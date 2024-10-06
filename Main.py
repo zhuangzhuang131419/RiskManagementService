@@ -7,6 +7,10 @@ def main():
     # 初始化
     ctp_manager = CTPManager()
     ctp_manager.connect_to_market_data()
+    time.sleep(3)
+    ctp_manager.connect_to_trader()
+    time.sleep(3)
+    ctp_manager.query_instrument()
 
     while True:
         print("Heartbreak...")
