@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+!_ThostFtdcApi.pyd
 
 # Distribution / packaging
 .Python
