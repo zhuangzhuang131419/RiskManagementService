@@ -15,6 +15,7 @@ class CTPManager:
     trader_user_api = None
     trader_user_spi = None
 
+
     order_map = dict()
 
     def __init__(self):
@@ -69,6 +70,7 @@ class CTPManager:
     # 查询合约
     def query_instrument(self):
         query_file = ThostFtdcApi.CThostFtdcQryInstrumentField()
+        query_file.ExchangeID = "CFFEX"
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
         if ret == 0:
             print('发送查询合约成功！')
@@ -154,9 +156,46 @@ class CTPManager:
         return ret, order_ref
 
 
-    # # 查看持仓明细
-    # def query_investor_position_detail:
-    #     NotImplemented
+    # 查看持仓明细
+    def query_investor_position_detail(self):
+        query_file = self.trader_user_api.CThostFtdcQryInvestorPositionDetailField()
+        query_file.BrokerID = self.login_config.broker_id
+        ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
+        if ret == 0:
+            print('发送查询持仓明细成功！')
+        else:
+            print('发送查询持仓明细失败！')
+            judge_ret(ret)
+            while ret != 0:
+                query_file = self.trader_user_api.CThostFtdcQryInvestorPositionDetailField()
+                ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
+                print('正在查询持仓明细...')
+                time.sleep(5)
+        time.sleep(1)
+
+#
+    def subscribe_market_data_in_batches(self, instrument_ids):
+        print('开始订阅行情')
+
+        page_size = 100
+        for i in range(0, len(instrument_ids), page_size):
+            page = instrument_ids[i:i + page_size]  # 获取当前分页
+            self.subscribe_market_data(page)  # 处理当前分页的订阅
+
+        print('已发送全部订阅请求')
+
+    def subscribe_market_data(self, instrument_ids):
+        ret = self.market_data_user_api.SubscribeMarketData(instrument_ids)
+        if ret == 0:
+            pass
+        else:
+            print('发送订阅{}合约请求失败！'.format(str(instrument_ids)))
+            judge_ret(ret)
+            while ret != 0:
+                ret = self.market_data_user_api.mduserapi.SubscribeMarketData(instrument_ids)
+                print('正在订阅{}行情...'.format(str(instrument_ids)))
+                time.sleep(1)
+
     #
     #
     # def query_investor_position:

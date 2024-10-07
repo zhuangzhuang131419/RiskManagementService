@@ -11,14 +11,19 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     Index_Option_ProductIDlist = ['HO', 'IO', 'MO']
 
     sub_product_ids = Index_Future_ProductIDlist + Index_Option_ProductIDlist
-    exchangeId = dict()
+    exchange_id = dict()
     expire_date = dict()
 
     front_id = None
     session_id = None
-    max_order_ref = None
+    max_order_ref = 0
 
     trading_day = None
+
+    # flag
+    login_finish = False
+    query_finish = False
+
 
     def __init__(self, trader_user_api):
         super().__init__()
@@ -87,13 +92,33 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
                 print('发送结算单确认请求失败！')
                 judge_ret(ret)
 
+    def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: "CThostFtdcSettlementInfoConfirmField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+        if pRspInfo.ErrorID != 0 and pRspInfo is not None:
+            print('结算单确认失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+        else:
+            print('结算单确认成功！')
+            self.login_finish = True
 
 
+
+    # 请求查询合约响应，当执行ReqQryInstrument后，该方法被调用。
+    # https://documentation.help/CTP-API-cn/ONRSPQRYINSTRUMENT.html
     def OnRspQryInstrument(self, pInstrument: "CThostFtdcInstrumentField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
-        print('OnRspQryInstrument')
         for product_id in self.sub_product_ids:
             if product_id in pInstrument.InstrumentID:
-                self.exchangeId[pInstrument.InstrumentID] = pInstrument.ExchangeID
+                self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
                 self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
+
+        if bIsLast:
+            self.query_finish = True
+            print('查询合约完成')
+
+
+    # 请求查询投资者持仓明细响应，当执行ReqQryInvestorPositionDetail后，该方法被调用。
+    # https://documentation.help/CTP-API-cn/ONRSPQRYINVESTORPOSITIONDETAIL.html
+    def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: "CThostFtdcInvestorPositionDetailField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+        if pInvestorPositionDetail.Volume == 0:
+            return
+
 
 

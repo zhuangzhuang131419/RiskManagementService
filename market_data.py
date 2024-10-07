@@ -7,7 +7,6 @@ from helper.Helper import *
 class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
 
     sub_product_ids = []
-    exchangeId = dict()
 
     def __init__(self, market_data_user_api):
         super().__init__()
@@ -41,18 +40,6 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
             print('行情连接失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
             print('行情账户登录成功！')
-
-
-        # subIds = [id.encode('utf-8') for id in ["SA209"]]
-        # subIds = ["IF2412"]
-        # # print(subIds)
-        # ret = self.market_data_user_api.SubscribeMarketData(subIds)
-        #
-        # if ret == 0:
-        #     print('发送订阅合约请求成功！')
-        # else:
-        #     print('发送订阅合约请求失败！')
-        #     judge_ret(ret)
 
     # SubscribeMarketData
     def OnRspSubMarketData(self, pSpecificInstrument, pRspInfo, nRequestID, bIsLast):
