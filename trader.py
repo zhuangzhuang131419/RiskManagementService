@@ -1,3 +1,5 @@
+import copy
+
 from api import ThostFtdcApi
 from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField
@@ -13,6 +15,9 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     sub_product_ids = Index_Future_ProductIDlist + Index_Option_ProductIDlist
     exchange_id = dict()
     expire_date = dict()
+
+    # key: order_ref, value: order_info
+    order_map = dict()
 
     front_id = None
     session_id = None
@@ -93,7 +98,7 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
                 judge_ret(ret)
 
     def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: "CThostFtdcSettlementInfoConfirmField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
-        if pRspInfo.ErrorID != 0 and pRspInfo is not None:
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('结算单确认失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
             print('结算单确认成功！')
@@ -119,6 +124,54 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: "CThostFtdcInvestorPositionDetailField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pInvestorPositionDetail.Volume == 0:
             return
+
+    def OnRspOrderInsert(self, pInputOrder: "CThostFtdcInputOrderField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('下单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+        else:
+            print('下单成功, 风控通过')
+
+    def OnRtnOrder(self, pOrder: "CThostFtdcOrderField") -> "void":
+        try:
+            # 报单已提交
+            if pOrder.OrderStatus == 'a':
+                print('报单已提交')
+                self.order_map[pOrder.OrderRef].pOrder = copy.copy(pOrder)
+            # 未成交
+            elif pOrder.OrderStatus == '3':
+                # print(pOrder.StatusMsg)
+                print('未成交')
+            # 全部成交
+            elif pOrder.OrderStatus == '0':
+                # print(pOrder.StatusMsg)
+                print('全部成交')
+            # 撤单
+            elif pOrder.OrderStatus == '5':
+                # print(pOrder.OrderStatus)
+                # 被动撤单
+                if pOrder.OrderSubmitStatus == '4':
+                    print('被动撤单')
+                    print(pOrder.StatusMsg)
+                else:
+                    print(pOrder.OrderSubmitStatus)
+                    print('撤单')
+                    print(pOrder.StatusMsg)
+            # 部分成交，还在队列中
+            elif pOrder.OrderStatus == '1':
+                print(pOrder.OrderStatus)
+                print('部分成交，还在队列中')
+            else:
+                print("OnRtnOrder")
+                print("OrderStatus=", pOrder.OrderStatus)
+                print("StatusMsg=", pOrder.StatusMsg)
+        except Exception as e:
+            red_print(e)
+
+    def OnRtnTrade(self, pTrade: "CThostFtdcTradeField") -> "void":
+        del self.order_map[pTrade.OrderRef]
+
+
+
 
 
 

@@ -3,6 +3,7 @@ import time
 import numpy as np
 from ctp_manager import CTPManager
 from memory.memory_manager import MemoryManager
+from model.direction import Direction
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
     while not ctp_manager.trader_user_spi.query_finish:
         time.sleep(3)
 
-    instrument_ids = ctp_manager.trader_user_spi.exchange_id.keys()
+    instrument_ids = list(ctp_manager.trader_user_spi.exchange_id.keys())
     print('当前订阅的合约数量为:{}'.format(len(instrument_ids)))
 
     # 初始化内存
@@ -31,8 +32,8 @@ def main():
     # 订阅合约
     ctp_manager.subscribe_market_data_in_batches(instrument_ids)
 
-
-    # ctp_manager.insert_order('IF2412', "buyopen", 4160, 2)
+    # 模拟下单
+    ctp_manager.insert_order('IF2412', Direction.BUY_OPEN, 4000, 2)
 
     # ctp_manager.query_investor_position_detail()
 

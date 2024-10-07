@@ -4,23 +4,24 @@ from ctypes import c_int
 from api import ThostFtdcApi
 from config_manager import ConfigManager
 from market_data import MarketData
+from model.direction import Direction
 from model.order_info import OrderInfo
 from trader import Trader
 from helper.Helper import *
+from typing import List
 
 
 class CTPManager:
+    # 行情中心
     market_data_user_spi = None
     market_data_user_api = None
+
+    # 交易中心
     trader_user_api = None
     trader_user_spi = None
 
 
-    order_map = dict()
-
     def __init__(self):
-
-
         self.login_config = ConfigManager().login_config
         print(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
 
@@ -85,12 +86,11 @@ class CTPManager:
         time.sleep(1)
 
     # 下单
-    def insert_order(self, code: str, direction, price, volume, strategy_id=0):
-        print('insert order')
+    def insert_order(self, code: str, direction: Direction, price, volume, strategy_id=0):
         order_field = ThostFtdcApi.CThostFtdcInputOrderField()
         order_field.BrokerID = self.login_config.broker_id
 
-        order_field.ExchangeID = self.trader_user_spi.exchangeId[code]
+        order_field.ExchangeID = self.trader_user_spi.exchange_id[code]
         order_field.InstrumentID = code
         order_field.UserID = self.login_config.user_id
         order_field.InvestorID = self.login_config.investor_id
@@ -99,12 +99,12 @@ class CTPManager:
 
         # 定义 direction 对应的方向和组合开平标志
         direction_mapping = {
-            'buyopen': (ThostFtdcApi.THOST_FTDC_D_Buy, '0'),
-            'buyclose': (ThostFtdcApi.THOST_FTDC_D_Buy, '1'),
-            'sellopen': (ThostFtdcApi.THOST_FTDC_D_Sell, '0'),
-            'sellclose': (ThostFtdcApi.THOST_FTDC_D_Sell, '1'),
-            'buyclosetoday': (ThostFtdcApi.THOST_FTDC_D_Buy, ThostFtdcApi.THOST_FTDC_OF_CloseToday),
-            'sellclosetoday': (ThostFtdcApi.THOST_FTDC_D_Sell, ThostFtdcApi.THOST_FTDC_OF_CloseToday),
+            Direction.BUY_OPEN: (ThostFtdcApi.THOST_FTDC_D_Buy, '0'),
+            Direction.BUY_CLOSE: (ThostFtdcApi.THOST_FTDC_D_Buy, '1'),
+            Direction.SELL_OPEN: (ThostFtdcApi.THOST_FTDC_D_Sell, '0'),
+            Direction.SELL_CLOSE: (ThostFtdcApi.THOST_FTDC_D_Sell, '1'),
+            Direction.BUY_CLOSE_TODAY: (ThostFtdcApi.THOST_FTDC_D_Buy, ThostFtdcApi.THOST_FTDC_OF_CloseToday),
+            Direction.SELL_CLOSE_TODAY: (ThostFtdcApi.THOST_FTDC_D_Sell, ThostFtdcApi.THOST_FTDC_OF_CloseToday),
         }
 
         # 获取方向和组合开平标志
@@ -119,7 +119,7 @@ class CTPManager:
         self.trader_user_spi.max_order_ref += 1
         order_field.OrderRef = str(order_ref)
 
-        # 普通限价单的默认参数
+        # 普通限价单默认参数
         # 报单价格条件
         order_field.OrderPriceType = ThostFtdcApi.THOST_FTDC_OPT_LimitPrice
         # 触发条件
@@ -144,14 +144,14 @@ class CTPManager:
         ret = self.trader_user_api.ReqOrderInsert(order_field, 0)
 
         if ret == 0:
-            print('下单成功！')
-            self.order_map[str(order_ref)] = OrderInfo(order_ref, strategy_id, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
+            print('发送下单请求成功！')
+            self.trader_user_spi.order_map[str(order_ref)] = OrderInfo(order_ref, strategy_id, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
             # 报单回报里的报单价格和品种数据不对，所以自己记录数据
-            self.order_map[str(order_ref)].orderPrice = price
-            self.order_map[str(order_ref)].instrumentID = code
-            # print(g.order_map)
+            self.trader_user_spi.order_map[str(order_ref)].order_price = price
+            self.trader_user_spi.order_map[str(order_ref)].instrument_id = code
+            print(self.trader_user_spi.order_map[str(order_ref)])
         else:
-            print('下单失败！')
+            print('发送下单请求失败！')
             judge_ret(ret)
         return ret, order_ref
 
@@ -173,8 +173,8 @@ class CTPManager:
                 time.sleep(5)
         time.sleep(1)
 
-#
-    def subscribe_market_data_in_batches(self, instrument_ids):
+    # 批量订阅
+    def subscribe_market_data_in_batches(self, instrument_ids: List[str]):
         print('开始订阅行情')
 
         page_size = 100

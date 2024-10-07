@@ -8,3 +8,6 @@ def judge_ret(ret):
         print('失败原因：表示每秒发送请求数超过许可数')
     else:
         print('失败原因：未知。\nret：{}'.format(ret))
+
+def red_print(content):
+    print(f'\033[0;0;31m{content}\033[0m')

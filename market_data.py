@@ -2,18 +2,18 @@ from api import ThostFtdcApi
 from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
 from config_manager import ConfigManager
 from helper.Helper import *
+from queue import Queue
 
 
 class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
 
-    sub_product_ids = []
-
     def __init__(self, market_data_user_api):
         super().__init__()
-        self.sub_product_ids = None
         self.config_manager = ConfigManager()
         self.market_data_user_api = market_data_user_api
         self.login_info = self.config_manager.login_config
+
+        self.market_data = Queue()
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
     def OnFrontConnected(self):
@@ -45,12 +45,12 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
     def OnRspSubMarketData(self, pSpecificInstrument, pRspInfo, nRequestID, bIsLast):
         if pRspInfo.ErrorID != 0:
             print(f"订阅行情失败，合约: {pSpecificInstrument.InstrumentID}, 错误信息: {pRspInfo.ErrorMsg}")
-        else:
-            print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
+        # else:
+        #     print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData):
-        print(f'{pDepthMarketData.InstrumentID}:{pDepthMarketData.LastPrice}')
+        self.market_data.put(pDepthMarketData)
 
 
 
