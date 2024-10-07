@@ -1,8 +1,8 @@
-from CTP_API import ThostFtdcApi
-from CTP_API.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
-    CThostFtdcMulticastInstrumentField, CThostFtdcInstrumentField
-from ConfigManager import ConfigManager
-from Helper import *
+from api import ThostFtdcApi
+from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
+    CThostFtdcInstrumentField
+from config_manager import ConfigManager
+from helper.Helper import *
 
 class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     # 指数期货的品种列表
@@ -14,11 +14,16 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     exchangeId = dict()
     expire_date = dict()
 
+    front_id = None
+    session_id = None
+    max_order_ref = None
+
+    trading_day = None
+
     def __init__(self, trader_user_api):
         super().__init__()
-        self.config_manager = ConfigManager()
         self.trader_user_api = trader_user_api
-        self.login_info = self.config_manager.get_login_info()
+        self.login_info = ConfigManager().login_config
 
 
     def OnFrontConnected(self):
@@ -26,10 +31,10 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
         auth_field = ThostFtdcApi.CThostFtdcReqAuthenticateField()
 
 
-        auth_field.BrokerID = self.login_info['BrokerID']
-        auth_field.UserID = self.login_info['UserID']
-        auth_field.Password = self.login_info['Password']
-        auth_field.AuthCode = self.login_info['AuthCode']
+        auth_field.BrokerID = self.login_info.broker_id
+        auth_field.UserID = self.login_info.user_id
+        auth_field.Password = self.login_info.password
+        auth_field.AuthCode = self.login_info.auth_code
 
         ret = self.trader_user_api.ReqAuthenticate(auth_field, 0)
         if ret == 0:
@@ -46,9 +51,9 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
 
             # 发送登录请求
             login_field = ThostFtdcApi.CThostFtdcReqUserLoginField()
-            login_field.BrokerID = self.login_info['BrokerID']
-            login_field.UserID = self.login_info['UserID']
-            login_field.Password = self.login_info['Password']
+            login_field.BrokerID = self.login_info.broker_id
+            login_field.UserID = self.login_info.user_id
+            login_field.Password = self.login_info.password
 
             ret = self.trader_user_api.ReqUserLogin(login_field, 0)
             if ret == 0:
@@ -63,6 +68,26 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
             print('登录交易账户失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
             print('登录交易账户成功！')
+
+            # 保存数据用于下单
+            self.front_id = pRspUserLogin.FrontID
+            self.session_id = pRspUserLogin.SessionID
+            self.max_order_ref = int(pRspUserLogin.MaxOrderRef)
+
+            # 保存交易日
+            self.trading_day = pRspUserLogin.TradingDay
+
+            pSettlementInfoConfirm = ThostFtdcApi.CThostFtdcSettlementInfoConfirmField()
+            pSettlementInfoConfirm.BrokerID = self.login_info.broker_id
+            pSettlementInfoConfirm.InvestorID = self.login_info.investor_id
+            ret = self.trader_user_api.ReqSettlementInfoConfirm(pSettlementInfoConfirm, 0)
+            if ret == 0:
+                print('发送结算单确认请求成功！')
+            else:
+                print('发送结算单确认请求失败！')
+                judge_ret(ret)
+
+
 
     def OnRspQryInstrument(self, pInstrument: "CThostFtdcInstrumentField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         print('OnRspQryInstrument')

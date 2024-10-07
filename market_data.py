@@ -1,7 +1,7 @@
-from CTP_API import ThostFtdcApi
-from CTP_API.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, CThostFtdcMulticastInstrumentField
-from ConfigManager import ConfigManager
-from Helper import *
+from api import ThostFtdcApi
+from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
+from config_manager import ConfigManager
+from helper.Helper import *
 
 
 class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
@@ -14,17 +14,18 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
         self.sub_product_ids = None
         self.config_manager = ConfigManager()
         self.market_data_user_api = market_data_user_api
+        self.login_info = self.config_manager.login_config
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
     def OnFrontConnected(self):
         print("开始建立行情连接")
 
-        login_info = self.config_manager.get_login_info()
+
         login_field = ThostFtdcApi.CThostFtdcReqUserLoginField()
 
-        login_field.BrokerID = login_info['BrokerID']
-        login_field.UserID = login_info['UserID']
-        login_field.Password = login_info['Password']
+        login_field.BrokerID = self.login_info.broker_id
+        login_field.UserID = self.login_info.user_id
+        login_field.Password = self.login_info.password
 
         ret = self.market_data_user_api.ReqUserLogin(login_field, 0)
 
@@ -43,15 +44,15 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
 
 
         # subIds = [id.encode('utf-8') for id in ["SA209"]]
-        subIds = ["IF2412"]
-        # print(subIds)
-        ret = self.market_data_user_api.SubscribeMarketData(subIds)
-
-        if ret == 0:
-            print('发送订阅合约请求成功！')
-        else:
-            print('发送订阅合约请求失败！')
-            judge_ret(ret)
+        # subIds = ["IF2412"]
+        # # print(subIds)
+        # ret = self.market_data_user_api.SubscribeMarketData(subIds)
+        #
+        # if ret == 0:
+        #     print('发送订阅合约请求成功！')
+        # else:
+        #     print('发送订阅合约请求失败！')
+        #     judge_ret(ret)
 
     # SubscribeMarketData
     def OnRspSubMarketData(self, pSpecificInstrument, pRspInfo, nRequestID, bIsLast):
@@ -62,7 +63,6 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData):
-        print("OnRtnDepthMarketData")
         print(f'{pDepthMarketData.InstrumentID}:{pDepthMarketData.LastPrice}')
 
 
