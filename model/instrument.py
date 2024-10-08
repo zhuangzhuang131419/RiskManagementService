@@ -6,7 +6,6 @@ class Instrument:
 
 class Option(Instrument):
     def __init__(self, instrument_id: str):
-        self.validate_option_code()
         super().__init__(instrument_id)
         # eg. io2410-C-4100
         self.code = self.id[:2]

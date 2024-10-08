@@ -24,11 +24,14 @@ def main():
 
     # 初始化内存
     memory_manager = MemoryManager(instrument_ids)
-    print('当前订阅期货合约数量为：{}'.format(len(memory_manager.future_manager.futures)))
-    print('当前订阅期权合约数量为：{}'.format(len(memory_manager.option_manager.options)))
+    print('当前订阅期货合约数量为：{}'.format(len(memory_manager.future_manager.index_futures)))
+    print('当前订阅期权合约数量为：{}'.format(len(memory_manager.option_manager.index_options)))
+    print('当前订阅期货合约月份为：{}'.format(memory_manager.future_manager.index_future_month_id))
+    print('当前订阅期权合约月份为：{}'.format(memory_manager.option_manager.index_option_month_forward_id))
+    print('当前订阅期权合约行权价数量为：{}'.format(memory_manager.option_manager.index_option_month_strike_num))
 
     # 订阅合约
-    ctp_manager.subscribe_market_data_in_batches(instrument_ids)
+    # ctp_manager.subscribe_market_data_in_batches(instrument_ids)
 
     # 模拟下单
     # ctp_manager.insert_order('IF2412', Direction.BUY_OPEN, 4000, 2)

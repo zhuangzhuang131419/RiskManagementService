@@ -4,10 +4,10 @@ from ctypes import c_int
 
 from api import ThostFtdcApi
 from config_manager import ConfigManager
-from market_data import MarketData
+from ctp.market_data import MarketData
 from model.direction import Direction
 from model.order_info import OrderInfo
-from trader import Trader
+from ctp.trader import Trader
 from helper.Helper import *
 from typing import List
 
