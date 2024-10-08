@@ -30,11 +30,26 @@ class OptionManager:
     # 例如要取HO2410的看涨期权的第一个行权价的bid价格，index_option_market_data[0, 0, 0, 2]
     index_option_market_data = ndarray
 
+
+    # 0（远期有效性），1（远期ask），2（远期bid），3（Askstrike），4（BIDstrike），5（ATMS有效性），6（Ask），7（Bid），8（K1），9（K2），10（K3），11（K4），12（ISask），13（ISbid）
+    index_option_month_f_price = ndarray
+
+    index_option_month_atm_vol = ndarray
+
+    index_option_month_model_para = ndarray
+
     def __init__(self, index_options: [Option]):
         self.index_options = index_options
         self.init_index_option_month_id()
         self.init_index_option_month_strike_num()
-        self.index_option_market_data = self.init_index_option_market_data()
+        self.init_index_option_market_data()
+
+        #初始化IS相关数组
+        self.init_index_option_month_f_price()
+        self.init_index_option_month_atm_vol()
+        self.init_index_option_month_model_para()
+
+
 
     def init_index_option_month_id(self):
         """
@@ -69,10 +84,17 @@ class OptionManager:
         
         :return: 
         """
+        # 假设有 len(self.index_option_month_forward_id) 个月份，每个期权品种最多有 2 种看涨/看跌期权，index_option_month_strike_max_num 个行权价，每个行权价有 7 个字段
+        self.index_option_market_data = np.zeros((len(self.index_option_month_forward_id), 2, self.index_option_month_strike_max_num, 7))
 
-        # 假设有 len(self.index_option_month_forward_id) 个月份，每个期权品种最多有 2 种看涨/看跌期权，index_option_month_strike_num 个行权价，每个行权价有 7 个字段
-        market_data = np.zeros((len(self.index_option_month_forward_id), 2, self.index_option_month_strike_max_num, 7))
-        return market_data
+    def init_index_option_month_f_price(self):
+        self.index_option_month_f_price = np.zeros((len(self.index_option_month_forward_id),14))
+
+    def init_index_option_month_atm_vol(self):
+        self.index_option_month_atm_vol = np.zeros((len(self.index_option_month_forward_id),15))
+
+    def init_index_option_month_model_para(self):
+        self.index_option_month_model_para = np.zeros((len(self.index_option_month_forward_id),5))
 
 
 
