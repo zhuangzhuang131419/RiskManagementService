@@ -27,8 +27,12 @@ def main():
     print('当前订阅期货合约数量为：{}'.format(len(memory_manager.future_manager.index_futures)))
     print('当前订阅期权合约数量为：{}'.format(len(memory_manager.option_manager.index_options)))
     print('当前订阅期货合约月份为：{}'.format(memory_manager.future_manager.index_future_month_id))
-    print('当前订阅期权合约月份为：{}'.format(memory_manager.option_manager.index_option_month_forward_id))
-    print('当前订阅期权合约行权价数量为：{}'.format(memory_manager.option_manager.index_option_month_strike_num))
+    print('当前订阅期权合约月份为：{}'.format(memory_manager.option_manager.option_month_forward_id))
+    # print('HO2410的看涨期权的第一个行权价的行权价：{}'.format(memory_manager.option_manager.index_option_market_data[0, 0, 0, 0]))
+    # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
+    #     memory_manager.option_manager.index_option_market_data[0, 0, 1, 0]))
+    # print('HO2410一共有几个行权价: {}'.format(memory_manager.option_manager.option_month_strike_prices['HO2410']))
+    # print('当前订阅期权合约行权价数量为：{}'.format(memory_manager.option_manager.option_month_strike_num))
 
     # 订阅合约
     # ctp_manager.subscribe_market_data_in_batches(instrument_ids)
