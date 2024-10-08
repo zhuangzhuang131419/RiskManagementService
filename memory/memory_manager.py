@@ -1,3 +1,5 @@
+from memory.future_manager import FutureManager
+from memory.option_manager import OptionManager
 from model.instrument import Future, Option
 
 
@@ -7,19 +9,20 @@ class MemoryManager:
     # 指数期权的品种列表
     Index_Option_ProductIDlist = ['HO', 'IO', 'MO']
 
-    # 期货合约
-    futures = []
+    def __init__(self):
+        self.future_manager = FutureManager()
+        self.option_manager = OptionManager()
 
-    # 期权合约
-    options = []
+    # 添加一个合约
+    def add_instrument(self, instrument_id):
+        if self.is_future(instrument_id):
+            self.future_manager.add_future(Future(instrument_id))
+        elif self.is_option(instrument_id):
+            self.option_manager.add_option(Option(instrument_id))
 
-    # 期权行权价
-    option_month_strike_id = []
-
-
-    def __init__(self, instrument_ids):
-        self.instrument_ids = instrument_ids
-        self.sort_instrument_ids()
+    def add_instruments(self, instrument_ids):
+        for instrument_id in instrument_ids:
+            self.add_instrument(instrument_id)
 
     # 判断合约是不是在future
     def is_future(self, instrument_id):
@@ -28,12 +31,3 @@ class MemoryManager:
     # 判断合约是不是在option
     def is_option(self, instrument_id: str):
         return any(instrument_id.startswith(option_id) for option_id in self.Index_Option_ProductIDlist)
-
-
-    def sort_instrument_ids(self):
-        # 对合约种类进行分类
-        for instrument_id in self.instrument_ids:
-            if self.is_future(instrument_id):
-                self.futures.append(Future(instrument_id))
-            elif self.is_option(instrument_id):
-                self.options.append(Option(instrument_id))

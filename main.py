@@ -1,9 +1,7 @@
 import time
 
-import numpy as np
-from ctp_manager import CTPManager
+from ctp.ctp_manager import CTPManager
 from memory.memory_manager import MemoryManager
-from model.direction import Direction
 
 
 def main():
@@ -25,15 +23,16 @@ def main():
     print('当前订阅的合约数量为:{}'.format(len(instrument_ids)))
 
     # 初始化内存
-    memory_manager = MemoryManager(instrument_ids)
-    print('当前订阅期货合约数量为：{}'.format(len(memory_manager.futures)))
-    print('当前订阅期权合约数量为：{}'.format(len(memory_manager.options)))
+    memory_manager = MemoryManager()
+    memory_manager.add_instruments(instrument_ids)
+    print('当前订阅期货合约数量为：{}'.format(len(memory_manager.future_manager.futures)))
+    print('当前订阅期权合约数量为：{}'.format(len(memory_manager.option_manager.options)))
 
     # 订阅合约
     ctp_manager.subscribe_market_data_in_batches(instrument_ids)
 
     # 模拟下单
-    ctp_manager.insert_order('IF2412', Direction.BUY_OPEN, 4000, 2)
+    # ctp_manager.insert_order('IF2412', Direction.BUY_OPEN, 4000, 2)
 
     # ctp_manager.query_investor_position_detail()
 

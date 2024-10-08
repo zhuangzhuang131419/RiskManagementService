@@ -1,3 +1,4 @@
+import os.path
 import time
 from ctypes import c_int
 
@@ -20,15 +21,19 @@ class CTPManager:
     trader_user_api = None
     trader_user_spi = None
 
+    CONFIG_FILE_PATH = '../con_file/'
+
 
     def __init__(self):
         self.login_config = ConfigManager().login_config
+        if not os.path.exists(self.CONFIG_FILE_PATH):
+            os.makedirs(self.CONFIG_FILE_PATH)
         print(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
 
     def connect_to_market_data(self):
         print("连接行情中心")
         # 创建API实例
-        self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi('./con_file/')
+        self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi(self.CONFIG_FILE_PATH)
         # 创建spi实例
         self.market_data_user_spi = MarketData(self.market_data_user_api)
 
@@ -45,7 +50,7 @@ class CTPManager:
     def connect_to_trader(self):
         print("连接交易中心")
         # 创建API实例
-        self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi('./con_file/')
+        self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi(self.CONFIG_FILE_PATH)
         # 创建spi实例
         self.trader_user_spi = Trader(self.trader_user_api)
 
