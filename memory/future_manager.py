@@ -1,5 +1,5 @@
 from select import select
-
+import numpy as np
 from model.instrument import Future
 
 
@@ -12,6 +12,8 @@ class FutureManager:
     index_future_month_id = list()
 
     # 期货行情结构
+    # 将期货的行情信息记录在此结构中，2维度的numpy，按顺序记录：字段时间，bid,bidv,ask,askv,avail 6个字段
+    # bid,bidv,ask,askv,avail 代表：买1价格，买1量，卖1价格，卖1量，是否可交易标记
     index_future_market_data = list()
 
     def __init__(self, index_futures:[Future]):
@@ -25,5 +27,12 @@ class FutureManager:
         unique_month_ids = set()
         for future in self.index_futures:
             unique_month_ids.add(future.id[:6])
-
         return sorted(list(unique_month_ids))
+
+    def init_index_option_market_data(self):
+        """
+
+        :return:
+        """
+
+        np.zeros((len(self.index_future_month_id), 6))
