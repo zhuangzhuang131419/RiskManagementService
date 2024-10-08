@@ -23,8 +23,7 @@ def main():
     print('当前订阅的合约数量为:{}'.format(len(instrument_ids)))
 
     # 初始化内存
-    memory_manager = MemoryManager()
-    memory_manager.add_instruments(instrument_ids)
+    memory_manager = MemoryManager(instrument_ids)
     print('当前订阅期货合约数量为：{}'.format(len(memory_manager.future_manager.futures)))
     print('当前订阅期权合约数量为：{}'.format(len(memory_manager.option_manager.options)))
 

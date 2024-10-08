@@ -1,33 +1,30 @@
+from helper.Helper import *
 from memory.future_manager import FutureManager
 from memory.option_manager import OptionManager
 from model.instrument import Future, Option
 
 
 class MemoryManager:
-    # 指数期货的品种列表
-    Index_Future_ProductIDlist = ['IH', 'IF', 'IM']
-    # 指数期权的品种列表
-    Index_Option_ProductIDlist = ['HO', 'IO', 'MO']
 
-    def __init__(self):
-        self.future_manager = FutureManager()
-        self.option_manager = OptionManager()
 
-    # 添加一个合约
-    def add_instrument(self, instrument_id):
-        if self.is_future(instrument_id):
-            self.future_manager.add_future(Future(instrument_id))
-        elif self.is_option(instrument_id):
-            self.option_manager.add_option(Option(instrument_id))
+    option_manager = None
+    future_manager = None
 
-    def add_instruments(self, instrument_ids):
+    def __init__(self, instrument_ids: [str]):
+
+        self.init_future_option(instrument_ids)
+
+
+    def init_future_option(self, instrument_ids: [str]):
+        index_options = []
+        index_futures = []
         for instrument_id in instrument_ids:
-            self.add_instrument(instrument_id)
+            if is_index_option(instrument_id):
+                index_options.append(Option(instrument_id))
+            elif is_index_future(instrument_id):
+                index_futures.append(Future(instrument_id))
 
-    # 判断合约是不是在future
-    def is_future(self, instrument_id):
-        return any(instrument_id.startswith(future_id) for future_id in self.Index_Future_ProductIDlist)
+        self.future_manager = FutureManager(index_futures)
+        self.option_manager = OptionManager(index_options)
 
-    # 判断合约是不是在option
-    def is_option(self, instrument_id: str):
-        return any(instrument_id.startswith(option_id) for option_id in self.Index_Option_ProductIDlist)
+

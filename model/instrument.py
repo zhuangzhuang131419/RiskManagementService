@@ -6,12 +6,22 @@ class Instrument:
 
 class Option(Instrument):
     def __init__(self, instrument_id: str):
+        self.validate_option_code()
         super().__init__(instrument_id)
         # eg. io2410-C-4100
-        self.symbol = self.id[:2]
+        self.code = self.id[:2]
+        self.symbol = self.id.split('-')[0]
         self.expiry_month = self.id[2:6]
         self.option_type = self.id[7]
         self.strike_price = self.id.split('-')[-1]
+
+    def is_call_option(self):
+        """判断是否为看涨期权"""
+        return self.option_type == 'C'
+
+    def is_put_option(self):
+        """判断是否为看跌期权"""
+        return self.option_type == 'P'
 
 
     def validate_option_code(self):
