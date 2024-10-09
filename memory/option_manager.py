@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from numpy.core.records import ndarray
 
@@ -8,11 +10,11 @@ class OptionManager:
     index_options = list()
 
     # 期权品种月份列表
-    option_month_forward_id = []
+    index_option_month_forward_id = []
 
     # 期权品种月份行权价数量
-    option_month_strike_num = []
-    option_month_strike_prices = dict() # ['HO2410':{2400, 2500}]
+    index_option_month_strike_num = []
+    index_option_month_strike_prices = dict() # ['HO2410':{2400, 2500}]
 
     # 最多数量的行权价
     index_option_month_strike_max_num = 0
@@ -21,7 +23,7 @@ class OptionManager:
     # 第一个维度：品种月份维度，顺序与期权品种月份列表对齐，[0, : , : , : ]代表HO2410
     # 第二个维度：固定大小为2，看涨or 看跌，看涨期权为0，看跌期权为1
     # 第三个维度：行权价维度
-    # 第四个维度：字段维度固定大写为7，七个字段存放内容为：行权价，字段时间，bid, bidv, ask, askv, avail
+    # 第四个维度：字段维度固定大写为7，七个字段存放内容为：行权价，字段时间，bid, bidv, ask, askv, available
     # 例如要取HO2410的看涨期权的第一个行权价的bid价格，index_option_market_data[0, 0, 0, 2]
     index_option_market_data = ndarray
 
@@ -64,7 +66,7 @@ class OptionManager:
         for option in self.index_options:
             unique_month_ids.add(option.id[:6])
 
-        self.option_month_forward_id = sorted(list(unique_month_ids))
+        self.index_option_month_forward_id = sorted(list(unique_month_ids))
 
     def init_index_option_month_strike_num(self):
         """
@@ -75,16 +77,16 @@ class OptionManager:
             # 提取品种和月份部分，例如 'HO2410-C-4100' 提取 'HO2410'
             # 统计每个品种和月份的行权价数量
             # Call Put 不作区分
-            if option.symbol in self.option_month_strike_prices:
-                self.option_month_strike_prices[option.symbol].add(option.strike_price)
+            if option.symbol in self.index_option_month_strike_prices:
+                self.index_option_month_strike_prices[option.symbol].add(option.strike_price)
             else:
-                self.option_month_strike_prices[option.symbol] = {option.strike_price}
+                self.index_option_month_strike_prices[option.symbol] = {option.strike_price}
 
-        sorted_keys = sorted(self.option_month_strike_prices.keys())
-        print(self.option_month_strike_prices)
-        self.option_month_strike_num = [len(self.option_month_strike_prices[key]) for key in sorted_keys]
-        print(self.option_month_strike_num)
-        self.index_option_month_strike_max_num = max(self.option_month_strike_num)
+        sorted_keys = sorted(self.index_option_month_strike_prices.keys())
+        print(self.index_option_month_strike_prices)
+        self.index_option_month_strike_num = [len(self.index_option_month_strike_prices[key]) for key in sorted_keys]
+        print(self.index_option_month_strike_num)
+        self.index_option_month_strike_max_num = max(self.index_option_month_strike_num)
 
     def init_index_option_market_data(self):
         """
@@ -92,40 +94,57 @@ class OptionManager:
         :return: 
         """
         # 假设有 len(self.index_option_month_forward_id) 个月份，每个期权品种最多有 2 种看涨/看跌期权，index_option_month_strike_max_num 个行权价，每个行权价有 7 个字段
-        self.index_option_market_data = np.zeros((len(self.option_month_forward_id), 2, self.index_option_month_strike_max_num, 7))
+        self.index_option_market_data = np.zeros((len(self.index_option_month_forward_id), 2, self.index_option_month_strike_max_num, 7))
         for option in self.index_options:
-            strike_prices = sorted(list(self.option_month_strike_prices[option.symbol]))
+            strike_prices = sorted(list(self.index_option_month_strike_prices[option.symbol]))
             if option.is_call_option():
-                self.index_option_market_data[self.option_month_forward_id.index(option.symbol), 0, strike_prices.index(option.strike_price), 0] = option.strike_price
+                self.index_option_market_data[self.index_option_month_forward_id.index(option.symbol), 0, strike_prices.index(option.strike_price), 0] = option.strike_price
             elif option.is_put_option():
-                self.index_option_market_data[self.option_month_forward_id.index(option.symbol), 1, strike_prices.index(option.strike_price), 0] = option.strike_price
+                self.index_option_market_data[self.index_option_month_forward_id.index(option.symbol), 1, strike_prices.index(option.strike_price), 0] = option.strike_price
 
 
 
     def init_index_option_month_f_price(self):
-        self.index_option_month_f_price = np.zeros((len(self.option_month_forward_id), 14))
+        self.index_option_month_f_price = np.zeros((len(self.index_option_month_forward_id), 14))
 
     def init_index_option_month_atm_vol(self):
-        self.index_option_month_atm_vol = np.zeros((len(self.option_month_forward_id), 15))
+        self.index_option_month_atm_vol = np.zeros((len(self.index_option_month_forward_id), 15))
 
     def init_index_option_month_model_para(self):
-        self.index_option_month_model_para = np.zeros((len(self.option_month_forward_id), 5))
+        self.index_option_month_model_para = np.zeros((len(self.index_option_month_forward_id), 5))
 
     def init_index_option_month_t_iv(self):
-        self.index_option_month_t_iv = np.zeros((len(self.option_month_forward_id), self.index_option_month_strike_max_num, 9))
+        self.index_option_month_t_iv = np.zeros((len(self.index_option_month_forward_id), self.index_option_month_strike_max_num, 9))
+        for i in range(len(self.index_option_month_forward_id)):
+            # 行权价
+            self.index_option_month_t_iv[i, :, 0] = self.index_option_market_data[i, 0, :, 0].copy()
 
     def init_index_option_month_greeks(self):
-        self.index_option_month_greeks = np.zeros((len(self.option_month_forward_id), self.index_option_month_strike_max_num, 14))
+        self.index_option_month_greeks = np.zeros((len(self.index_option_month_forward_id), self.index_option_month_strike_max_num, 14))
+        for i in range(len(self.index_option_month_forward_id)):
+            # 行权价
+            self.index_option_month_greeks[i, :, 0] = self.index_option_market_data[i, 0, :, 0].copy()
 
     def init_index_option_time(self):
         pass
 
-
-
-
-
-
-
+    # def index_option_vol_calculator(self):
+    #     while True:
+    #         local_time_start = time.time()
+    #         for i in range(len(self.index_option_month_forward_id)):
+    #             # 计算forward价格，获取两侧行权价，标记FW价格无效，loc_index_month_available,标记IS无法取得,loc_index_IS_available
+    #             # 将全局变量赋予局部变量：时间,P,C可交易性，行权价,P,C价格，R,D
+    #
+    #
+    # def index_option_imply(self, option_call_available: [], option_put_available: [], option_strike: [], option_ask):
+    #     """
+    #     @para
+    #     """
+    #     index_option_month_f_price = [0] * 14
+    #     # 至少有一组C与P必须同时可交易才能生成forward，否则返回-1
+    #     if 1 in option_call_available * option_put_available:
+    #         index_option_month_f_price[0] = 1
+    #         available = (option_call_available * option_put_available) != 0
 
 
 
