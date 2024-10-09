@@ -1,6 +1,5 @@
-from select import select
 import numpy as np
-from model.instrument import Future
+from model.instrument.instrument import Future
 
 
 class FutureManager:

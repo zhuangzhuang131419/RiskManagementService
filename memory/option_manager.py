@@ -1,20 +1,22 @@
-import time
+from typing import List
 
 import numpy as np
 from numpy.core.records import ndarray
 
-from model.instrument import Option
+from model.instrument.option import Option
+from model.instrument.option_series import OptionSeries
+
 
 class OptionManager:
-    # 期权
-    index_options = list()
+    # 期权链
+    option_series_list: List[OptionSeries]
 
     # 期权品种月份列表
     index_option_month_forward_id = []
 
     # 期权品种月份行权价数量
     index_option_month_strike_num = []
-    index_option_month_strike_prices = dict() # ['HO2410':{2400, 2500}]
+    index_option_month_strike_prices = {} # ['HO2410':{2400, 2500}]
 
     # 最多数量的行权价
     index_option_month_strike_max_num = 0
@@ -40,7 +42,7 @@ class OptionManager:
     index_option_month_greeks = ndarray
 
     def __init__(self, index_options: [Option]):
-        self.index_options = index_options
+        self.init_option_series(index_options)
         self.init_index_option_month_id()
         self.init_index_option_month_strike_num()
         self.init_index_option_market_data()
@@ -56,31 +58,50 @@ class OptionManager:
 
         self.init_index_option_time()
 
+    def init_option_series(self, options: [Option]):
+        """
+        根据期权名称分组期权并初始化 OptionSeries。
+        :param options: List[Option] - Option 对象的列表
+        """
+        option_series_dict = {}
+
+        # 按名称分组期权
+        for option in options:
+            if option.name not in option_series_dict:
+                option_series_dict[option.name] = []
+            option_series_dict[option.name].append(option)
+
+        # 初始化 OptionSeries
+        for name, options_list in option_series_dict.items():
+            self.option_series_list.append(OptionSeries(name, options_list))
+
+        self.option_series_list.sort(key=lambda series: series.name)
+
 
 
     def init_index_option_month_id(self):
         """
         生成唯一的期权月份列表，格式如：["HO2410","HO2411","HO2412","HO2501","HO2503","HO2506",…,…]
         """
-        unique_month_ids = set()
-        for option in self.index_options:
-            unique_month_ids.add(option.id[:6])
 
-        self.index_option_month_forward_id = sorted(list(unique_month_ids))
+        for option in self.option_series_list:
+            self.index_option_month_forward_id.append(option.name)
+
 
     def init_index_option_month_strike_num(self):
         """
         生成每个期权品种月份对应的行权价数量列表。
         假设期权格式为：'HO2410-C-4100'，表示品种HO，月份2410，行权价4100
         """
+
         for option in self.index_options:
             # 提取品种和月份部分，例如 'HO2410-C-4100' 提取 'HO2410'
             # 统计每个品种和月份的行权价数量
             # Call Put 不作区分
-            if option.symbol in self.index_option_month_strike_prices:
-                self.index_option_month_strike_prices[option.symbol].add(option.strike_price)
+            if option.month_id in self.index_option_month_strike_prices:
+                self.index_option_month_strike_prices[option.month_id].add(option.strike_price)
             else:
-                self.index_option_month_strike_prices[option.symbol] = {option.strike_price}
+                self.index_option_month_strike_prices[option.month_id] = {option.strike_price}
 
         sorted_keys = sorted(self.index_option_month_strike_prices.keys())
         print(self.index_option_month_strike_prices)
@@ -96,11 +117,11 @@ class OptionManager:
         # 假设有 len(self.index_option_month_forward_id) 个月份，每个期权品种最多有 2 种看涨/看跌期权，index_option_month_strike_max_num 个行权价，每个行权价有 7 个字段
         self.index_option_market_data = np.zeros((len(self.index_option_month_forward_id), 2, self.index_option_month_strike_max_num, 7))
         for option in self.index_options:
-            strike_prices = sorted(list(self.index_option_month_strike_prices[option.symbol]))
+            strike_prices = sorted(list(self.index_option_month_strike_prices[option.month_id]))
             if option.is_call_option():
-                self.index_option_market_data[self.index_option_month_forward_id.index(option.symbol), 0, strike_prices.index(option.strike_price), 0] = option.strike_price
+                self.index_option_market_data[self.index_option_month_forward_id.index(option.month_id), 0, strike_prices.index(option.strike_price), 0] = option.strike_price
             elif option.is_put_option():
-                self.index_option_market_data[self.index_option_month_forward_id.index(option.symbol), 1, strike_prices.index(option.strike_price), 0] = option.strike_price
+                self.index_option_market_data[self.index_option_month_forward_id.index(option.month_id), 1, strike_prices.index(option.strike_price), 0] = option.strike_price
 
 
 

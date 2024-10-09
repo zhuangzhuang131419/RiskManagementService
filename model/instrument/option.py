@@ -1,15 +1,17 @@
-class Instrument:
-    id: str
+from model.instrument.instrument import Instrument
 
-    def __init__(self, instrument_id):
-        self.id = instrument_id
 
 class Option(Instrument):
+    bid = 0
+    ask = 0
+    bid_volume = 0
+    ask_volume = 0
+    available = False
+
     def __init__(self, instrument_id: str):
         super().__init__(instrument_id)
         # eg. io2410-C-4100
-        self.code = self.id[:2]
-        self.symbol = self.id.split('-')[0]
+        self.month_id = self.id.split('-')[0]
         self.expiry_month = self.id[2:6]
         self.option_type = self.id[7]
         self.strike_price = self.id.split('-')[-1]
@@ -39,19 +41,7 @@ class Option(Instrument):
 
     def __str__(self):
         """返回期权的详细信息"""
-        return (f"期权标的物: {self.symbol}\n"
+        return (f"期权标的物: {self.month_id}\n"
                 f"到期日期: {self.expiry_month}\n"
                 f"期权类型: {self.option_type}\n"
                 f"行权价: {self.strike_price}")
-
-class Future(Instrument):
-
-    def __init__(self, instrument_id):
-        super().__init__(instrument_id)
-        # eg. IH2412
-        self.symbol = self.id[:2]
-        self.bid = float
-        self.ask = float
-        self.bid_volume = float
-        self.ask_volume = float
-        self.available = True
