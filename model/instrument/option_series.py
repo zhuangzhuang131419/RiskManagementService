@@ -10,13 +10,28 @@ class OptionSeries:
         :param options: 期权对象列表，包含该系列的所有期权。
         """
         self.name = name # 期权名字，例如 'HO2410'
-        self.options = {}
+        self.strike_price_options = {}
 
         for option in options:
-            self.options[option.strike_price] = option
+            if option.strike_price not in self.strike_price_options:
+                self.strike_price_options[option.strike_price] = [None, None]
 
-    def get_option(self, strike_price):
-        return self.options.get(strike_price)
+            if option.is_call_option():
+                self.strike_price_options[option.strike_price][0] = option
+            elif option.is_put_option():
+                self.strike_price_options[option.strike_price][1] = option
+
+        self.strike_price_options = dict(sorted(self.strike_price_options.items()))
+
+    def get_option(self, strike_price, is_put):
+        return self.strike_price_options[strike_price][is_put]
 
     def get_all_strike_price(self):
-        return sorted(self.options.keys())
+        return self.strike_price_options.keys()
+
+    def get_num_strike_price(self):
+        return len(self.strike_price_options.keys())
+    
+    def imply(self):
+        self.index_option_f_price_list = [0] * 14
+

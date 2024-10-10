@@ -8,18 +8,18 @@ class MemoryManager:
     option_manager = None
     future_manager = None
 
-    def __init__(self, instrument_ids: [str]):
-        self.init_future_option(instrument_ids)
+    def __init__(self, instruments: dict):
+        self.init_future_option(instruments)
 
 
-    def init_future_option(self, instrument_ids: [str]):
+    def init_future_option(self, instruments: dict):
         index_options = []
         index_futures = []
-        for instrument_id in instrument_ids:
+        for instrument_id, expired_date in instruments:
             if is_index_option(instrument_id):
-                index_options.append(Option(instrument_id))
+                index_options.append(Option(instrument_id, expired_date))
             elif is_index_future(instrument_id):
-                index_futures.append(Future(instrument_id))
+                index_futures.append(Future(instrument_id, expired_date))
 
         self.future_manager = FutureManager(index_futures)
         self.option_manager = OptionManager(index_options)

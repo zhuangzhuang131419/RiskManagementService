@@ -9,7 +9,7 @@ from model.instrument.option_series import OptionSeries
 
 class OptionManager:
     # 期权链
-    option_series_list: List[OptionSeries]
+    option_series_dict: {}
 
     # 期权品种月份列表
     index_option_month_forward_id = []
@@ -30,8 +30,7 @@ class OptionManager:
     index_option_market_data = ndarray
 
 
-    # 0（远期有效性），1（远期ask），2（远期bid），3（Askstrike），4（BIDstrike），5（ATMS有效性），6（Ask），7（Bid），8（K1），9（K2），10（K3），11（K4），12（ISask），13（ISbid）
-    index_option_month_f_price = ndarray
+
 
     index_option_month_atm_vol = ndarray
 
@@ -42,13 +41,16 @@ class OptionManager:
     index_option_month_greeks = ndarray
 
     def __init__(self, index_options: [Option]):
+
         self.init_option_series(index_options)
         self.init_index_option_month_id()
         self.init_index_option_month_strike_num()
         self.init_index_option_market_data()
 
         #初始化IS相关数组
-        self.init_index_option_month_f_price()
+        self.index_option_month_forward_price = None
+        self.init_index_option_month_forward_price()
+
         self.init_index_option_month_atm_vol()
         self.init_index_option_month_model_para()
 
@@ -73,9 +75,7 @@ class OptionManager:
 
         # 初始化 OptionSeries
         for name, options_list in option_series_dict.items():
-            self.option_series_list.append(OptionSeries(name, options_list))
-
-        self.option_series_list.sort(key=lambda series: series.name)
+            self.option_series_dict[name] = OptionSeries(name, options_list)
 
 
 
@@ -84,8 +84,10 @@ class OptionManager:
         生成唯一的期权月份列表，格式如：["HO2410","HO2411","HO2412","HO2501","HO2503","HO2506",…,…]
         """
 
-        for option in self.option_series_list:
-            self.index_option_month_forward_id.append(option.name)
+        for option_series in self.option_series_dict:
+            self.index_option_month_forward_id.append(option_series.name)
+
+        sorted(self.index_option_month_forward_id)
 
 
     def init_index_option_month_strike_num(self):
@@ -94,19 +96,9 @@ class OptionManager:
         假设期权格式为：'HO2410-C-4100'，表示品种HO，月份2410，行权价4100
         """
 
-        for option in self.index_options:
-            # 提取品种和月份部分，例如 'HO2410-C-4100' 提取 'HO2410'
-            # 统计每个品种和月份的行权价数量
-            # Call Put 不作区分
-            if option.month_id in self.index_option_month_strike_prices:
-                self.index_option_month_strike_prices[option.month_id].add(option.strike_price)
-            else:
-                self.index_option_month_strike_prices[option.month_id] = {option.strike_price}
+        for name in self.index_option_month_forward_id:
+            self.index_option_month_strike_num.append(self.option_series_dict[name].get_num_strike_price())
 
-        sorted_keys = sorted(self.index_option_month_strike_prices.keys())
-        print(self.index_option_month_strike_prices)
-        self.index_option_month_strike_num = [len(self.index_option_month_strike_prices[key]) for key in sorted_keys]
-        print(self.index_option_month_strike_num)
         self.index_option_month_strike_max_num = max(self.index_option_month_strike_num)
 
     def init_index_option_market_data(self):
@@ -116,17 +108,18 @@ class OptionManager:
         """
         # 假设有 len(self.index_option_month_forward_id) 个月份，每个期权品种最多有 2 种看涨/看跌期权，index_option_month_strike_max_num 个行权价，每个行权价有 7 个字段
         self.index_option_market_data = np.zeros((len(self.index_option_month_forward_id), 2, self.index_option_month_strike_max_num, 7))
-        for option in self.index_options:
-            strike_prices = sorted(list(self.index_option_month_strike_prices[option.month_id]))
-            if option.is_call_option():
-                self.index_option_market_data[self.index_option_month_forward_id.index(option.month_id), 0, strike_prices.index(option.strike_price), 0] = option.strike_price
-            elif option.is_put_option():
-                self.index_option_market_data[self.index_option_month_forward_id.index(option.month_id), 1, strike_prices.index(option.strike_price), 0] = option.strike_price
 
+        for i, name in self.index_option_month_forward_id:
+            strike_prices = self.option_series_dict[name].get_all_strike_price()
+            for j, strike_price in strike_prices:
+                self.index_option_market_data[i, 0, j, 0] = strike_price
+                self.index_option_market_data[i, 1, j, 0] = strike_price
 
-
-    def init_index_option_month_f_price(self):
-        self.index_option_month_f_price = np.zeros((len(self.index_option_month_forward_id), 14))
+    def init_index_option_month_forward_price(self):
+        """
+        # 0（远期有效性），1（远期ask），2（远期bid），3（Askstrike），4（BIDstrike），5（ATMS有效性），6（Ask），7（Bid），8（K1），9（K2），10（K3），11（K4），12（ISask），13（ISbid）
+        """
+        self.index_option_month_forward_price = np.zeros((len(self.index_option_month_forward_id), 14))
 
     def init_index_option_month_atm_vol(self):
         self.index_option_month_atm_vol = np.zeros((len(self.index_option_month_forward_id), 15))
@@ -147,6 +140,7 @@ class OptionManager:
             self.index_option_month_greeks[i, :, 0] = self.index_option_market_data[i, 0, :, 0].copy()
 
     def init_index_option_time(self):
+
         pass
 
     # def index_option_vol_calculator(self):
@@ -157,15 +151,28 @@ class OptionManager:
     #             # 将全局变量赋予局部变量：时间,P,C可交易性，行权价,P,C价格，R,D
     #
     #
-    # def index_option_imply(self, option_call_available: [], option_put_available: [], option_strike: [], option_ask):
-    #     """
-    #     @para
-    #     """
-    #     index_option_month_f_price = [0] * 14
-    #     # 至少有一组C与P必须同时可交易才能生成forward，否则返回-1
-    #     if 1 in option_call_available * option_put_available:
-    #         index_option_month_f_price[0] = 1
-    #         available = (option_call_available * option_put_available) != 0
+
+    # def index_option_implyS(loc_Oprion_C_Price_available, loc_Oprion_P_Price_available, loc_Oprion_strike,
+    #                         loc_Oprion_C_ASK1_Price_available, loc_Oprion_C_BID1_Price_available,
+    #                         loc_Oprion_P_ASK1_Price_available, loc_Oprion_P_BID1_Price_available,
+    #                         loc_Index_optiom_Remaintimenumb, Index_option_Rumb, Index_option_Dumb, ):
+
+
+    def index_option_imply_forward(self, option_call_available: [], option_put_available: [], option_strike: [],
+                                   option_call_ask1_price: [], option_call_bid1_price: [],
+                                   option_put_ask1_price: [], option_put_bid1_price: []):
+        """
+        @para
+        """
+        # 0（远期有效性），1（远期ask），2（远期bid），3（Askstrike），4（BIDstrike），5（ATMS有效性），6（Ask），7（Bid），8（K1），9（K2），10（K3），11（K4），12（ISask），13（ISbid）
+        index_option_month_forward_price = [0] * 14
+        # 至少有一组C与P必须同时可交易才能生成forward，否则返回-1
+        if 1 in option_call_available * option_put_available:
+            index_option_month_forward_price[0] = 1
+            # 生成可交易的组生成 01 序列
+            middle_available = (option_call_available * option_put_available) != 0
+            # midaskarray = loc_Oprion_C_ASK1_Price_available[midarray] - loc_Oprion_P_BID1_Price_available[midarray] + \
+            #               loc_Oprion_strike[midarray] * math.exp(-loc_Index_optiom_Remaintimenumb * Index_option_Rumb)
 
 
 
