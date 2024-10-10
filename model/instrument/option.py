@@ -5,7 +5,7 @@ class Option(Instrument):
     def __init__(self, instrument_id: str, expired_date: str):
         super().__init__(instrument_id, expired_date)
         # eg. io2410-C-4100
-        self.name = self.id.split('-')[0]
+        self.symbol = self.id.split('-')[0]
         self.option_type = self.id[7]
         self.strike_price = self.id.split('-')[-1]
 
@@ -34,7 +34,7 @@ class Option(Instrument):
 
     def __str__(self):
         """返回期权的详细信息"""
-        return (f"期权标的物: {self.name}\n"
+        return (f"期权标的物: {self.symbol}\n"
                 f"到期日期: {self.expired_date}\n"
                 f"期权类型: {self.option_type}\n"
                 f"行权价: {self.strike_price}")

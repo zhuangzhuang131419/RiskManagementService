@@ -1,6 +1,6 @@
 class Instrument:
     id: str
-    name: str
+    symbol: str
     bid = 0
     ask = 0
     bid_volume = 0

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from api import ThostFtdcApi
 from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
 from config_manager import ConfigManager
@@ -50,6 +52,8 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData):
+        # if (pDepthMarketData.InstrumentID.startswith("HO2410")):
+        #     print(f"bid_price_1:{pDepthMarketData.BidPrice1}, bid_volume_1:{pDepthMarketData.BidVolume1}, ask_price_1:{pDepthMarketData.AskPrice1}, ask_volume_1:{pDepthMarketData.AskVolume1}")
         self.market_data.put(pDepthMarketData)
 
 

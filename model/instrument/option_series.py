@@ -2,6 +2,9 @@ from model.instrument.option import Option
 
 
 class OptionSeries:
+    CALL = 0  # 看涨期权在列表中的位置
+    PUT = 1  # 看跌期权在列表中的位置
+
     def __init__(self, name: str, options: [Option]):
         """
         初始化期权系列。
@@ -17,21 +20,25 @@ class OptionSeries:
                 self.strike_price_options[option.strike_price] = [None, None]
 
             if option.is_call_option():
-                self.strike_price_options[option.strike_price][0] = option
+                self.strike_price_options[option.strike_price][self.CALL] = option
             elif option.is_put_option():
-                self.strike_price_options[option.strike_price][1] = option
+                self.strike_price_options[option.strike_price][self.PUT] = option
 
         self.strike_price_options = dict(sorted(self.strike_price_options.items()))
 
     def get_option(self, strike_price, is_put):
         return self.strike_price_options[strike_price][is_put]
 
+    def get_all_options(self):
+        """
+        获取所有非空的期权（看涨期权和看跌期权）。
+        :return: 所有期权的列表。
+        """
+        return [option for pair in self.strike_price_options.values() for option in pair if option is not None]
+
     def get_all_strike_price(self):
-        return self.strike_price_options.keys()
+        return list(self.strike_price_options.keys())
 
     def get_num_strike_price(self):
         return len(self.strike_price_options.keys())
-    
-    def imply(self):
-        self.index_option_f_price_list = [0] * 14
 

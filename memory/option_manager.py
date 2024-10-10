@@ -1,15 +1,21 @@
-from typing import List
-
+import datetime
 import numpy as np
 from numpy.core.records import ndarray
 
+from helper.Helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY
 from model.instrument.option import Option
 from model.instrument.option_series import OptionSeries
 
 
 class OptionManager:
     # 期权链
-    option_series_dict: {}
+    option_series_dict = dict()
+
+    # 到期时间
+    option_expired_date = []
+
+    # 剩余时间
+    index_option_remain_day = []
 
     # 期权品种月份列表
     index_option_month_forward_id = []
@@ -41,9 +47,10 @@ class OptionManager:
     index_option_month_greeks = ndarray
 
     def __init__(self, index_options: [Option]):
-
         self.init_option_series(index_options)
         self.init_index_option_month_id()
+        self.init_index_option_expired_date(index_options)
+        self.init_index_option_remain_day()
         self.init_index_option_month_strike_num()
         self.init_index_option_market_data()
 
@@ -58,8 +65,6 @@ class OptionManager:
         self.init_index_option_month_t_iv()
         self.init_index_option_month_greeks()
 
-        self.init_index_option_time()
-
     def init_option_series(self, options: [Option]):
         """
         根据期权名称分组期权并初始化 OptionSeries。
@@ -69,9 +74,9 @@ class OptionManager:
 
         # 按名称分组期权
         for option in options:
-            if option.name not in option_series_dict:
-                option_series_dict[option.name] = []
-            option_series_dict[option.name].append(option)
+            if option.symbol not in option_series_dict:
+                option_series_dict[option.symbol] = []
+            option_series_dict[option.symbol].append(option)
 
         # 初始化 OptionSeries
         for name, options_list in option_series_dict.items():
@@ -84,10 +89,26 @@ class OptionManager:
         生成唯一的期权月份列表，格式如：["HO2410","HO2411","HO2412","HO2501","HO2503","HO2506",…,…]
         """
 
-        for option_series in self.option_series_dict:
-            self.index_option_month_forward_id.append(option_series.name)
+        for name in self.option_series_dict.keys():
+            self.index_option_month_forward_id.append(name)
 
         sorted(self.index_option_month_forward_id)
+
+    def init_index_option_expired_date(self, options: [Option]):
+        expired_date = set()
+        for option in options:
+            expired_date.add(option.expired_date)
+
+        expired_date_list = sorted(list(expired_date))
+        for _ in INDEX_OPTION_PREFIXES:
+            self.option_expired_date += expired_date_list
+
+    def init_index_option_remain_day(self):
+        for date in self.option_expired_date:
+            start_date = datetime.datetime.now().date()
+            end_date = datetime.datetime.strptime(date, "%Y%m%d").date()
+            day_count = count_trading_days(start_date, end_date, HOLIDAYS)
+            self.index_option_remain_day.append(round((day_count - 1) / YEAR_TRADING_DAY, 4))
 
 
     def init_index_option_month_strike_num(self):
@@ -103,15 +124,14 @@ class OptionManager:
 
     def init_index_option_market_data(self):
         """
-        
+        假设有 len(self.index_option_month_forward_id) 个月份，每个期权品种最多有 2 种看涨/看跌期权，index_option_month_strike_max_num 个行权价，每个行权价有 7 个字段
         :return: 
         """
-        # 假设有 len(self.index_option_month_forward_id) 个月份，每个期权品种最多有 2 种看涨/看跌期权，index_option_month_strike_max_num 个行权价，每个行权价有 7 个字段
         self.index_option_market_data = np.zeros((len(self.index_option_month_forward_id), 2, self.index_option_month_strike_max_num, 7))
 
-        for i, name in self.index_option_month_forward_id:
+        for i, name in enumerate(self.index_option_month_forward_id):
             strike_prices = self.option_series_dict[name].get_all_strike_price()
-            for j, strike_price in strike_prices:
+            for j, strike_price in enumerate(strike_prices):
                 self.index_option_market_data[i, 0, j, 0] = strike_price
                 self.index_option_market_data[i, 1, j, 0] = strike_price
 
@@ -139,9 +159,15 @@ class OptionManager:
             # 行权价
             self.index_option_month_greeks[i, :, 0] = self.index_option_market_data[i, 0, :, 0].copy()
 
-    def init_index_option_time(self):
+    def get_option(self, instrument_id):
+        symbol = instrument_id.split('-')[0]
+        strike_price = instrument_id.split('-')[-1]
+        if instrument_id[7] == "C":
+            return self.option_series_dict[symbol][strike_price][0]
+        elif instrument_id[7] == "P":
+            return self.option_series_dict[symbol][strike_price][1]
 
-        pass
+
 
     # def index_option_vol_calculator(self):
     #     while True:
