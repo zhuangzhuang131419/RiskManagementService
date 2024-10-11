@@ -4,7 +4,7 @@ from api import ThostFtdcApi
 from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField
 from config_manager import ConfigManager
-from helper.Helper import *
+from helper.helper import *
 
 class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     # 指数期货的品种列表

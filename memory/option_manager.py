@@ -2,7 +2,7 @@ import datetime
 import numpy as np
 from numpy.core.records import ndarray
 
-from helper.Helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY
+from helper.helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY
 from model.instrument.option import Option
 from model.instrument.option_series import OptionSeries
 
@@ -43,7 +43,7 @@ class OptionManager:
 
     index_option_month_greeks = ndarray
 
-    def __init__(self, index_options: [Option]):
+    def __init__(self, index_options):
         self.init_option_series(index_options)
         self.init_index_option_month_id()
         self.init_index_option_expired_date(index_options)

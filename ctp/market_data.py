@@ -4,7 +4,7 @@ from datetime import timedelta
 from api import ThostFtdcApi
 from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
 from config_manager import ConfigManager
-from helper.Helper import *
+from helper.helper import *
 from queue import Queue
 
 
@@ -49,12 +49,11 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
         if pRspInfo.ErrorID != 0:
             print(f"订阅行情失败，合约: {pSpecificInstrument.InstrumentID}, 错误信息: {pRspInfo.ErrorMsg}")
         # else:
-        #     print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
+        #     if not is_index_option(pSpecificInstrument.InstrumentID) and not is_index_future(pSpecificInstrument.InstrumentID):
+        #         print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData):
-        # if (pDepthMarketData.InstrumentID.startswith("HO2410")):
-        #     print(f"bid_price_1:{pDepthMarketData.BidPrice1}, bid_volume_1:{pDepthMarketData.BidVolume1}, ask_price_1:{pDepthMarketData.AskPrice1}, ask_volume_1:{pDepthMarketData.AskVolume1}")
         if is_index_future(pDepthMarketData.InstrumentID) or is_index_option(pDepthMarketData.InstrumentID):
             self.market_data.put(copy.copy(pDepthMarketData))
 

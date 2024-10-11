@@ -84,3 +84,5 @@ if __name__ == '__main__':
     print(f'2503-P-4400:{is_index_future("2503-P-4400")}')
     print(f'2412-C-3800:{is_index_future("2412-C-3800")}')
     print(f'2412-C-3800:{is_index_option("2412-C-3800")}')
+    print(validate_option_id("HO2412-C-3800"))
+    print(f'HO2412-C-3800:{is_index_option("HO2412-C-3800")}')

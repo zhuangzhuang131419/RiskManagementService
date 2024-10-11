@@ -11,7 +11,7 @@ from model.instrument.instrument import Future
 from model.instrument.option import Option
 from model.order_info import OrderInfo
 from ctp.trader import Trader
-from helper.Helper import *
+from helper.helper import *
 from typing import List
 
 
@@ -216,6 +216,8 @@ class CTPManager:
             # 清洗编码问题，数据分类：-1为编码错误
 
             if is_index_future(instrument_id) or is_index_option(instrument_id):
+                if not is_index_future(instrument_id) and not is_index_option(instrument_id):
+                    print(instrument_id)
 
                 market_data_list = [round(time.time()), depth_market_date.BidPrice1, depth_market_date.BidVolume1, depth_market_date.AskPrice1, depth_market_date.AskVolume1, 0]
                 for i, data in enumerate(market_data_list):
@@ -237,23 +239,21 @@ class CTPManager:
                     market_data_list[5] = 0
 
                 if is_index_option(instrument_id):
-                    if len(instrument_id) != 13:
-                        print(f'{depth_market_date.InstrumentID}:{is_index_option(depth_market_date.InstrumentID)}')
                     # 导入期权行情
                     try:
-                        o = Option(depth_market_date.InstrumentID, "")
+                        o = Option(instrument_id, "")
                         l1 = self.memory.option_manager.index_option_month_forward_id.index(o.symbol)
                         l2 = OPTION_PUT_CALL_DICT[o.option_type]
                         l3 = self.memory.option_manager.option_series_dict[o.symbol].get_all_strike_price().index(o.strike_price)
                         self.memory.option_manager.index_option_market_data[l1, l2, l3, 1:7] = market_data_list[:6]
                     except ValueError as e:
-                        print(f"ValueError: {e} - Couldn't find the symbol or strike price in the list. instrument: {depth_market_date.InstrumentID}")
+                        print(f"ValueError: {e} - Couldn't find the symbol or strike price in the list. instrument: {instrument_id}")
                     except Exception as e:
-                        print(f"Exception: {e} - instrument id: {depth_market_date.InstrumentID}")
+                        print(f"Exception: {e} - instrument id: {instrument_id}")
                         continue
-                elif is_index_future(depth_market_date.InstrumentID):
+                elif is_index_future(instrument_id):
                     # 导入期货行情
-                    f = Future(depth_market_date.InstrumentID, "")
+                    f = Future(instrument_id, "")
                     try:
                         l1 = self.memory.future_manager.index_future_month_id.index(f.symbol)
                         self.memory.future_manager.index_future_market_data[l1, 0:6] = market_data_list[:6]
