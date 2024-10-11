@@ -209,13 +209,13 @@ class CTPManager:
 
     def tick(self):
         while True:
-            depth_market_date = self.market_data_user_spi.market_data.get()
+            depth_market_date = self.market_data_user_spi.market_data.get(True)
 
             # update_time = depth_market_date.UpdateTime
-            # data_list = depth_market_date.InstrumentID
+            instrument_id = depth_market_date.InstrumentID
             # 清洗编码问题，数据分类：-1为编码错误
 
-            if is_index_future(depth_market_date.InstrumentID) or is_index_option(depth_market_date.InstrumentID):
+            if is_index_future(instrument_id) or is_index_option(instrument_id):
 
                 market_data_list = [round(time.time()), depth_market_date.BidPrice1, depth_market_date.BidVolume1, depth_market_date.AskPrice1, depth_market_date.AskVolume1, 0]
                 for i, data in enumerate(market_data_list):
@@ -223,6 +223,11 @@ class CTPManager:
                     if (isinstance(data, int) or isinstance(data, float)) and (abs(data - 1.7976931348623157e+308) < 0.000001):
                         market_data_list[i] = -1
 
+                # if depth_market_date.InstrumentID.startswith("HO2410") and depth_market_date.InstrumentID.split("-")[-1] == "1975":
+                #     print(f'买一价{market_data_list[1]}')
+                #     print(f'买一量{market_data_list[2]}')
+                #     print(f'卖一价{market_data_list[3]}')
+                #     print(f'卖一量{market_data_list[4]}')
                 market_data_list = [market_data_list[0], round(market_data_list[1], 1), int(market_data_list[2]), round(market_data_list[3], 3), int(market_data_list[4]), 0]
 
                 # 判断是否可交易
@@ -231,30 +236,32 @@ class CTPManager:
                 else:
                     market_data_list[5] = 0
 
-                if is_index_option(depth_market_date.InstrumentID):
+                if is_index_option(instrument_id):
+                    if len(instrument_id) != 13:
+                        print(f'{depth_market_date.InstrumentID}:{is_index_option(depth_market_date.InstrumentID)}')
                     # 导入期权行情
                     try:
                         o = Option(depth_market_date.InstrumentID, "")
                         l1 = self.memory.option_manager.index_option_month_forward_id.index(o.symbol)
                         l2 = OPTION_PUT_CALL_DICT[o.option_type]
                         l3 = self.memory.option_manager.option_series_dict[o.symbol].get_all_strike_price().index(o.strike_price)
+                        self.memory.option_manager.index_option_market_data[l1, l2, l3, 1:7] = market_data_list[:6]
                     except ValueError as e:
                         print(f"ValueError: {e} - Couldn't find the symbol or strike price in the list. instrument: {depth_market_date.InstrumentID}")
                     except Exception as e:
                         print(f"Exception: {e} - instrument id: {depth_market_date.InstrumentID}")
                         continue
-
-
-                    self.memory.option_manager.index_option_market_data[l1, l2, l3, 1:7] = market_data_list
                 elif is_index_future(depth_market_date.InstrumentID):
                     # 导入期货行情
                     f = Future(depth_market_date.InstrumentID, "")
                     try:
                         l1 = self.memory.future_manager.index_future_month_id.index(f.symbol)
+                        self.memory.future_manager.index_future_market_data[l1, 0:6] = market_data_list[:6]
                     except ValueError as e:
                         print(f"ValueError: {e} - Couldn't find the symbol in the list. future: {f}")
+                    except Exception as e:
+                        print(f"Exception: {e} - instrument id: {depth_market_date.InstrumentID}")
                         continue
-                    self.memory.future_manager.index_future_market_data[l1, 0:6] = market_data_list
             else:
                 # 非订阅行情
                 continue

@@ -1,10 +1,18 @@
+import re
 from model.instrument.instrument import Instrument
+
+
+def validate_option_id(instrument_id):
+    pattern = r'^[A-Z]{2}\d{4}-[CP]-\d+$'
+    if not re.match(pattern, instrument_id, re.IGNORECASE):
+        raise ValueError(f"期权代码格式无效：{instrument_id}")
 
 
 class Option(Instrument):
     def __init__(self, instrument_id: str, expired_date: str):
         super().__init__(instrument_id, expired_date)
         # eg. io2410-C-4100
+        validate_option_id(instrument_id)
         self.symbol = self.id.split('-')[0]
         self.option_type = self.id[7]
         self.strike_price = self.id.split('-')[-1]
@@ -17,24 +25,13 @@ class Option(Instrument):
         """判断是否为看跌期权"""
         return self.option_type == 'P'
 
-
-    def validate_option_code(self):
-        """校验期权代码的合法性"""
-        if len(self.id) != 13:
-            raise ValueError(f"期权代码长度应为13位，当前为 {len(self.id)} 位")
-
-        if not self.id[2:6].isdigit():
-            raise ValueError(f"到期日期应为数字（年和月），当前为 {self.id[2:6]}")
-
-        if self.id[7] not in ['C', 'P']:
-            raise ValueError(f"期权类型无效，应为 'C'（看涨期权）或 'P'（看跌期权），当前为 {self.id[7]}")
-
-        if not self.id.split('-')[-1].isdigit():
-            raise ValueError(f"行权价应为数字，当前为 {self.id.split('-')[-1]}")
-
     def __str__(self):
         """返回期权的详细信息"""
         return (f"期权标的物: {self.symbol}\n"
                 f"到期日期: {self.expired_date}\n"
                 f"期权类型: {self.option_type}\n"
                 f"行权价: {self.strike_price}")
+
+if __name__ == '__main__':
+    o = Option("IO2410-C-4100", "")
+    o1 = Option("io2410-C-4100", "")

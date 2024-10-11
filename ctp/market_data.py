@@ -1,3 +1,4 @@
+import copy
 from datetime import timedelta
 
 from api import ThostFtdcApi
@@ -54,7 +55,8 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
     def OnRtnDepthMarketData(self, pDepthMarketData):
         # if (pDepthMarketData.InstrumentID.startswith("HO2410")):
         #     print(f"bid_price_1:{pDepthMarketData.BidPrice1}, bid_volume_1:{pDepthMarketData.BidVolume1}, ask_price_1:{pDepthMarketData.AskPrice1}, ask_volume_1:{pDepthMarketData.AskVolume1}")
-        self.market_data.put(pDepthMarketData)
+        if is_index_future(pDepthMarketData.InstrumentID) or is_index_option(pDepthMarketData.InstrumentID):
+            self.market_data.put(copy.copy(pDepthMarketData))
 
 
 

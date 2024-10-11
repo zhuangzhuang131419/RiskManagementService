@@ -1,5 +1,9 @@
 import datetime
 
+from model.instrument.instrument import validate_future_id
+from model.instrument.option import validate_option_id
+
+
 # 判断发送请求失败原因
 def judge_ret(ret):
     if ret == -1:
@@ -27,7 +31,7 @@ def is_index_future(instrument_id: str) -> bool:
     :param instrument_id: 合约id
     :return: 是否是指数期货
     """
-    return any(instrument_id.startswith(future_prefix) for future_prefix in INDEX_FUTURE_PREFIXES) and len(instrument_id) == 6
+    return any(instrument_id.startswith(future_prefix) for future_prefix in INDEX_FUTURE_PREFIXES) and validate_future_id(instrument_id)
 
 # 判断合约是不是在option
 def is_index_option(instrument_id: str) -> bool:
@@ -35,7 +39,7 @@ def is_index_option(instrument_id: str) -> bool:
     :param instrument_id: 合约id
     :return: 是否是指数期权
     """
-    return any(instrument_id.startswith(option_prefix) for option_prefix in INDEX_OPTION_PREFIXES) and len(instrument_id) == 13
+    return any(instrument_id.startswith(option_prefix) for option_prefix in INDEX_OPTION_PREFIXES) and validate_option_id(instrument_id)
 
 YEAR_TRADING_DAY=244
 #预定义到期时间组
@@ -74,3 +78,9 @@ def count_sundays(start_date, end_date):
             sundays += 1
         current_date += datetime.timedelta(days=1)
     return sundays
+
+if __name__ == '__main__':
+    print(f'2503-P-4400:{is_index_option("2503-P-4400")}')
+    print(f'2503-P-4400:{is_index_future("2503-P-4400")}')
+    print(f'2412-C-3800:{is_index_future("2412-C-3800")}')
+    print(f'2412-C-3800:{is_index_option("2412-C-3800")}')

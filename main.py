@@ -1,4 +1,6 @@
 import time
+import numpy as np
+np.set_printoptions(suppress=True)
 from threading import Thread
 
 from ctp.ctp_manager import CTPManager
@@ -53,8 +55,11 @@ def main():
     # ctp_manager.query_investor_position_detail()
 
     while True:
-        print('HO2410的看涨期权的第一个行权价相关信息：{}'.format(
-            ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0]))
+        strike_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]
+        timestamp = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 1]
+        bid_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 2]
+        ask_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 4]
+        print(f'HO2410的看涨期权的第一个行权价相关信息：行权价{strike_price}, 时间{timestamp}, 买一价{bid_price}, 卖一价{ask_price}')
         time.sleep(10)
 
 if __name__ == "__main__":

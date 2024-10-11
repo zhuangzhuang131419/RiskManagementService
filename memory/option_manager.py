@@ -35,9 +35,6 @@ class OptionManager:
     # 例如要取HO2410的看涨期权的第一个行权价的bid价格，index_option_market_data[0, 0, 0, 2]
     index_option_market_data = ndarray
 
-
-
-
     index_option_month_atm_vol = ndarray
 
     index_option_month_model_para = ndarray
