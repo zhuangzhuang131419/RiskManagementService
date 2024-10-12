@@ -82,10 +82,6 @@ def count_sundays(start_date, end_date):
         current_date += datetime.timedelta(days=1)
     return sundays
 
-def atm_para_estimation()
-
-
-
 if __name__ == '__main__':
     print(f'2503-P-4400:{is_index_option("2503-P-4400")}')
     print(f'2503-P-4400:{is_index_future("2503-P-4400")}')
