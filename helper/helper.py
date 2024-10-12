@@ -26,6 +26,8 @@ INDEX_OPTION_PREFIXES = ['HO', 'IO', 'MO']
 
 OPTION_PUT_CALL_DICT = {'C': 0, 'P': 1}
 
+INTEREST_RATE = 0.025
+
 def is_index_future(instrument_id: str) -> bool:
     """
     :param instrument_id: 合约id

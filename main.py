@@ -55,11 +55,13 @@ def main():
     # ctp_manager.query_investor_position_detail()
 
     while True:
-        strike_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]
-        timestamp = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 1]
-        bid_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 2]
-        ask_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 4]
-        print(f'HO2410的看涨期权的第一个行权价相关信息：行权价{strike_price}, 时间{timestamp}, 买一价{bid_price}, 卖一价{ask_price}')
+        strike_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]
+        timestamp = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 1]
+        bid_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 2]
+        bid_volume = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 3]
+        ask_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 4]
+        ask_volume = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 5]
+        print(f'HO2410的看涨期权的第一个行权价相关信息：行权价{strike_price}, 时间{timestamp}, 买一价{bid_price}, 买一量{bid_volume}, 卖一价{ask_price}, 卖一量{ask_volume}')
         time.sleep(10)
 
 if __name__ == "__main__":

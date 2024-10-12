@@ -1,8 +1,10 @@
 import datetime
+import math
+
 import numpy as np
 from numpy.core.records import ndarray
 
-from helper.helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY
+from helper.helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY, INTEREST_RATE
 from model.instrument.option import Option
 from model.instrument.option_series import OptionSeries
 
@@ -27,12 +29,15 @@ class OptionManager:
     # 最多数量的行权价
     index_option_month_strike_max_num = 0
 
+
+    """
     # 期权行情结构
-    # 第一个维度：品种月份维度，顺序与期权品种月份列表对齐，[0, : , : , : ]代表HO2410
-    # 第二个维度：固定大小为2，看涨or 看跌，看涨期权为0，看跌期权为1
-    # 第三个维度：行权价维度
-    # 第四个维度：字段维度固定大写为7，七个字段存放内容为：行权价，字段时间，bid, bidv, ask, askv, available
-    # 例如要取HO2410的看涨期权的第一个行权价的bid价格，index_option_market_data[0, 0, 0, 2]
+    第一个维度：品种月份维度，顺序与期权品种月份列表对齐，[0, : , : , : ]代表HO2410
+    第二个维度：固定大小为2，看涨or 看跌，看涨期权为0，看跌期权为1
+    第三个维度：行权价维度
+    第四个维度：字段维度固定大写为7，七个字段存放内容为：行权价，字段时间，bid, bidv, ask, askv, available
+    例如要取HO2410的看涨期权的第一个行权价的bid价格，index_option_market_data[0, 0, 0, 2]
+    """
     index_option_market_data = ndarray
 
     index_option_month_atm_vol = ndarray
@@ -181,19 +186,46 @@ class OptionManager:
     #                         loc_Index_optiom_Remaintimenumb, Index_option_Rumb, Index_option_Dumb, ):
 
 
-    def index_option_imply_forward(self, option_call_available: [], option_put_available: [], option_strike: [],
-                                   option_call_ask1_price: [], option_call_bid1_price: [],
-                                   option_put_ask1_price: [], option_put_bid1_price: []):
+    def index_option_imply_forward(self, index):
         """
+        计算一个symbol期权下所有的隐含波动率
         @para
         """
+        call_available = self.index_option_market_data[index, 0, :, 6]
+        put_available = self.index_option_market_data[index, 1, :, 6]
+        strike_prices = self.index_option_market_data[index, 0, :, 0]
+        call_ask1_price = self.index_option_market_data[index, 0, :, 4]
+        call_bid1_price = self.index_option_market_data[index, 0, :, 2]
+        put_ask1_price = self.index_option_market_data[index, 1, :, 4]
+        put_bid1_price = self.index_option_market_data[index, 1, :, 2]
+        remain_time = self.index_option_remain_day[index]
+
+
+
         # 0（远期有效性），1（远期ask），2（远期bid），3（Askstrike），4（BIDstrike），5（ATMS有效性），6（Ask），7（Bid），8（K1），9（K2），10（K3），11（K4），12（ISask），13（ISbid）
         index_option_month_forward_price = [0] * 14
         # 至少有一组C与P必须同时可交易才能生成forward，否则返回-1
-        if 1 in option_call_available * option_put_available:
+
+        num_strike_price = self.option_series_dict[self.index_option_month_forward_id[index]].get_num_strike_price()
+        for i in range(num_strike_price):
+            if call_available[i] and put_available[i]:
+                # 期权平价公式 C-P=S-Ke^(-rt) => S=C-P+Ke^(-rt)
+                # C是欧式看涨期权的价格；
+                # P是欧式看跌期权的价格；
+                # S是标的资产的当前价格；
+                # K是期权的执行价格（行权价）；
+                # r是无风险利率（通常为年化利率）；
+                # t是期权到期时间和当前时间之间的差异（以年为单位）；
+                # e是自然对数的底数。
+                option_imply_price = call_ask1_price[i] - put_bid1_price[i] + strike_prices[i] * math.exp(-INTEREST_RATE* remain_time[i])
+
+
+
+
+        if 1 in call_available * put_available:
             index_option_month_forward_price[0] = 1
             # 生成可交易的组生成 01 序列
-            middle_available = (option_call_available * option_put_available) != 0
+            middle_available = (call_available * put_available) != 0
             # midaskarray = loc_Oprion_C_ASK1_Price_available[midarray] - loc_Oprion_P_BID1_Price_available[midarray] + \
             #               loc_Oprion_strike[midarray] * math.exp(-loc_Index_optiom_Remaintimenumb * Index_option_Rumb)
 

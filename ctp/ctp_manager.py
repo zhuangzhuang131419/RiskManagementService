@@ -216,20 +216,12 @@ class CTPManager:
             # 清洗编码问题，数据分类：-1为编码错误
 
             if is_index_future(instrument_id) or is_index_option(instrument_id):
-                if not is_index_future(instrument_id) and not is_index_option(instrument_id):
-                    print(instrument_id)
-
                 market_data_list = [round(time.time()), depth_market_date.BidPrice1, depth_market_date.BidVolume1, depth_market_date.AskPrice1, depth_market_date.AskVolume1, 0]
                 for i, data in enumerate(market_data_list):
                     # 遍历所有的行情字段，判断是否double最大值
                     if (isinstance(data, int) or isinstance(data, float)) and (abs(data - 1.7976931348623157e+308) < 0.000001):
                         market_data_list[i] = -1
 
-                # if depth_market_date.InstrumentID.startswith("HO2410") and depth_market_date.InstrumentID.split("-")[-1] == "1975":
-                #     print(f'买一价{market_data_list[1]}')
-                #     print(f'买一量{market_data_list[2]}')
-                #     print(f'卖一价{market_data_list[3]}')
-                #     print(f'卖一量{market_data_list[4]}')
                 market_data_list = [market_data_list[0], round(market_data_list[1], 1), int(market_data_list[2]), round(market_data_list[3], 3), int(market_data_list[4]), 0]
 
                 # 判断是否可交易
