@@ -27,6 +27,7 @@ INDEX_OPTION_PREFIXES = ['HO', 'IO', 'MO']
 OPTION_PUT_CALL_DICT = {'C': 0, 'P': 1}
 
 INTEREST_RATE = 0.025
+DIVIDEND = 0
 
 def is_index_future(instrument_id: str) -> bool:
     """
@@ -80,6 +81,10 @@ def count_sundays(start_date, end_date):
             sundays += 1
         current_date += datetime.timedelta(days=1)
     return sundays
+
+def atm_para_estimation()
+
+
 
 if __name__ == '__main__':
     print(f'2503-P-4400:{is_index_option("2503-P-4400")}')
