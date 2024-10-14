@@ -1,10 +1,19 @@
 import time
 import numpy as np
+from numpy.core.defchararray import title
+
 np.set_printoptions(suppress=True)
 from threading import Thread
 
 from ctp.ctp_manager import CTPManager
 from memory.memory_manager import MemoryManager
+from flask import Flask, jsonify, render_template
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('template/index.html', title='我的前端页面', message='欢迎使用 Flask')
 
 
 def main():
@@ -70,3 +79,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #app.run(debug=True)

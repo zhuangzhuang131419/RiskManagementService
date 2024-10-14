@@ -5,7 +5,8 @@ import time
 import numpy as np
 from numpy.core.records import ndarray
 
-from helper.calculator import calculate_prices, calculate_imply_volatility, estimate_atm_volatility, calculate_gamma
+from helper.calculator import calculate_prices, calculate_imply_volatility, estimate_atm_volatility, calculate_gamma, \
+    calculate_delta
 from helper.helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY, INTEREST_RATE, DIVIDEND
 from model.instrument.option import Option
 from model.instrument.option_series import OptionSeries
@@ -129,6 +130,7 @@ class OptionManager:
     def init_index_option_market_data(self):
         """
         假设有 len(self.index_option_month_forward_id) 个月份，每个期权品种最多有 2 种看涨/看跌期权，index_option_month_strike_max_num 个行权价，每个行权价有 7 个字段
+        [1]行权价 [2]字段时间 [3]bid [4]bid_volume [5]ask [6]ask_volume [7]available
         :return: 
         """
         self.index_option_market_data = np.zeros((len(self.index_option_month_forward_id), 2, self.index_option_month_strike_max_num, 7))
@@ -147,7 +149,7 @@ class OptionManager:
 
     def init_index_option_month_atm_vol(self):
         """
-        # [1] 当前ATM有效性 [2] K1 volatility [3] K2 volatility [4] K3 volatility [5] 序列保护的atm volatility [6] atm_gamma [7] atm_gamma [8] X-1.98 [9] X-1.32 [10] X-0.66 [11] X0] [12] X+1.98 [13] X+1.32 [14] X+0.66
+        [1] 当前ATM有效性 [2] K1 volatility [3] K2 volatility [4] K3 volatility [5] 序列保护的atm volatility [6] atm_gamma [7] atm_gamma [8] X-1.98 [9] X-1.32 [10] X-0.66 [11] X0] [12] X+1.98 [13] X+1.32 [14] X+0.66
         """
         self.index_option_month_atm_volatility = np.zeros((len(self.index_option_month_forward_id), 15))
 
@@ -155,6 +157,9 @@ class OptionManager:
         self.index_option_month_model_para = np.zeros((len(self.index_option_month_forward_id), 5))
 
     def init_index_option_month_t_iv(self):
+        """
+        [1] 行权价 [2] call ask volatility [3] call bid volatility [4] put ask volatility [5] put bid volatility [6] 样本有效性 [7] X [8] sample volatility [9] 拟合vega
+        """
         self.index_option_month_t_iv = np.zeros((len(self.index_option_month_forward_id), self.index_option_month_strike_max_num, 9))
         for i in range(len(self.index_option_month_forward_id)):
             # 行权价
@@ -181,13 +186,14 @@ class OptionManager:
             timestamp = time.time()
             for i, symbol in enumerate(self.index_option_month_forward_id):
                 # 计算forward价格，获取两侧行权价，标记FW价格无效，loc_index_month_available,标记IS无法取得,loc_index_IS_available
-                self.index_option_month_forward_price[i, :] = self.index_option_imply_forward_price(i)
+                self.index_option_imply_forward_price(i)
                 if self.index_option_month_forward_price[i, 0] == -1:
                     self.index_option_month_atm_volatility[i, :] = -1
                     # print(f'{symbol} month tick error')
                     continue
-                # else:
-                    # self.index_option_month_atm_volatility[i, :] = []
+                else:
+                    # set index_option_month_atm_volatility
+                    self.atm_para_estimate(i)
                     # self.index_option_month_t_iv[i, :] = []
                     # self.index_option_month_model_para[i, :] = []
                     # self.index_option_month_greeks[i, :] = []
@@ -251,9 +257,40 @@ class OptionManager:
             for i in range(7):
                 self.index_option_month_atm_volatility[8+i] = math.exp((i * 0.66 - 1.98) * self.index_option_month_atm_volatility[5] * math.sqrt(remain_time)) * forward_underlying_price
 
+    def index_option_month_t_iv_calculate(self, index):
+        strike_price_num = self.index_option_month_strike_num[index]
+
+        call_bid_price = self.index_option_market_data[index, 0, :, 4]
+        call_ask_price = self.index_option_market_data[index, 0, :, 2]
+        put_bid_price = self.index_option_market_data[index, 1, :, 4]
+        put_ask_price = self.index_option_market_data[index, 1, :, 2]
+        # 对应标的物的远期价格
+        underlying_price = (self.index_option_month_forward_price[index, 12] + self.index_option_month_forward_price[index, 13]) / 2
+        remain_time = self.index_option_remain_day[index]
+        volatility =  self.index_option_month_atm_volatility[index, 5]
+        call_available =  self.index_option_market_data[index, 0, :, 6]
+        put_available = self.index_option_market_data[index, 1, :, 6]
+
+
+        self.index_option_month_t_iv[index, 0:strike_price_num, 1] = calculate_imply_volatility('c', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, call_ask_price[0:strike_price_num], DIVIDEND)
+        self.index_option_month_t_iv[index, 0:strike_price_num, 2] = calculate_imply_volatility('c', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, call_bid_price[0:strike_price_num], DIVIDEND)
+        self.index_option_month_t_iv[index, 0:strike_price_num, 3] = calculate_imply_volatility('p', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, put_ask_price[0:strike_price_num], DIVIDEND)
+        self.index_option_month_t_iv[index, 0:strike_price_num, 4] = calculate_imply_volatility('p', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, put_bid_price[0:strike_price_num], DIVIDEND)
+
+        if volatility > 0:
+            sample_delta = calculate_delta('c', underlying_price, self.index_option_month_t_iv[0, strike_price_num, 0], remain_time, INTEREST_RATE, volatility, DIVIDEND)
+
+            for i in range(strike_price_num):
+                # 样本有效性
+                # self.index_option_month_t_iv[index, i, 6] =
+                pass
+
+
+
     def index_option_imply_forward_price(self, index):
         """
         计算一个symbol期权下所有的隐含波动率
+        # 0（远期有效性），1（远期ask），2（远期bid），3（Askstrike），4（BIDstrike），5（ATMS有效性），6（Ask），7（Bid），8（K1 平值左侧第二行权价），9（K2 平值左侧行权价），10（K3 平值右侧行权价），11（K4 平值右侧第二行权价），12（ISask），13（ISbid）
         @para
         """
         call_available = self.index_option_market_data[index, 0, :, 6]
@@ -264,19 +301,13 @@ class OptionManager:
         put_ask1_price = self.index_option_market_data[index, 1, :, 4]
         put_bid1_price = self.index_option_market_data[index, 1, :, 2]
         remain_time = self.index_option_remain_day[index]
-
-
-
-        # 0（远期有效性），1（远期ask），2（远期bid），3（Askstrike），4（BIDstrike），5（ATMS有效性），6（Ask），7（Bid），8（K1 平值左侧第二行权价），9（K2 平值左侧行权价），10（K3 平值右侧行权价），11（K4 平值右侧第二行权价），12（ISask），13（ISbid）
-        index_option_month_forward_price = [0] * 14
-        # 至少有一组C与P必须同时可交易才能生成forward，否则返回-1
-
         num_strike_price = self.option_series_dict[self.index_option_month_forward_id[index]].get_num_strike_price()
 
         # 检查是否有至少一组看涨和看跌期权可以交易
+        # 至少有一组C与P必须同时可交易才能生成forward，否则返回-1
         trading_pairs = call_available * put_available
         if 1 in trading_pairs:
-            index_option_month_forward_price[0] = 1
+            self.index_option_month_forward_price[index, 0] =1
 
             tradable_indices = trading_pairs != 0
 
@@ -296,13 +327,13 @@ class OptionManager:
             forward_bid_prices = calculate_prices(call_bid1_price[tradable_indices], put_ask1_price[tradable_indices], strike_prices[tradable_indices], remain_time)
 
             # 最小ask值及其对应的执行价
-            index_option_month_forward_price[1] = min(forward_ask_prices)
-            index_option_month_forward_price[3] = strike_prices[tradable_indices][forward_ask_prices.argmin()]
+            self.index_option_month_forward_price[index, 1] = min(forward_ask_prices)
+            self.index_option_month_forward_price[index, 3] = strike_prices[tradable_indices][forward_ask_prices.argmin()]
 
-            index_option_month_forward_price[2] = max(forward_bid_prices)
-            index_option_month_forward_price[4] = strike_prices[tradable_indices][forward_bid_prices.argmax()]
+            self.index_option_month_forward_price[index, 2] = max(forward_bid_prices)
+            self.index_option_month_forward_price[index, 4] = strike_prices[tradable_indices][forward_bid_prices.argmax()]
 
-            forward_price = (index_option_month_forward_price[1] + index_option_month_forward_price[2]) / 2 * math.exp(remain_time * (INTEREST_RATE - DIVIDEND))
+            forward_price = (self.index_option_month_forward_price[index, 1] + self.index_option_month_forward_price[index, 2]) / 2 * math.exp(remain_time * (INTEREST_RATE - DIVIDEND))
 
             # 查找ATM（平值期权）位置
             atm_location = [-1, -1]
@@ -313,15 +344,15 @@ class OptionManager:
 
             # 如果没有找到有效的ATM位置
             if -1 in atm_location:
-                index_option_month_forward_price[5:12] = [-1] * 7
-                index_option_month_forward_price[12:14] = [index_option_month_forward_price[1], index_option_month_forward_price[2]]
+                self.index_option_month_forward_price[5:12] = [-1] * 7
+                self.index_option_month_forward_price[12:14] = [self.index_option_month_forward_price[1], self.index_option_month_forward_price[2]]
             else:
                 # 检查两侧ATM期权的有效性
                 is_left_tradable = call_available[atm_location[0]] * put_available[atm_location[0]] == 1
                 is_right_tradable = call_available[atm_location[1]] * put_available[atm_location[1]] == 1
 
                 if is_left_tradable and is_right_tradable:
-                    index_option_month_forward_price[5] = 1
+                    self.index_option_month_forward_price[5] = 1
 
                     # 左侧和右侧的ask和bid价格
                     left_ask = calculate_prices(call_ask1_price[atm_location[0]], put_bid1_price[atm_location[0]], strike_prices[atm_location[0]], remain_time)
@@ -333,24 +364,22 @@ class OptionManager:
                     strike_diff = strike_prices[atm_location[1]] - strike_prices[atm_location[0]]
                     forward_diff = forward_price - strike_prices[atm_location[0]]
 
-                    index_option_month_forward_price[6] = (strike_prices[atm_location[1]] - forward_price) / strike_diff * left_ask + forward_diff / strike_diff * right_ask
-                    index_option_month_forward_price[7] = (strike_prices[atm_location[1]] - forward_price) / strike_diff * left_bid + forward_diff / strike_diff * right_bid
+                    self.index_option_month_forward_price[6] = (strike_prices[atm_location[1]] - forward_price) / strike_diff * left_ask + forward_diff / strike_diff * right_ask
+                    self.index_option_month_forward_price[7] = (strike_prices[atm_location[1]] - forward_price) / strike_diff * left_bid + forward_diff / strike_diff * right_bid
 
-                    index_option_month_forward_price[9] = strike_prices[atm_location[0]]
-                    index_option_month_forward_price[10] = strike_prices[atm_location[1]]
+                    self.index_option_month_forward_price[9] = strike_prices[atm_location[0]]
+                    self.index_option_month_forward_price[10] = strike_prices[atm_location[1]]
 
-                    index_option_month_forward_price[12:14] = [index_option_month_forward_price[6], index_option_month_forward_price[7]]
+                    self.index_option_month_forward_price[12:14] = [self.index_option_month_forward_price[6], self.index_option_month_forward_price[7]]
                 else:
-                    index_option_month_forward_price[5:12] = [-1] * 7
-                    index_option_month_forward_price[12:14] = [index_option_month_forward_price[1], index_option_month_forward_price[2]]
+                    self.index_option_month_forward_price[5:12] = [-1] * 7
+                    self.index_option_month_forward_price[12:14] = [self.index_option_month_forward_price[1], self.index_option_month_forward_price[2]]
 
             # 检查两侧的额外执行价是否有效
-            if index_option_month_forward_price[9] == -1 or index_option_month_forward_price[10] == -1:
-                index_option_month_forward_price[8] = index_option_month_forward_price[11] = -1
+            if self.index_option_month_forward_price[9] == -1 or self.index_option_month_forward_price[10] == -1:
+                self.index_option_month_forward_price[8] = self.index_option_month_forward_price[11] = -1
             else:
-                index_option_month_forward_price[8] = strike_prices[atm_location[0] - 1] if atm_location[0] > 0 and trading_pairs[atm_location[0] - 1] == 1 else -1
-                index_option_month_forward_price[11] = strike_prices[atm_location[1] + 1] if atm_location[1] < len(strike_prices) - 1 and trading_pairs[atm_location[1] + 1] == 1 else -1
+                self.index_option_month_forward_price[8] = strike_prices[atm_location[0] - 1] if atm_location[0] > 0 and trading_pairs[atm_location[0] - 1] == 1 else -1
+                self.index_option_month_forward_price[11] = strike_prices[atm_location[1] + 1] if atm_location[1] < len(strike_prices) - 1 and trading_pairs[atm_location[1] + 1] == 1 else -1
         else:
-            index_option_month_forward_price = [-1] * 14
-
-        return index_option_month_forward_price
+            self.index_option_month_forward_price[index] = [-1] * 14
