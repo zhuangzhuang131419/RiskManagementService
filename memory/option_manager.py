@@ -1,12 +1,13 @@
 import datetime
 import math
 import time
+from random import sample
 
 import numpy as np
 from numpy.core.records import ndarray
 
 from helper.calculator import calculate_prices, calculate_imply_volatility, estimate_atm_volatility, calculate_gamma, \
-    calculate_delta
+    calculate_delta, calculate_x_distance
 from helper.helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY, INTEREST_RATE, DIVIDEND
 from model.instrument.option import Option
 from model.instrument.option_series import OptionSeries
@@ -279,11 +280,26 @@ class OptionManager:
 
         if volatility > 0:
             sample_delta = calculate_delta('c', underlying_price, self.index_option_month_t_iv[0, strike_price_num, 0], remain_time, INTEREST_RATE, volatility, DIVIDEND)
-
-            for i in range(strike_price_num):
+            available_put_volatility = call_available * self.index_option_month_t_iv[:, 4] > 0
+            available_call_volatility = put_available * self.index_option_month_t_iv[:, 2] > 0
+            for j in range(strike_price_num):
                 # 样本有效性
-                # self.index_option_month_t_iv[index, i, 6] =
-                pass
+                self.index_option_month_t_iv[index, j, 6] = calculate_x_distance(underlying_price, self.index_option_month_t_iv[index, j, 0], remain_time, INTEREST_RATE, volatility, DIVIDEND)
+                # 偏离一个标准差的距离，call 没有参考价值
+                if self.index_option_month_t_iv[index, j, 6] < -1.32:
+                    self.index_option_month_t_iv[index, j, 5] = int(available_put_volatility[j]) if int(available_put_volatility[j]) == 1 else 0
+                    if int(available_put_volatility[j]) > 0:
+                        self.index_option_month_t_iv[index, j, 7] = (self.index_option_month_t_iv[index, j, 4] + self.index_option_month_t_iv[index, j, 3]) / 2
+                # 偏离一个标准差的距离，put 没有参考价值
+                elif self.index_option_month_t_iv[index, j, 6] > 1.32:
+                    self.index_option_month_t_iv[index, j, 5] = int(available_call_volatility[j]) if int(available_put_volatility[j]) == 1 else 0
+                    if int(available_put_volatility[j]) > 0:
+                        self.index_option_month_t_iv[index, j, 7] = (self.index_option_month_t_iv[index, j, 2] + self.index_option_month_t_iv[index, j, 1]) / 2
+                else:
+                    self.index_option_month_t_iv[index, j, 5] = int(available_call_volatility[j] * available_put_volatility[j]) if int(available_call_volatility[j] * available_put_volatility[j]) == 1 else 0
+                    if int(available_call_volatility[j] * available_put_volatility[j]) > 0:
+                        self.index_option_month_t_iv[index, j, 7] = (((self.index_option_month_t_iv[index, j, 2] + self.index_option_month_t_iv[index, j, 1]) / 2) * (1 - sample_delta[j]) +
+                                                                     ((self.index_option_month_t_iv[index, j, 4] + self.index_option_month_t_iv[index, j, 3]) / 2) * sample_delta[j])
 
 
 

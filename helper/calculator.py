@@ -21,6 +21,23 @@ def calculate_prices(call_prices, put_prices, strike_prices, remain_time):
     """计算标的的价格"""
     return call_prices - put_prices + strike_prices * math.exp(-INTEREST_RATE * remain_time)
 
+def calculate_x_distance(S, K, t, r, v, q):
+    """
+    计算标的资产当前价格与期权执行价之间的标准差距离。
+
+    参数：
+    S (float): 当前标的资产价格（如股票价格）。
+    K (float): 期权的执行价（行权价）。
+    t (float): 到期时间，表示距离期权到期的时间（以年为单位）。
+    r (float): 无风险利率（如国债利率）。
+    v (float): 标的资产的波动率，衡量价格波动的幅度。
+    q (float): 股息收益率，表示期权到期前的股息支付率。
+
+    """
+    # 计算价格差异并考虑时间、利率和股息的影响
+    x_distance = math.log(K / (S * math.exp(t * (r - q)))) / (v * math.sqrt(t))
+    return x_distance
+
 
 def calculate_imply_volatility(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, option_price: float, dividend_rate: float) -> float:
     """
