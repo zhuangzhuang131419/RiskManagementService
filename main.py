@@ -42,6 +42,9 @@ def main():
     print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
         ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
     Thread(target=ctp_manager.tick).start()
+    Thread(target=ctp_manager.memory.option_manager.index_volatility_calculator).start()
+
+
     # print('HO2410的看涨期权的第一个行权价相关信息：{}'.format(
     #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0]))
     # print('HO2410一共有几个行权价: {}'.format(memory_manager.option_manager.option_month_strike_prices['HO2410']))
@@ -62,6 +65,7 @@ def main():
         ask_price = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 4]
         ask_volume = ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 5]
         print(f'HO2410的看涨期权的第一个行权价相关信息：行权价{strike_price}, 时间{timestamp}, 买一价{bid_price}, 买一量{bid_volume}, 卖一价{ask_price}, 卖一量{ask_volume}')
+        print('HO2410 期货价格:{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_price[0, :]))
         time.sleep(10)
 
 if __name__ == "__main__":

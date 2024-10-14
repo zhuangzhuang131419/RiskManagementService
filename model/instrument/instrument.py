@@ -9,8 +9,8 @@ def validate_future_id(instrument_id):
 class Instrument:
     id: str
     symbol: str
-    bid = 0
-    ask = 0
+    bid = 0.0
+    ask = 0.0
     bid_volume = 0
     ask_volume = 0
     available = False
