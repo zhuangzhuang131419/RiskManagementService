@@ -6,8 +6,7 @@ from random import sample
 import numpy as np
 from numpy.core.records import ndarray
 
-from helper.calculator import calculate_prices, calculate_imply_volatility, estimate_atm_volatility, calculate_gamma, \
-    calculate_delta, calculate_x_distance
+from helper.calculator import *
 from helper.helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY, INTEREST_RATE, DIVIDEND
 from model.instrument.option import Option
 from model.instrument.option_series import OptionSeries
@@ -21,7 +20,7 @@ class OptionManager:
     option_expired_date = []
 
     # 剩余时间
-    index_option_remain_day = []
+    index_option_remain_year = []
 
     # 期权品种月份列表
     index_option_month_forward_id = []
@@ -114,7 +113,7 @@ class OptionManager:
             start_date = datetime.datetime.now().date()
             end_date = datetime.datetime.strptime(date, "%Y%m%d").date()
             day_count = count_trading_days(start_date, end_date, HOLIDAYS)
-            self.index_option_remain_day.append(round((day_count - 1) / YEAR_TRADING_DAY, 4))
+            self.index_option_remain_year.append(round((day_count - 1) / YEAR_TRADING_DAY, 4))
 
 
     def init_index_option_month_strike_num(self):
@@ -193,22 +192,87 @@ class OptionManager:
                     # print(f'{symbol} month tick error')
                     continue
                 else:
-                    # set index_option_month_atm_volatility
-                    self.atm_para_estimate(i)
-                    # self.index_option_month_t_iv[i, :] = []
-                    # self.index_option_month_model_para[i, :] = []
-                    # self.index_option_month_greeks[i, :] = []
+                    self.calculate_atm_para(i)
+                    self.calculate_index_option_month_t_iv(i)
+                    self.calculate_wing_model_para(i)
+                    self.calculate_greeks(i)
 
             time.sleep(2)
 
-    def atm_para_estimate(self, index):
+    def calculate_greeks(self, index):
+        underlying_price = (self.index_option_month_forward_price[index, 12] + self.index_option_month_forward_price[index, 13]) / 2
+        strike_prices = self.index_option_market_data[index, 0, :, 0]
+        remain_time = self.index_option_remain_year[index]
+        volatility = self.index_option_month_atm_volatility[index, 5]
+        wing_model = self.index_option_month_model_para[index, 1:4]
+        strike_price_num = self.index_option_month_strike_num[index]
+
+        self.index_option_month_greeks[index, 0:strike_price_num, 1] = v_delta('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 2] = v_delta('p', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 3] = v_gamma_percent('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 4] = v_vega('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 5] = v_theta('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 6] = v_theta('p', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 7] = v_vannasv('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 8] = v_vannasv('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 9] = v_db('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 10] = v_vomma('p', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 11] = v_dk1('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 12] = v_dk2('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+        self.index_option_month_greeks[index, 0:strike_price_num, 13] = v_charm('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
+
+
+    def calculate_wing_model_para(self, index):
+        underlying_price = (self.index_option_month_forward_price[index, 12] + self.index_option_month_forward_price[index, 13]) / 2
+        strike_prices = self.index_option_market_data[index, 0, :, 0]
+        remain_time = self.index_option_remain_year[index]
+        volatility = self.index_option_month_atm_volatility[index, 5]
+        sample_volatility = self.index_option_month_t_iv[index, :, 7]
+        sample_available = self.index_option_month_t_iv[index, :, 5]
+        strike_price_num = self.index_option_month_strike_num[index]
+
+        available_num = np.count_nonzero(sample_available)
+        if available_num <= 3:
+            self.index_option_month_model_para[index, 0:6] = [underlying_price, 0, 0, 0, -1]
+            return
+
+        # 剔除掉
+        cut_point = 2
+        x_array = np.zeros((strike_price_num, 3))
+        y_array = np.zeros(strike_price_num)
+        for j in range(strike_price_num):
+            x_distance = calculate_x_distance(S=underlying_price, K=strike_prices[j], t=remain_time, r=INTEREST_RATE, v=volatility, q=DIVIDEND)
+            if -cut_point < x_distance <= 0:
+                x_array[j, 0] = x_distance * x_distance * sample_available[j]
+                x_array[j, 2] = x_distance * sample_available[j]
+                y_array[j] = sample_volatility[j] * sample_available[j]
+            elif 0 < x_distance <= cut_point:
+                x_array[j, 1] = x_distance * x_distance * sample_available[j]
+                x_array[j, 2] = x_distance * sample_available[j]
+                y_array[j] = sample_volatility[j] * sample_available[j]
+
+        # 参数估计
+        para_array = np.dot(np.dot(np.linalg.inv(np.dot(np.transpose(x_array), x_array)), np.transpose(x_array)),y_array)
+        # 残差序列
+        residual = y_array - x_array @ para_array
+
+        self.index_option_month_model_para[index, 0:6] = [underlying_price, para_array, (residual@residual) / available_num]
+
+
+
+
+
+
+
+
+    def calculate_atm_para(self, index):
         # K1 左二 K2 左一 K3 右一 k4 右二
         left_right_strike_price = self.index_option_month_forward_price[index, 8:12]
         strike_prices = self.index_option_market_data[index, 0, :, 0]
         # option ask bid 取中间价
         call_price = (self.index_option_market_data[index, 0, :, 4] + self.index_option_market_data[index, 0, :, 2]) / 2
         put_price = (self.index_option_market_data[index, 1, :, 4] + self.index_option_market_data[index, 1, :, 2]) / 2
-        remain_time = self.index_option_remain_day[index]
+        remain_time = self.index_option_remain_year[index]
         # 对应标的物的远期价格
         underlying_price = (self.index_option_month_forward_price[index, 12] + self.index_option_month_forward_price[index, 13]) / 2
 
@@ -258,7 +322,7 @@ class OptionManager:
             for i in range(7):
                 self.index_option_month_atm_volatility[8+i] = math.exp((i * 0.66 - 1.98) * self.index_option_month_atm_volatility[5] * math.sqrt(remain_time)) * forward_underlying_price
 
-    def index_option_month_t_iv_calculate(self, index):
+    def calculate_index_option_month_t_iv(self, index):
         strike_price_num = self.index_option_month_strike_num[index]
 
         call_bid_price = self.index_option_market_data[index, 0, :, 4]
@@ -267,7 +331,7 @@ class OptionManager:
         put_ask_price = self.index_option_market_data[index, 1, :, 2]
         # 对应标的物的远期价格
         underlying_price = (self.index_option_month_forward_price[index, 12] + self.index_option_month_forward_price[index, 13]) / 2
-        remain_time = self.index_option_remain_day[index]
+        remain_time = self.index_option_remain_year[index]
         volatility =  self.index_option_month_atm_volatility[index, 5]
         call_available =  self.index_option_market_data[index, 0, :, 6]
         put_available = self.index_option_market_data[index, 1, :, 6]
@@ -316,7 +380,7 @@ class OptionManager:
         call_bid1_price = self.index_option_market_data[index, 0, :, 2]
         put_ask1_price = self.index_option_market_data[index, 1, :, 4]
         put_bid1_price = self.index_option_market_data[index, 1, :, 2]
-        remain_time = self.index_option_remain_day[index]
+        remain_time = self.index_option_remain_year[index]
         num_strike_price = self.option_series_dict[self.index_option_month_forward_id[index]].get_num_strike_price()
 
         # 检查是否有至少一组看涨和看跌期权可以交易
