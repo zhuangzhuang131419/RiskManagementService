@@ -6,7 +6,6 @@ import pandas as pd
 import py_vollib_vectorized
 
 from helper.helper import INTEREST_RATE
-from helper.wing_model import WingModel
 
 
 # put call parity
@@ -40,7 +39,7 @@ def calculate_x_distance(S, K, t, r, v, q):
     return x_distance
 
 
-def calculate_imply_volatility(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, option_price: float, dividend_rate: float) -> float:
+def calculate_imply_volatility(option_type: str, underlying_price, strike_price, remaining_year: float, interest_rate: float, option_price, dividend_rate) -> float:
     """
     计算期权的隐含波动率。
 
@@ -68,7 +67,7 @@ def calculate_imply_volatility(option_type: str, underlying_price: float, strike
             return -1
     except Exception as e:
         # 捕获任何异常并返回 None
-        print(f"Error calculating implied volatility: {e}")
+        print(f"Error calculating implied volatility: {e}\n price = {option_price}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n {option_type}")
         return -1
 
 def calculate_delta(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
@@ -99,74 +98,4 @@ def estimate_atm_volatility(strike_price_list, volatility_list, price):
     # 将当前价格 price 代入拟合的二次多项式
     return np.dot(np.array([1, price, price * price]), para)
 
-def v_delta(flag, S, K, t, r, v, q, k1, k2, b):
-    if t < 1 / 254:
-        t = 1 / 254
-    model0 = WingModel(S, K, t, r, v, q, k1, k2, b)
-    model1 = WingModel(S + 1, K, t, r, v, q, k1, k2, b)
-    delta = (py_vollib_vectorized.vectorized_black_scholes_merton(flag, S + 1, K, t, r, model1.vol, q=0,return_as='numpy')
-             - py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model0.vol, q=0, return_as='numpy'))
-    return delta
 
-def v_gamma_percent(flag, S, K, t, r, v, q, k1, k2, b):
-    gamma =v_delta(flag, S*1.005, K, t, r, v, q, k1, k2, b)- v_delta(flag, S*0.995, K, t, r, v, q, k1, k2, b)
-    return gamma
-
-def v_charm(flag, S, K, t, r, v, q, k1, k2, b):
-    charm =v_delta(flag, S, K, t, r, v, q, k1, k2, b)- v_delta(flag, S, K, t-1/254, r, v, q, k1, k2, b)
-    return charm
-
-def v_vega(flag, S, K, t, r, v, q, k1, k2, b):#vega
-    if t<1/254:
-        t=1/254
-    model0 = WingModel(S, K, t, r, v-0.005, q, k1, k2, b)
-    model1 = WingModel(S, K, t, r, v+0.005, q, k1, k2, b)
-    vega = (py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model1.vol, q=0,return_as='numpy')
-            -py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model0.vol, q=0,return_as='numpy'))
-    return vega
-
-def v_theta(flag, S, K, t, r, v, q, k1, k2, b):
-    if t<1/254:
-        t=1/254
-    #保证wing中的t大于0
-    model0= WingModel(S, K, t-1/255, r, v, q, k1, k2, b)
-    model1 = WingModel(S, K, t, r, v, q, k1, k2, b)
-    theta = (py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t-1/255, r, model1.vol, q=0,return_as='numpy')
-             -py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model0.vol, q=0,return_as='numpy'))
-    return theta
-
-def v_db(flag, S, K, t, r, v, q, k1, k2, b):
-    if t<1/254:
-        t=1/254
-    model0 = WingModel(S, K, t, r, v, q, k1, k2, b)
-    model1 = WingModel(S, K, t, r, v, q, k1, k2, b+0.01)
-    db = (py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model1.vol, q=0,return_as='numpy')
-          - py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model0.vol, q=0, return_as='numpy'))
-    return db
-
-def v_dk1(flag, S, K, t, r, v, q, k1, k2, b):
-    if t<1/254:
-        t=1/254
-    model0 = WingModel(S, K, t, r, v, q, k1, k2, b)
-    model1 = WingModel(S, K, t, r, v, q, k1+0.01, k2, b)
-    dk1 = (py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model1.vol, q=0,return_as='numpy')
-           - py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model0.vol, q=0, return_as='numpy'))
-    return dk1
-
-def v_dk2(flag, S, K, t, r, v, q, k1, k2, b):
-    if t<1/254:
-        t=1/254
-    model0 = WingModel(S, K, t, r, v, q, k1, k2, b)
-    model1 = WingModel(S, K, t, r, v, q, k1, k2+0.01, b)
-    dk2 = (py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model1.vol, q=0,return_as='numpy')
-           - py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model0.vol, q=0, return_as='numpy'))
-    return dk2
-
-def v_vannasv(flag, S, K, t, r, v, q, k1, k2, b):
-    return v_delta(flag, S, K, t, r, v+0.005, q, k1, k2, b)- v_delta(flag, S, K, t, r, v-0.005, q, k1, k2, b)
-
-def v_vannavs(flag, S, K, t, r, v, q, k1, k2, b):
-    return v_vega(flag, S+0.5, K, t, r, v, q, k1, k2, b)-v_vega(flag, S-0.5, K, t, r, v, q, k1, k2, b)
-
-def v_vomma(flag, S, K, t, r, v, q, k1, k2, b):
-    return v_vega(flag, S, K, t, r, v+0.005, q, k1, k2, b) - v_vega(flag, S, K, t, r, v-0.005, q, k1, k2, b)
