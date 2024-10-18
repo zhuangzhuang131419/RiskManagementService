@@ -8,12 +8,13 @@ from threading import Thread
 from ctp.ctp_manager import CTPManager
 from memory.memory_manager import MemoryManager
 from flask import Flask, jsonify, render_template
+from flask_cors import CORS
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 
 @app.route('/')
 def index():
-    return render_template('template/index.html', title='我的前端页面', message='欢迎使用 Flask')
+    return render_template('index.html', title='我的前端页面', message='欢迎使用 Flask')
 
 
 def main():
@@ -78,5 +79,5 @@ def main():
         time.sleep(10)
 
 if __name__ == "__main__":
-    main()
-    #app.run(debug=True)
+    Thread(target=main).start()
+    app.run(debug=True)

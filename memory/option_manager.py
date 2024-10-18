@@ -194,9 +194,9 @@ class OptionManager:
                     continue
                 else:
                     self.calculate_atm_para(i)
-                    # self.calculate_index_option_month_t_iv(i)
-                    # self.calculate_wing_model_para(i)
-                    # self.calculate_greeks(i)
+                    self.calculate_index_option_month_t_iv(i)
+                    self.calculate_wing_model_para(i)
+                    self.calculate_greeks(i)
 
             time.sleep(2)
 
@@ -280,10 +280,10 @@ class OptionManager:
         forward_underlying_price = underlying_price * math.exp(remain_time * (INTEREST_RATE - DIVIDEND))
 
         if index == 0:
-        #     print(f"四个行权价{left_right_strike_price}")
-        #     print(f"行权价{strike_prices}")
-        #     print(f"看涨{call_price}")
-        #     print(f"看跌{put_price}")
+            # print(f"四个行权价{left_right_strike_price}")
+            # print(f"行权价{strike_prices}")
+            # print(f"看涨{call_price}")
+            # print(f"看跌{put_price}")
             print(f"剩余时间{remain_time}")
             print(f"标的物远期价格{underlying_price}")
 
@@ -319,7 +319,7 @@ class OptionManager:
                     self.index_option_month_atm_volatility[index, 5] = estimate_atm_volatility(np.array([k2_strike, k3_strike, k4_strike]), np.array(volatility[1:]), forward_underlying_price)
                 if left2_put_volatility != -1 and right2_call_volatility != -1:
                     # 全部有效
-                    self.index_option_month_atm_volatility[index, 5] = (estimate_atm_volatility(np.array([k1_strike, k2_strike, k3_strike]), np.array(volatility[0:3]), forward_underlying_price) + estimate_atm_volatility([k2_strike, k3_strike, k4_strike], volatility[1:], forward_underlying_price)) / 2
+                    self.index_option_month_atm_volatility[index, 5] = (estimate_atm_volatility(np.array([k1_strike, k2_strike, k3_strike]), np.array(volatility[0:3]), forward_underlying_price) + estimate_atm_volatility(np.array([k2_strike, k3_strike, k4_strike]), np.array(volatility[1:]), forward_underlying_price)) / 2
                 # if left2_put_volatility == -1 and right2_call_volatility == -1:
                 #     # 仅中间有效
                 #     self.index_option_month_atm_volatility[index, 5] = self.index_option_month_atm_volatility[index, 5]
