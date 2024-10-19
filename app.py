@@ -1,25 +1,31 @@
 import time
 import numpy as np
-from numpy.core.defchararray import title
 
 np.set_printoptions(suppress=True)
 from threading import Thread
 
 from ctp.ctp_manager import CTPManager
 from memory.memory_manager import MemoryManager
-from flask import Flask, jsonify, render_template
-from flask_cors import CORS
+from flask import Flask, jsonify, render_template, send_from_directory
 
-app = Flask(__name__, template_folder="templates")
+app = Flask(__name__, static_folder='./frontend/build')
 
-@app.route('/')
-def index():
-    return render_template('index.html', title='我的前端页面', message='欢迎使用 Flask')
+# 路由所有到 React 的前端应用
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and path.startswith('static'):
+        # 如果请求的是静态文件，返回对应的静态文件
+        return send_from_directory(app.static_folder, path)
+    else:
+        # 否则返回 React 构建后的 index.html
+        return send_from_directory(app.static_folder, 'index.html')
 
+ctp_manager = CTPManager()
 
 def main():
     # 初始化
-    ctp_manager = CTPManager()
+    global ctp_manager
     ctp_manager.connect_to_market_data()
     time.sleep(3)
 
@@ -78,6 +84,22 @@ def main():
         print('HO2410 期货价格:{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_price[0, :]))
         time.sleep(10)
 
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/api/get_all_market_data', methods=['GET'])
+def get_all_market_data():
+    # 返回当前行情数据
+    return None
+
+@app.route('/api/get_all_option', methods=['GET'])
+def get_all_option():
+    return jsonify(ctp_manager.memory.option_manager.index_option_month_forward_id)
+
 if __name__ == "__main__":
     Thread(target=main).start()
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
+
+

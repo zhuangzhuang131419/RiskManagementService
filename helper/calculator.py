@@ -67,7 +67,7 @@ def calculate_imply_volatility(option_type: str, underlying_price, strike_price,
             return -1
     except Exception as e:
         # 捕获任何异常并返回 None
-        print(f"Error calculating implied volatility: {e}\n price = {option_price}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n {option_type}")
+        print(f"Error calculating implied volatility: {e}\n price = {option_price}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n")
         return -1
 
 def calculate_delta(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):

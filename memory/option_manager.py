@@ -257,13 +257,9 @@ class OptionManager:
         # 残差序列
         residual = y_array - x_array @ para_array
 
-        self.index_option_month_model_para[index, 0:6] = [underlying_price, para_array, (residual@residual) / available_num]
-
-
-
-
-
-
+        self.index_option_month_model_para[index, 0] = underlying_price
+        self.index_option_month_model_para[index, 1:4] = para_array
+        self.index_option_month_model_para[index, 4] = (residual@residual) / available_num
 
 
     def calculate_atm_para(self, index):
@@ -278,14 +274,6 @@ class OptionManager:
         underlying_price = (self.index_option_month_forward_price[index, 12] + self.index_option_month_forward_price[index, 13]) / 2
 
         forward_underlying_price = underlying_price * math.exp(remain_time * (INTEREST_RATE - DIVIDEND))
-
-        if index == 0:
-            # print(f"四个行权价{left_right_strike_price}")
-            # print(f"行权价{strike_prices}")
-            # print(f"看涨{call_price}")
-            # print(f"看跌{put_price}")
-            print(f"剩余时间{remain_time}")
-            print(f"标的物远期价格{underlying_price}")
 
         # 判断离平值期权最近的
         if k2_strike == -1 or k3_strike == -1:
@@ -345,11 +333,11 @@ class OptionManager:
         call_available =  self.index_option_market_data[index, 0, :, 6]
         put_available = self.index_option_market_data[index, 1, :, 6]
 
-
-        self.index_option_month_t_iv[index, 0:strike_price_num, 1] = calculate_imply_volatility('c', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, call_ask_price[0:strike_price_num], DIVIDEND)
-        self.index_option_month_t_iv[index, 0:strike_price_num, 2] = calculate_imply_volatility('c', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, call_bid_price[0:strike_price_num], DIVIDEND)
-        self.index_option_month_t_iv[index, 0:strike_price_num, 3] = calculate_imply_volatility('p', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, put_ask_price[0:strike_price_num], DIVIDEND)
-        self.index_option_month_t_iv[index, 0:strike_price_num, 4] = calculate_imply_volatility('p', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, put_bid_price[0:strike_price_num], DIVIDEND)
+        for j in range(strike_price_num):
+            self.index_option_month_t_iv[index, j, 1] = calculate_imply_volatility('c', underlying_price, self.index_option_month_t_iv[index, j, 0], remain_time, INTEREST_RATE, call_ask_price[j], DIVIDEND)
+            self.index_option_month_t_iv[index, j, 2] = calculate_imply_volatility('c', underlying_price, self.index_option_month_t_iv[index, j, 0], remain_time, INTEREST_RATE, call_bid_price[j], DIVIDEND)
+            self.index_option_month_t_iv[index, j, 3] = calculate_imply_volatility('p', underlying_price, self.index_option_month_t_iv[index, j, 0], remain_time, INTEREST_RATE, put_ask_price[j], DIVIDEND)
+            self.index_option_month_t_iv[index, j, 4] = calculate_imply_volatility('p', underlying_price, self.index_option_month_t_iv[index, j, 0], remain_time, INTEREST_RATE, put_bid_price[j], DIVIDEND)
 
         if volatility > 0:
             sample_delta = calculate_delta('c', underlying_price, self.index_option_month_t_iv[index, 0:strike_price_num, 0], remain_time, INTEREST_RATE, volatility, DIVIDEND)
@@ -399,17 +387,6 @@ class OptionManager:
             self.index_option_month_forward_price[index, 0] =1
 
             tradable_indices = trading_pairs != 0
-
-            # if index == 0:
-                # print(f"tradable indices{tradable_indices}")
-                # print(f"call available{call_available}")
-                # print(f"put_available{put_available}")
-                # print(f"strike{strike_prices}")
-                # print(f"call_ask1{call_ask1_price}")
-                # print(f"call_bid1{call_bid1_price}")
-                # print(f"put_ask1{put_ask1_price}")
-                # print(f"put_bid1{put_bid1_price}")
-                # print(f"remain_time{remain_time}")
 
             # 计算ask数组和bid数组
             forward_ask_prices = calculate_prices(call_ask1_price[tradable_indices], put_bid1_price[tradable_indices], strike_prices[tradable_indices], remain_time)
