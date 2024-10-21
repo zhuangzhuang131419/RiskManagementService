@@ -10,15 +10,20 @@ from helper.helper import INTEREST_RATE
 
 # put call parity
 def calculate_prices(call_prices, put_prices, strike_prices, remain_time):
-    # 期权平价公式 C-P=S-Ke^(-rt) => S=C-P+Ke^(-rt)
-    # C是欧式看涨期权的价格；
-    # P是欧式看跌期权的价格；
-    # S是标的资产的当前价格；
-    # K是期权的执行价格（行权价）；
-    # r是无风险利率（通常为年化利率）；
-    # t是期权到期时间和当前时间之间的差异（以年为单位）；
-    # e是自然对数的底数。
-    """计算标的的价格"""
+    """
+    计算标的的价格
+    期权平价公式 C-P=S-Ke^(-rt) => S=C-P+Ke^(-rt)
+    C是欧式看涨期权的价格；
+    P是欧式看跌期权的价格；
+    S是标的资产的当前价格；
+    K是期权的执行价格（行权价）；
+    r是无风险利率（通常为年化利率）；
+    t是期权到期时间和当前时间之间的差异（以年为单位）；
+    e是自然对数的底数。
+
+    返回：
+        标的资产现货价格
+    """
     return call_prices - put_prices + strike_prices * math.exp(-INTEREST_RATE * remain_time)
 
 def calculate_x_distance(S, K, t, r, v, q):
@@ -72,8 +77,8 @@ def calculate_imply_volatility(option_type: str, underlying_price, strike_price,
 
 def calculate_delta(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
     try:
-        gamma = py_vollib_vectorized.vectorized_delta(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='numpy')
-        return gamma
+        delta = py_vollib_vectorized.vectorized_delta(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='numpy')
+        return delta
     except Exception as e:
         print(f"Error calculating delta: {e}")
 
