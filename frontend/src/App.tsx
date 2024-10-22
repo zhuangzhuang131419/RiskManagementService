@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import TradingDashboard from './components/TradingDashboard';
+import TradingDashboard from './Components/TradingDashboard';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import { initializeIcons } from '@fluentui/react';
 

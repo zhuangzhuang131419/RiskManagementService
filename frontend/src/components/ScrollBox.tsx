@@ -1,4 +1,4 @@
-import { List, Text } from '@fluentui/react';
+import { DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, DetailsRow, IDetailsRowStyles, Selection } from '@fluentui/react';
 import React from 'react';
 
 // 定义 ScrollBox 的通用 Props
@@ -12,22 +12,50 @@ const ScrollBox = <T extends unknown>({ items, onClick, renderItem }: ScrollBoxP
   // 自定义样式：只允许上下滚动
   const scrollBoxStyle: React.CSSProperties = {
     maxHeight: '300px', // 限制高度以产生滚动条
+    maxWidth: '300px',
     overflowY: 'auto',  // 只允许上下滚动
     overflowX: 'hidden', // 禁止左右滚动
   };
 
-  return (
-    <div style={scrollBoxStyle}>
-      <List
-        items={items}
-        onRenderCell={(item) => (
-            <div onClick={() => onClick(item as T)} style={{ padding: '8px', cursor: 'pointer' }}>
-              <Text>{renderItem(item as T)}</Text>
-            </div>
-          )}
-      />
-    </div>
-  );
+    const columns: IColumn[] = [
+        { 
+            key: 'column1', 
+            name: '期权', 
+            fieldName: 'item', 
+            minWidth: 10, 
+            maxWidth: 200, 
+            isResizable: true,
+            onRender: (item: T, index?: number) => (
+                <div>{renderItem(item)}</div> // Custom rendering for each row item
+              ),
+        },
+    ];
+
+    const selection = new Selection({
+        onSelectionChanged: () => {
+            const selectedItems = selection.getSelection();
+            if (selectedItems.length > 0) {
+                const selectedItem = selectedItems[0] as T;
+                onClick(selectedItem); // 将选中的期权符号传递给父组件
+            }
+        },
+    });
+
+
+    console.log("Scrollbox" + items)
+
+    return (
+        <div style={scrollBoxStyle}>
+            <DetailsList
+                items={items}
+                columns={columns}
+                layoutMode={DetailsListLayoutMode.justified}
+                selectionMode={SelectionMode.single}
+                selection={selection}
+                selectionPreservedOnEmptyClick={true}
+            />
+        </div>
+    );
 };
 
 export default ScrollBox;

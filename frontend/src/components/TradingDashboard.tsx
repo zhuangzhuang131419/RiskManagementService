@@ -6,6 +6,8 @@ import AccountSelector from './AccountSelector';
 import ScrollBox from './ScrollBox';
 import { symbolName } from 'typescript';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
+import TopDataBar from './TopDataBar';
+import { TopBarData } from '../Model/Account';
 
 const stackStyles = {
     root: {
@@ -38,30 +40,57 @@ const TradingDashboard: React.FC = () => {
         optionDataProvider.fetchOptionSymbols,
     );
 
-    return (
-        <Stack>
-            <Stack.Item>
-                <AccountSelector accounts={accounts} onSelect={setSelectedAccount} />
-                {!isOptionFetching && <ScrollBox items={optionItems} onClick={setSelectedOption} renderItem={(item) => item as string} />}
-            </Stack.Item>
-            <Stack horizontal tokens={{ childrenGap: 50 }} styles={stackStyles}>
-            {/* 左侧的 OptionList */}
-            {/* <Stack {...columnProps}>
-                <OptionList onSelect={setSelectedOption} />
-            </Stack> */}
+    console.log("optionItems" + optionItems)
 
-            {/* 右侧的 OptionGreeks */}
-            <Stack
-                styles={{
-                    root: {
-                        width: '40%'
-                    }
-                }}>
-                {selectedOption ? (
+    const topBarData: TopBarData = {
+        greekLetters: {
+            delta: 0.5,
+            vega: 0.3,
+            theta: -0.1,
+        },
+        indexOptionCount: 120,
+        etfOptionCount: 80,
+        futureCount: 50,
+        cashCombined: 1000000,
+    };
+
+    return (
+        // 主布局
+        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { width: '100%' } }}>
+            {/* 顶部：账户选择器和数据展示 */}
+            <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { alignItems: 'center' } }}>
+                <Stack.Item grow={1}>
+                    <AccountSelector accounts={accounts} onSelect={setSelectedAccount} />
+                </Stack.Item>
+                <Stack.Item grow={2}>
+                    <TopDataBar data={topBarData} />
+                </Stack.Item>
+            </Stack>
+
+            {/* 中间部分：期权滚动框和期权希腊字母展示 */}
+            <Stack horizontal tokens={{ childrenGap: 20 }}>
+                {/* 左侧：ScrollBox */}
+                <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
+                    {!isOptionFetching && (
+                        <ScrollBox
+                            items={optionItems as string[]}
+                            onClick={setSelectedOption}
+                            renderItem={(item) => item as string}
+                        />
+                    )}
+                    {!isOptionFetching && (
+                        <ScrollBox
+                            items={optionItems as string[]}
+                            onClick={setSelectedOption}
+                            renderItem={(item) => item as string}
+                        />
+                    )}
+                </Stack>
+
+                {/* 右侧：OptionGreeks */}
+                <Stack horizontal tokens={{ childrenGap: 10 }} grow={1}>
                     <OptionGreeks symbol={selectedOption} />
-                ) : (
-                    <p>请选择一个期权以查看其希腊字母数据。{selectedOption}</p>
-                )}
+                    <OptionGreeks symbol={selectedOption} />
                 </Stack>
             </Stack>
         </Stack>

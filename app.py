@@ -198,8 +198,8 @@ def get_option_greeks():
 
 
 if __name__ == "__main__":
-    init_ctp()
-    Thread(target=main).start()
+    # init_ctp()
+    # Thread(target=main).start()
     app.run(debug=True, use_reloader=False)
 
 
