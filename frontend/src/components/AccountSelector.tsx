@@ -1,15 +1,13 @@
 import { Dropdown } from "@fluentui/react";
+import { Account } from "../Model/Account";
 
-interface Account {
-    id: string;
-    name: string;
-  }
+
   
   // 定义组件的 props 类型
-  interface AccountSelectorProps {
-    accounts: Account[];               // accounts 为账户对象数组
-    onSelect: (accountId: string) => void; // onSelect 函数接受选中的账户 ID
-  }
+interface AccountSelectorProps {
+  accounts: Account[];               // accounts 为账户对象数组
+  onSelect: (accountId: string) => void; // onSelect 函数接受选中的账户 ID
+}
 
 const AccountSelector: React.FC<AccountSelectorProps> = ({ accounts, onSelect }) => {
     const accountOptions = accounts.map((acc) => ({

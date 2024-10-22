@@ -1,36 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
-import { Stack, DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, DetailsRow, IDetailsRowStyles, Selection } from '@fluentui/react';
+import { DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, DetailsRow, IDetailsRowStyles, Selection } from '@fluentui/react';
+import { optionDataProvider } from '../DataProvider/OptionDataProvider';
+import { OptionItem } from '../Model/OptionData';
 
 interface OptionListProps {
     onSelect: (symbol: string) => void;
 }
 
-interface OptionItem {
-    key: string;
-    symbol: string;
-}
-
-const fetchOptions = async () => {
-    const response = await fetch('/api/options');
-    if (!response.ok) {
-        throw new Error('Failed to fetch options');
-    }
-    return response.json();
-};
 
 const OptionList: React.FC<OptionListProps> = ({ onSelect }) => {
     const [options, setOptions] = useState<OptionItem[]>([]);
 
-    const { data, error, isFetching } = useQuery(['options'], fetchOptions, {
-        onSuccess: (data: string[]) => {
-            const optionItems = data.map((option) => ({
-                key: option,
-                symbol: option,
-            }));
-            setOptions(optionItems);
-        }
-    });
+    // const { data, error, isFetching } = useQuery(['options'], optionDataProvider.fetchOptionSymbols, {
+    //     onSuccess: (data: string[]) => {
+    //         const optionItems = data.map((option) => ({
+    //             key: option,
+    //             symbol: option,
+    //         }));
+    //         setOptions(optionItems);
+    //     }
+    // });
 
     const columns: IColumn[] = [
         { key: 'column1', name: '期权', fieldName: 'symbol', minWidth: 10, maxWidth: 200, isResizable: true },

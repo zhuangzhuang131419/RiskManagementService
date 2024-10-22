@@ -1,44 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
 import { Stack, DetailsList, IColumn, Text } from '@fluentui/react';
+import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 
 interface OptionGreeksProps {
     symbol: string | null;
 }
-
-interface OptionGreeksData {
-    delta: number;
-    gamma: number;
-    vega: number;
-    theta: number;
-}
-
-interface StrikePrices {
-    call_option: OptionGreeksData;
-    put_option: OptionGreeksData;
-}
-
-interface GreeksResponse {
-    symbol: string;
-    strike_prices: { [key: string]: StrikePrices };
-}
-
-const fetchGreeks = async (symbol: string): Promise<GreeksResponse> => {
-    const response = await fetch(`/api/option/greeks?symbol=${symbol}`);
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
-    }
-    console.log('symbol' + symbol)
-    // 打印响应状态
-    console.log('Response status: ' + response.status);
-    console.log('Response status text: ' + response.statusText);
-
-    // 解析并打印 JSON 数据
-    const data = await response.json();
-    console.log('Response data: ', data);
-    
-    return data;
-};
 
 const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
 
@@ -47,7 +14,7 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
     // 使用 useQuery 自动管理数据获取，每当 symbol 变化时重新加载
     const { data: greeksData, error, isLoading } = useQuery(
         ['greeks', symbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
-        () => fetchGreeks(symbol as string),  // 数据获取函数
+        () => optionDataProvider.fetchOptionGreeks(symbol as string),  // 数据获取函数
         {
             onSuccess(data) {
                 const formattedItems = Object.keys(data.strike_prices).map((strikePrice) => {
