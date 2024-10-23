@@ -6,13 +6,14 @@ interface ScrollBoxProps<T> {
   items: T[];
   onClick: (item: T) => void;
   renderItem: (item: T) => string; // 用于渲染每一项的显示内容
+  title: string;
 }
 
-const ScrollBox = <T extends unknown>({ items, onClick, renderItem }: ScrollBoxProps<T>) => {
+const ScrollBox = <T extends unknown>({ items, onClick, renderItem, title }: ScrollBoxProps<T>) => {
   // 自定义样式：只允许上下滚动
   const scrollBoxStyle: React.CSSProperties = {
-    maxHeight: '300px', // 限制高度以产生滚动条
-    maxWidth: '300px',
+    maxHeight: '100%', // 限制高度以产生滚动条
+    maxWidth: '100%',
     overflowY: 'auto',  // 只允许上下滚动
     overflowX: 'hidden', // 禁止左右滚动
   };
@@ -20,7 +21,7 @@ const ScrollBox = <T extends unknown>({ items, onClick, renderItem }: ScrollBoxP
     const columns: IColumn[] = [
         { 
             key: 'column1', 
-            name: '期权', 
+            name: title, 
             fieldName: 'item', 
             minWidth: 10, 
             maxWidth: 200, 

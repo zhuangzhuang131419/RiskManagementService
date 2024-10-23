@@ -1,9 +1,9 @@
 import copy
 
-from api import ThostFtdcApi
-from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
+from api_cffex import ThostFtdcApi
+from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField
-from config_manager import ConfigManager
+from config.config_manager import ConfigManager
 from helper.helper import *
 
 class Trader(ThostFtdcApi.CThostFtdcTraderSpi):

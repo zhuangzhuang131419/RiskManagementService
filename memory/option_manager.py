@@ -213,9 +213,9 @@ class OptionManager:
         wing_model = self.index_option_month_model_para[index, 1:4]
         strike_price_num = self.index_option_month_strike_num[index]
 
-        if index == 1:
-            j = 10
-            print(f'underlying_price: {underlying_price}, strike_price: {strike_prices[j]}, remain_time: {remain_time}, volatility: {volatility}, wing model: {wing_model}')
+        # if index == 1:
+        #     j = 10
+        #     print(f'underlying_price: {underlying_price}, strike_price: {strike_prices[j]}, remain_time: {remain_time}, volatility: {volatility}, wing model: {wing_model}')
         self.index_option_month_greeks[index, 0:strike_price_num, 1] = v_delta('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
         self.index_option_month_greeks[index, 0:strike_price_num, 2] = v_delta('p', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
         self.index_option_month_greeks[index, 0:strike_price_num, 3] = v_gamma_percent('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])

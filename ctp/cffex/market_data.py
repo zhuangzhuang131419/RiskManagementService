@@ -1,9 +1,8 @@
 import copy
-from datetime import timedelta
 
-from api import ThostFtdcApi
-from api.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
-from config_manager import ConfigManager
+from api_cffex import ThostFtdcApi
+from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
+from config.config_manager import ConfigManager
 from helper.helper import *
 from queue import Queue
 

@@ -9,5 +9,3 @@ class LoginConfig:
     password: str
     app_id: str
     auth_code: str
-    market_server_front: str
-    trade_server_front: str

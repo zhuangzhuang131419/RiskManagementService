@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Stack } from '@fluentui/react';
+import { ChoiceGroup, Stack, IChoiceGroupOption } from '@fluentui/react';
 import OptionGreeks from './OptionGreeks';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import AccountSelector from './AccountSelector';
@@ -9,6 +9,7 @@ import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 import TopDataBar from './TopDataBar';
 import { TopBarData } from '../Model/Account';
 import { futureDataProvider } from '../DataProvider/FutureDataProvider';
+import { etfDataProvider } from '../DataProvider/ETFDataProvider';
 
 const stackStyles = {
     root: {
@@ -20,13 +21,13 @@ const stackStyles = {
 document.body.style.overflow = 'hidden';
 document.documentElement.style.overflow = 'hidden';
 
-
-
-
 const TradingDashboard: React.FC = () => {
     const [selectedAccount, setSelectedAccount] = useState<string>("account1");
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [selectedFuture, setSelectedFuture] = useState<string | null>(null);
+    const [selectedETF, setSelectedETF] = useState<string | null>(null);
+
+    const [selectedKey, setSelectedKey] = React.useState<string>('B'); // 设置默认选中 'B'
 
     const accounts = [
         {
@@ -42,11 +43,19 @@ const TradingDashboard: React.FC = () => {
     const { data: optionItems, isFetching: isOptionFetching } = useQuery(
         ['options'],
         optionDataProvider.fetchOptionSymbols,
+        {
+            onSuccess(data) {},
+        }
     );
 
     const { data: futureItems, isFetching: isFutureFetching } = useQuery(
         ['futures'],
         futureDataProvider.fetchFutureSymbols,
+    );
+
+    const { data: etfItems, isFetching: isEtfFetching } = useQuery(
+        ['etfs'],
+        etfDataProvider.fetchFutureSymbols,
     );
 
     // console.log("optionItems" + optionItems)
@@ -64,6 +73,7 @@ const TradingDashboard: React.FC = () => {
     };
 
     return (
+
         // 主布局
         <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '90vh', width: '100%' } }}>
             {/* 顶部：账户选择器和数据展示 */}
@@ -85,6 +95,7 @@ const TradingDashboard: React.FC = () => {
                             items={optionItems as string[]}
                             onClick={setSelectedOption}
                             renderItem={(item) => item as string}
+                            title='期权'
                         />
                     )}
                     {!isFutureFetching && (
@@ -92,6 +103,15 @@ const TradingDashboard: React.FC = () => {
                             items={futureItems as string[]}
                             onClick={setSelectedFuture}
                             renderItem={(item) => item as string}
+                            title='期货'
+                        />
+                    )}
+                    {!isEtfFetching && (
+                        <ScrollBox
+                            items={etfItems as string[]}
+                            onClick={setSelectedETF}
+                            renderItem={(item) => item as string}
+                            title='ETF'
                         />
                     )}
                 </Stack>
@@ -99,7 +119,7 @@ const TradingDashboard: React.FC = () => {
                 {/* 右侧：OptionGreeks */}
                 <Stack horizontal tokens={{ childrenGap: 10 }} grow={1} styles={{ root: { height: '100%' }}}>
                     <OptionGreeks symbol={selectedOption} />
-                    <OptionGreeks symbol={selectedOption} />
+                    <OptionGreeks symbol={selectedETF} />
                 </Stack>
             </Stack>
         </Stack>

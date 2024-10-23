@@ -11,7 +11,7 @@ class FutureDataProvider implements IFutureDataProvider {
             throw new Error('Failed to fetch futures');
         }
         return response.json();
-        // return ["IO2410", "IO2411", "IO2412", "HO2410", "HO2411", "HO2412"];
+        // return ["IF2411", "IF2412", "IF2501", "HF2410", "HF2411", "HF2412"];
     };
 }
 

@@ -30,23 +30,23 @@ ctp_manager = CTPManager()
 def init_ctp():
     # 初始化
     global ctp_manager
-    ctp_manager.connect_to_market_data()
+    ctp_manager.connect_to_cffex_market_data()
     time.sleep(3)
 
-    ctp_manager.connect_to_trader()
-    while not ctp_manager.trader_user_spi.login_finish:
+    ctp_manager.connect_to_cffex_trader()
+    while not ctp_manager.cffex_trader_user_spi.login_finish:
         time.sleep(3)
 
     # 查询合约
-    ctp_manager.query_instrument()
-    while not ctp_manager.trader_user_spi.query_finish:
+    ctp_manager.cffex_query_instrument()
+    while not ctp_manager.cffex_trader_user_spi.query_finish:
         time.sleep(3)
 
-    instrument_ids = list(ctp_manager.trader_user_spi.exchange_id.keys())
+    instrument_ids = list(ctp_manager.cffex_trader_user_spi.exchange_id.keys())
     print('当前订阅的合约数量为:{}'.format(len(instrument_ids)))
 
     # 初始化内存
-    ctp_manager.memory = MemoryManager(ctp_manager.trader_user_spi.expire_date)
+    ctp_manager.memory = MemoryManager(ctp_manager.cffex_trader_user_spi.expire_date)
 
     # 订阅合约
     ctp_manager.subscribe_market_data_in_batches(instrument_ids)
@@ -131,10 +131,12 @@ def get_all_market_data():
 
 @app.route('/api/options', methods=['GET'])
 def get_all_option():
+    print(f'get_all_option: {ctp_manager.memory.option_manager.index_option_month_forward_id}')
     return jsonify(ctp_manager.memory.option_manager.index_option_month_forward_id)
 
 @app.route('/api/futures', methods=['GET'])
 def get_all_future():
+    print(f'get_all_future: {ctp_manager.memory.future_manager.index_future_month_id}')
     return jsonify(ctp_manager.memory.future_manager.index_future_month_id)
 
 @app.route('/api/option/market_data', methods=['GET'])
