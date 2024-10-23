@@ -214,7 +214,7 @@ class OptionManager:
         strike_price_num = self.index_option_month_strike_num[index]
 
         if index == 1:
-            j = 22
+            j = 10
             print(f'underlying_price: {underlying_price}, strike_price: {strike_prices[j]}, remain_time: {remain_time}, volatility: {volatility}, wing model: {wing_model}')
         self.index_option_month_greeks[index, 0:strike_price_num, 1] = v_delta('c', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
         self.index_option_month_greeks[index, 0:strike_price_num, 2] = v_delta('p', underlying_price, strike_prices[0:strike_price_num], remain_time, INTEREST_RATE, volatility, DIVIDEND, wing_model[0], wing_model[1], wing_model[2])
@@ -254,11 +254,11 @@ class OptionManager:
             if -cut_point < x_distance <= 0:
                 x_array[j, 0] = x_distance * x_distance * sample_available[j]
                 x_array[j, 2] = x_distance * sample_available[j]
-                y_array[j] = sample_volatility[j] * sample_available[j]
+                y_array[j] = (sample_volatility[j] - volatility) * sample_available[j]
             elif 0 < x_distance <= cut_point:
                 x_array[j, 1] = x_distance * x_distance * sample_available[j]
                 x_array[j, 2] = x_distance * sample_available[j]
-                y_array[j] = sample_volatility[j] * sample_available[j]
+                y_array[j] = (sample_volatility[j] - volatility) * sample_available[j]
 
         # 参数估计
         para_array = np.dot(np.dot(np.linalg.inv(np.dot(np.transpose(x_array), x_array)), np.transpose(x_array)),y_array)
