@@ -1,6 +1,8 @@
 import time
 import numpy as np
 
+from model.ctp_manager import CTPManager
+from model.exchange.exchange_type import ExchangeType
 from model.response.option_market_resp import OptionMarketResp, OptionData
 from model.response.option_greeks import OptionGreeksData, OptionGreeksResp
 from model.response.option_resp_base import StrikePrices
@@ -8,8 +10,6 @@ from model.response.option_resp_base import StrikePrices
 np.set_printoptions(suppress=True)
 from threading import Thread
 
-from ctp.ctp_manager import CTPManager
-from memory.memory_manager import MemoryManager
 from flask import Flask, jsonify, render_template, send_from_directory, request
 
 app = Flask(__name__, static_folder='./frontend/build')
@@ -30,26 +30,43 @@ ctp_manager = CTPManager()
 def init_ctp():
     # 初始化
     global ctp_manager
-    ctp_manager.connect_to_cffex_market_data()
-    time.sleep(3)
 
-    ctp_manager.connect_to_cffex_trader()
-    while not ctp_manager.cffex_trader_user_spi.login_finish:
+    ctp_manager.set_user("config/test_config.ini")
+    user = ctp_manager.current_user
+
+    user.connect_exchange(ExchangeType.CFFEX.value)
+    while not ctp_manager.current_user.is_login(ExchangeType.CFFEX.value):
         time.sleep(3)
+
+    print(f'中金所登录成功')
+
+    user.connect_exchange(ExchangeType.SSEX.value)
+    while not ctp_manager.current_user.is_login(ExchangeType.SSEX.value):
+        time.sleep(3)
+
+    print(f'上交所登录成功')
 
     # 查询合约
-    ctp_manager.cffex_query_instrument()
-    while not ctp_manager.cffex_trader_user_spi.query_finish:
+    user.query_instrument(ExchangeType.CFFEX)
+    while not ctp_manager.current_user.is_query_finish(ExchangeType.CFFEX):
         time.sleep(3)
 
-    instrument_ids = list(ctp_manager.cffex_trader_user_spi.exchange_id.keys())
-    print('当前订阅的合约数量为:{}'.format(len(instrument_ids)))
+    instrument_ids = list(user.exchanges[ExchangeType.CFFEX].trader_user_spi.exchange_id.keys())
+    print('当前中金所订阅的合约数量为:{}'.format(len(instrument_ids)))
+
+
+    user.query_instrument(ExchangeType.SSEX)
+    while not ctp_manager.current_user.is_query_finish(ExchangeType.SSEX):
+        time.sleep(3)
+
+    instrument_ids = list(user.exchanges[ExchangeType.SSEX].trader_user_spi.exchange_id.keys())
+    print('当前上交所订阅的合约数量为:{}'.format(len(instrument_ids)))
 
     # 初始化内存
-    ctp_manager.memory = MemoryManager(ctp_manager.cffex_trader_user_spi.expire_date)
+    # ctp_manager.memory = MemoryManager(ctp_manager.cffex_trader_user_spi.expire_date)
 
     # 订阅合约
-    ctp_manager.subscribe_market_data_in_batches(instrument_ids)
+    # ctp_manager.subscribe_market_data_in_batches(instrument_ids)
 
 
 def main():
@@ -206,6 +223,6 @@ def get_option_greeks():
 if __name__ == "__main__":
     init_ctp()
     Thread(target=main).start()
-    app.run(debug=True, use_reloader=False)
+    # app.run(debug=True, use_reloader=False)
 
 

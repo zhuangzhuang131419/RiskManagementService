@@ -3,8 +3,9 @@ import copy
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField
-from config.config_manager import ConfigManager
 from helper.helper import *
+from model.order_info import OrderInfo
+
 
 class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     # 指数期货的品种列表
@@ -17,7 +18,7 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     expire_date = dict()
 
     # key: order_ref, value: order_info
-    order_map = dict()
+    order_map = {}
 
     front_id = None
     session_id = None
@@ -30,10 +31,10 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     query_finish = False
 
 
-    def __init__(self, trader_user_api):
+    def __init__(self, trader_user_api, config):
         super().__init__()
         self.trader_user_api = trader_user_api
-        self.login_info = ConfigManager().login_config
+        self.config = config
 
 
     def OnFrontConnected(self):
@@ -41,10 +42,10 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
         auth_field = ThostFtdcApi.CThostFtdcReqAuthenticateField()
 
 
-        auth_field.BrokerID = self.login_info.broker_id
-        auth_field.UserID = self.login_info.user_id
-        auth_field.Password = self.login_info.password
-        auth_field.AuthCode = self.login_info.auth_code
+        auth_field.BrokerID = self.config.broker_id
+        auth_field.UserID = self.config.user_id
+        auth_field.Password = self.config.password
+        auth_field.AuthCode = self.config.auth_code
 
         ret = self.trader_user_api.ReqAuthenticate(auth_field, 0)
         if ret == 0:
@@ -61,9 +62,9 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
 
             # 发送登录请求
             login_field = ThostFtdcApi.CThostFtdcReqUserLoginField()
-            login_field.BrokerID = self.login_info.broker_id
-            login_field.UserID = self.login_info.user_id
-            login_field.Password = self.login_info.password
+            login_field.BrokerID = self.config.broker_id
+            login_field.UserID = self.config.user_id
+            login_field.Password = self.config.password
 
             ret = self.trader_user_api.ReqUserLogin(login_field, 0)
             if ret == 0:
@@ -88,8 +89,8 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
             self.trading_day = pRspUserLogin.TradingDay
 
             pSettlementInfoConfirm = ThostFtdcApi.CThostFtdcSettlementInfoConfirmField()
-            pSettlementInfoConfirm.BrokerID = self.login_info.broker_id
-            pSettlementInfoConfirm.InvestorID = self.login_info.investor_id
+            pSettlementInfoConfirm.BrokerID = self.config.broker_id
+            pSettlementInfoConfirm.InvestorID = self.config.investor_id
             ret = self.trader_user_api.ReqSettlementInfoConfirm(pSettlementInfoConfirm, 0)
             if ret == 0:
                 print('发送结算单确认请求成功！')
@@ -136,6 +137,7 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
             # 报单已提交
             if pOrder.OrderStatus == 'a':
                 print('报单已提交')
+                self.order_map[pOrder.OrderRef] = OrderInfo(pOrder.OrderRef, None, self.front_id, self.session_id)
                 self.order_map[pOrder.OrderRef].pOrder = copy.copy(pOrder)
             # 未成交
             elif pOrder.OrderStatus == '3':

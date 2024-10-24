@@ -2,19 +2,16 @@ import copy
 
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
-from config.config_manager import ConfigManager
 from helper.helper import *
 from queue import Queue
 
 
 class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
 
-    def __init__(self, market_data_user_api):
+    def __init__(self, market_data_user_api, account_config):
         super().__init__()
-        self.config_manager = ConfigManager()
         self.market_data_user_api = market_data_user_api
-        self.login_info = self.config_manager.login_config
-
+        self.config = account_config
         self.market_data = Queue()
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
@@ -24,9 +21,9 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
 
         login_field = ThostFtdcApi.CThostFtdcReqUserLoginField()
 
-        login_field.BrokerID = self.login_info.broker_id
-        login_field.UserID = self.login_info.user_id
-        login_field.Password = self.login_info.password
+        login_field.BrokerID = self.config.broker_id
+        login_field.UserID = self.config.user_id
+        login_field.Password = self.config.password
 
         ret = self.market_data_user_api.ReqUserLogin(login_field, 0)
 
