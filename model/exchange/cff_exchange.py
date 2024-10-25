@@ -14,17 +14,15 @@ from model.order_info import OrderInfo
 
 
 class CFFExchange(Exchange, ABC):
-    def __init__(self, config: AccountConfig):
-        super().__init__(config)
-        self.type = ExchangeType.CFFEX
+    def __init__(self, config: AccountConfig, config_file_path: str):
+        super().__init__(config, config_file_path)
+        self.type = ExchangeType.CFFEX.value
         print(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
-        if not os.path.exists("../con_file/cffex"):
-            os.makedirs("../con_file/cffex")
 
     def connect_market_data(self):
         print("连接中金行情中心")
         # 创建API实例
-        self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi("../con_file/cffex")
+        self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
         self.market_data_user_spi = MarketData(self.market_data_user_api, self.config)
         # 连接行情前置服务器
@@ -35,7 +33,7 @@ class CFFExchange(Exchange, ABC):
 
     def connect_trader(self):
         print("连接中金交易中心")
-        self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi("../con_file/cffex")
+        self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
         self.trader_user_spi = Trader(self.trader_user_api, self.config)
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
         self.trader_user_api.RegisterFront(self.config.trade_server_front)

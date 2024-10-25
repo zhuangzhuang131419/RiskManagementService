@@ -8,12 +8,6 @@ from model.order_info import OrderInfo
 
 
 class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
-    # 指数期货的品种列表
-    Index_Future_ProductIDlist = ['IH', 'IF', 'IM']
-    # 指数期权的品种列表
-    Index_Option_ProductIDlist = ['HO', 'IO', 'MO']
-
-    sub_product_ids = Index_Future_ProductIDlist + Index_Option_ProductIDlist
     exchange_id = dict()
     expire_date = dict()
 
@@ -110,8 +104,11 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
     # 请求查询合约响应，当执行ReqQryInstrument后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINSTRUMENT.html
     def OnRspQryInstrument(self, pInstrument: "CThostFtdcInstrumentField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
-        for product_id in self.sub_product_ids:
-            if product_id in pInstrument.InstrumentID:
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+
+        if pInstrument is not None:
+            if is_index_future(pInstrument.InstrumentID) or is_index_option(pInstrument.InstrumentID):
                 self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
                 self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
 

@@ -7,7 +7,7 @@ from psutil import users
 from model.config.account_config import AccountConfig
 from model.exchange.cff_exchange import CFFExchange
 from model.exchange.exchange_type import ExchangeType
-from model.exchange.ss_exchange import SSExchange
+from model.exchange.ss_sz_exchange import SSSZExchange
 
 
 class User:
@@ -43,7 +43,7 @@ class User:
         # }
 
         for section in self.config.sections():
-            if section == ExchangeType.CFFEX.value or section == ExchangeType.SSEX.value:
+            if section == ExchangeType.CFFEX.value or section == ExchangeType.SSE.value or section == ExchangeType.SZSE.value:
                 self.accounts[section] = AccountConfig(
                     broker_name=self.config.get(section, 'BrokerName'),
                     broker_id=self.config.get(section, 'BrokerID'),
@@ -55,7 +55,7 @@ class User:
                     market_server_front=self.config.get(section, 'MarketServerFront'),
                     trade_server_front=self.config.get(section, 'TradeServerFront')
                 )
-        print(f'accounts={self.accounts}')
+        print(f'accounts={len(self.accounts)}')
 
     def query_instrument(self, account_id: str):
         """
@@ -72,22 +72,38 @@ class User:
         exchange = None
 
         if account_id == ExchangeType.CFFEX.value:
-            exchange = CFFExchange(self.accounts[account_id])
-        elif account_id == ExchangeType.SSEX.value:
-            exchange = SSExchange(self.accounts[account_id])
+            exchange = CFFExchange(self.accounts[account_id], "conf/ss_sz/")
+        elif account_id == ExchangeType.SSE.value:
+            exchange = SSSZExchange(self.accounts[account_id], "conf/ss/", exchange_type=ExchangeType.SSE.value)
+        elif account_id == ExchangeType.SZSE.value:
+            exchange = SSSZExchange(self.accounts[account_id], "conf/sz/", exchange_type=ExchangeType.SZSE.value)
 
-        print(f'exchange{exchange}')
         self.exchanges[account_id] = exchange
+        # print(f'共需要连接{len(self.exchanges)}个交易所')
         exchange.connect_market_data()
         exchange.connect_trader()
 
-        print(f'Exchanges = {self.exchanges}')
-
-    def is_login(self, account_id: str):
+    def is_login(self, account_id: str) -> bool:
         return self.exchanges[account_id].trader_user_spi.login_finish
 
-    def is_query_finish(self, account_id: str):
+    def is_query_finish(self, account_id: str) -> bool:
         return self.exchanges[account_id].trader_user_spi.query_finish
+
+    # 批量订阅
+    def subscribe_batches_market_data(self, account_id, instrument_ids: [str]):
+        print('开始订阅行情')
+
+        page_size = 100
+        for i in range(0, len(instrument_ids), page_size):
+            page = instrument_ids[i:i + page_size]  # 获取当前分页
+            self.subscribe_market_data(account_id, page)  # 处理当前分页的订阅
+
+        print('已发送全部订阅请求')
+
+    def subscribe_market_data(self, account_id: str, instrument_ids):
+        if account_id in self.exchanges:
+            exchange = self.exchanges[account_id]
+            exchange.subscribe_market_data(instrument_ids)
 
 
 

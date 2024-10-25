@@ -20,13 +20,35 @@ class CTPManager:
 
     current_user = None
 
+    users = {}
+
     def __init__(self):
         self.market_data = Queue()
+        self.init_user()
         if not os.path.exists(self.CONFIG_FILE_PATH):
             os.makedirs(self.CONFIG_FILE_PATH)
 
-    def set_user(self, config_path):
-        self.current_user = User(config_path)
+    def init_user(self):
+        user = User("config/test_config.ini")
+        self.users[user.user_id] = user
+
+    def switch_to_user(self, user_id: str):
+        self.current_user = self.users[user_id]
+        # self.current_user.connect_exchange(ExchangeType.CFFEX.value)
+        # while not self.current_user.is_login(ExchangeType.CFFEX.value):
+        #     time.sleep(3)
+        #
+        # print(f'中金所登录成功')
+
+        self.current_user.connect_exchange(ExchangeType.SSE.value)
+        while not self.current_user.is_login(ExchangeType.SSE.value):
+            time.sleep(3)
+
+        self.current_user.connect_exchange(ExchangeType.SZSE.value)
+        while not self.current_user.is_login(ExchangeType.SZSE.value):
+            time.sleep(3)
+
+        print(f'所有交易所登录成功！')
 
 
     def tick(self):

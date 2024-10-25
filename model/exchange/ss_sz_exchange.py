@@ -4,8 +4,8 @@ from abc import ABC
 
 from py_vollib.ref_python.black.greeks.analytical import theta
 
-from ctp.ssex.market_data import MarketData
-from ctp.ssex.trader import Trader
+from ctp.ss_sz.market_data import MarketData
+from ctp.ss_sz.trader import Trader
 from model.exchange.exchange import Exchange
 from api_ssex import ThostFtdcApiSOpt
 from helper.helper import judge_ret
@@ -14,18 +14,16 @@ from model.exchange.exchange_type import ExchangeType
 from model.order_info import OrderInfo
 
 
-class SSExchange(Exchange, ABC):
-    def __init__(self, config):
-        super().__init__(config)
-        self.type = ExchangeType.SSEX
+class SSSZExchange(Exchange, ABC):
+    def __init__(self, config, config_file_path, exchange_type):
+        super().__init__(config, config_file_path)
+        self.exchange_type = exchange_type
         print(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
-        if not os.path.exists("../con_file/ssex"):
-            os.makedirs("../con_file/ssex")
 
     def connect_market_data(self):
-        print("连接上交行情中心")
+        print(f"连接{self.exchange_type}行情中心")
         # 创建API实例
-        self.market_data_user_api = ThostFtdcApiSOpt.CThostFtdcMdApi_CreateFtdcMdApi("../con_file/ssex")
+        self.market_data_user_api = ThostFtdcApiSOpt.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
         self.market_data_user_spi = MarketData(self.market_data_user_api, self.config)
         # 连接行情前置服务器
@@ -35,9 +33,10 @@ class SSExchange(Exchange, ABC):
         self.market_data_user_api.Init()
 
     def connect_trader(self):
-        print("连接上交交易中心")
-        self.trader_user_api = ThostFtdcApiSOpt.CThostFtdcTraderApi_CreateFtdcTraderApi("../con_file/ssex")
+        print(f"连接{self.exchange_type}交易中心")
+        self.trader_user_api = ThostFtdcApiSOpt.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
         self.trader_user_spi = Trader(self.trader_user_api, self.config)
+
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
         self.trader_user_api.RegisterFront(self.config.trade_server_front)
 
@@ -50,10 +49,20 @@ class SSExchange(Exchange, ABC):
         self.trader_user_api.Init()
 
     def query_instrument(self):
-        print("查询上交合约")
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInstrumentField()
-        query_file.ExchangeID = ExchangeType.SSEX
-        self.trader_user_api.ReqQryInstrument(query_file, 0)
+        query_file.ExchangeID = self.exchange_type
+        ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
+        if ret == 0:
+            print('发送查询合约成功！')
+        else:
+            print('发送查询合约失败！')
+            judge_ret(ret)
+            while ret != 0:
+                query_file = ThostFtdcApiSOpt.CThostFtdcQryInstrumentField()
+                ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
+                print('正在查询合约...')
+                time.sleep(5)
+        time.sleep(1)
 
     def insert_order(self, code: str, direction: Direction, price, volume, strategy_id=0):
         order_field = ThostFtdcApiSOpt.CThostFtdcInputOrderField()

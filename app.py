@@ -2,6 +2,7 @@ import time
 import numpy as np
 
 from model.ctp_manager import CTPManager
+from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
 from model.response.option_market_resp import OptionMarketResp, OptionData
 from model.response.option_greeks import OptionGreeksData, OptionGreeksResp
@@ -31,57 +32,57 @@ def init_ctp():
     # 初始化
     global ctp_manager
 
-    ctp_manager.set_user("config/test_config.ini")
+    ctp_manager.switch_to_user("test123")
     user = ctp_manager.current_user
 
-    user.connect_exchange(ExchangeType.CFFEX.value)
-    while not ctp_manager.current_user.is_login(ExchangeType.CFFEX.value):
+
+    # # 查询合约
+    # user.query_instrument(ExchangeType.CFFEX.value)
+    # while not ctp_manager.current_user.is_query_finish(ExchangeType.CFFEX.value):
+    #     time.sleep(3)
+    #
+    # cffex_instrument_ids = list(user.exchanges[ExchangeType.CFFEX.value].trader_user_spi.exchange_id.keys())
+    # print('当前中金所订阅的合约数量为:{}'.format(len(cffex_instrument_ids)))
+
+    # user.subscribe_market_data(ExchangeType.CFFEX.value, cffex_instrument_ids)
+
+
+    user.query_instrument(ExchangeType.SSE.value)
+    while not ctp_manager.current_user.is_query_finish(ExchangeType.SSE.value):
         time.sleep(3)
 
-    print(f'中金所登录成功')
+    ssex_instrument_ids = list(user.exchanges[ExchangeType.SSE.value].trader_user_spi.exchange_id.keys())
+    print('当前上交所订阅的合约数量为:{}'.format(len(ssex_instrument_ids)))
+    print(f'{ssex_instrument_ids}')
 
-    user.connect_exchange(ExchangeType.SSEX.value)
-    while not ctp_manager.current_user.is_login(ExchangeType.SSEX.value):
+    user.subscribe_market_data(ExchangeType.SSE.value, ssex_instrument_ids)
+
+    user.query_instrument(ExchangeType.SZSE.value)
+    while not ctp_manager.current_user.is_query_finish(ExchangeType.SZSE.value):
         time.sleep(3)
-
-    print(f'上交所登录成功')
-
-    # 查询合约
-    user.query_instrument(ExchangeType.CFFEX)
-    while not ctp_manager.current_user.is_query_finish(ExchangeType.CFFEX):
-        time.sleep(3)
-
-    instrument_ids = list(user.exchanges[ExchangeType.CFFEX].trader_user_spi.exchange_id.keys())
-    print('当前中金所订阅的合约数量为:{}'.format(len(instrument_ids)))
-
-
-    user.query_instrument(ExchangeType.SSEX)
-    while not ctp_manager.current_user.is_query_finish(ExchangeType.SSEX):
-        time.sleep(3)
-
-    instrument_ids = list(user.exchanges[ExchangeType.SSEX].trader_user_spi.exchange_id.keys())
-    print('当前上交所订阅的合约数量为:{}'.format(len(instrument_ids)))
+    szsex_instrument_ids = list(user.exchanges[ExchangeType.SSE.value].trader_user_spi.exchange_id.keys())
+    print('当前深交所订阅的合约数量为:{}'.format(len(szsex_instrument_ids)))
+    print(f'{szsex_instrument_ids}')
+    # ssex_instrument_ids = list(user.exchanges[ExchangeType.SSE.value].trader_user_spi.exchange_id.keys())
+    # print('当前上交所订阅的合约数量为:{}'.format(len(ssex_instrument_ids)))
+    # print(f'{ssex_instrument_ids}')
 
     # 初始化内存
     # ctp_manager.memory = MemoryManager(ctp_manager.cffex_trader_user_spi.expire_date)
 
-    # 订阅合约
-    # ctp_manager.subscribe_market_data_in_batches(instrument_ids)
-
-
 def main():
-    print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.memory.future_manager.index_futures)))
-    print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.memory.option_manager.option_series_dict)))
-    print('当前订阅期货合约月份为：{}'.format(ctp_manager.memory.future_manager.index_future_month_id))
-    print('当前订阅期权合约月份为：{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_id))
-    print('当前订阅期权合约到期月为：{}'.format(ctp_manager.memory.option_manager.option_expired_date))
-    print('当前订阅期权合约剩余天数为：{}'.format(ctp_manager.memory.option_manager.index_option_remain_year))
-    print('当前订阅期权合约行权价为：{}'.format(ctp_manager.memory.option_manager.option_series_dict['HO2411'].strike_price_options.keys()))
-    # print('HO2410的看涨期权的第一个行权价的行权价：{}'.format(ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]))
-    # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
-    #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
-    Thread(target=ctp_manager.tick).start()
-    Thread(target=ctp_manager.memory.option_manager.index_volatility_calculator).start()
+    # print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.memory.future_manager.index_futures)))
+    # print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.memory.option_manager.option_series_dict)))
+    # print('当前订阅期货合约月份为：{}'.format(ctp_manager.memory.future_manager.index_future_month_id))
+    # print('当前订阅期权合约月份为：{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_id))
+    # print('当前订阅期权合约到期月为：{}'.format(ctp_manager.memory.option_manager.option_expired_date))
+    # print('当前订阅期权合约剩余天数为：{}'.format(ctp_manager.memory.option_manager.index_option_remain_year))
+    # print('当前订阅期权合约行权价为：{}'.format(ctp_manager.memory.option_manager.option_series_dict['HO2411'].strike_price_options.keys()))
+    # # print('HO2410的看涨期权的第一个行权价的行权价：{}'.format(ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]))
+    # # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
+    # #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
+    # Thread(target=ctp_manager.tick).start()
+    # Thread(target=ctp_manager.memory.option_manager.index_volatility_calculator).start()
 
 
     # print('HO2410的看涨期权的第一个行权价相关信息：{}'.format(
@@ -97,12 +98,12 @@ def main():
     # ctp_manager.query_investor_position_detail()
 
     while True:
-        k1_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 1]
-        k2_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 2]
-        k3_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 3]
-        k4_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 4]
-        atm_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 5]
-        atm_vega = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 6]
+        # k1_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 1]
+        # k2_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 2]
+        # k3_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 3]
+        # k4_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 4]
+        # atm_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 5]
+        # atm_vega = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 6]
         # print(f'HO2410的atm相关信息：k1_volatility: {k1_volatility}, k2_volatility: {k2_volatility}, k3_volatility: {k3_volatility}, k4_volatility: {k4_volatility}, atm_volatility: {atm_volatility}, atm_vega: {atm_vega}')
 
 
@@ -121,18 +122,18 @@ def main():
         # ask_price = ctp_manager.memory.option_manager.index_option_market_data[1, 1, strike_index, 4]
         # ask_volume = ctp_manager.memory.option_manager.index_option_market_data[1, 1, strike_index, 5]
         # print(f'HO2411的看跌期权的第23个行权价相关信息：行权价{strike_price}, 时间{timestamp}, 买一价{bid_price}, 买一量{bid_volume}, 卖一价{ask_price}, 卖一量{ask_volume}')
-        i = 0
-        call_delta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 1]
-        put_delta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 2]
-        gamma = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 3]
-        vega = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 4]
-        call_theta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 5]
-        put_theta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 6]
-        vanna_vs = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 7]
-        vanna_sv = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 8]
-        print(f'HO2411的看涨期权的第一个行权价Greeks相关信息：delta{call_delta}, gamma{gamma}, vega{vega}, theta{call_theta}')
-        print(
-            f'HO2411的看跌期权的第一个行权价Greeks相关信息：delta{put_delta}, gamma{gamma}, vega{vega}, theta{put_theta}')
+        # i = 0
+        # call_delta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 1]
+        # put_delta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 2]
+        # gamma = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 3]
+        # vega = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 4]
+        # call_theta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 5]
+        # put_theta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 6]
+        # vanna_vs = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 7]
+        # vanna_sv = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 8]
+        # print(f'HO2411的看涨期权的第一个行权价Greeks相关信息：delta{call_delta}, gamma{gamma}, vega{vega}, theta{call_theta}')
+        # print(
+        #     f'HO2411的看跌期权的第一个行权价Greeks相关信息：delta{put_delta}, gamma{gamma}, vega{vega}, theta{put_theta}')
         # print('HO2410 期货价格:{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_price[0, :]))
         time.sleep(10)
 

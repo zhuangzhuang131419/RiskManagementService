@@ -23,6 +23,8 @@ def red_print(content):
 INDEX_FUTURE_PREFIXES = ['IH', 'IF', 'IM']
 # 指数期权的品种列表
 INDEX_OPTION_PREFIXES = ['HO', 'IO', 'MO']
+# ETF的品种列表
+
 
 OPTION_PUT_CALL_DICT = {'C': 0, 'P': 1}
 
@@ -43,6 +45,8 @@ def is_index_option(instrument_id: str) -> bool:
     :return: 是否是指数期权
     """
     return any(instrument_id.startswith(option_prefix) for option_prefix in INDEX_OPTION_PREFIXES) and validate_option_id(instrument_id)
+
+
 
 YEAR_TRADING_DAY=244
 #预定义到期时间组

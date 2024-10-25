@@ -4,8 +4,6 @@ from api_ssex import ThostFtdcApiSOpt
 from helper.helper import *
 
 class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
-    sub_product_ids = ["500", "300"]
-
     exchange_id = dict()
     expire_date = dict()
 
@@ -102,10 +100,13 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
     # 请求查询合约响应，当执行ReqQryInstrument后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINSTRUMENT.html
     def OnRspQryInstrument(self, pInstrument: "CThostFtdcInstrumentField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
-        for product_id in self.sub_product_ids:
-            if product_id in pInstrument.InstrumentID:
-                self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
-                self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+
+        if pInstrument is not None:
+            # if is_index_future(pInstrument.InstrumentID) or is_index_option(pInstrument.InstrumentID):
+            self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
+            self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
 
         if bIsLast:
             self.query_finish = True

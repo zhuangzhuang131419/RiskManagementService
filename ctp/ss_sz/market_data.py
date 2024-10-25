@@ -50,6 +50,7 @@ class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData):
         if is_index_future(pDepthMarketData.InstrumentID) or is_index_option(pDepthMarketData.InstrumentID):
+            print('SSEX OnRtnDepthMarketData')
             self.market_data.put(copy.copy(pDepthMarketData))
 
 
