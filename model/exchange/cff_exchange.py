@@ -16,7 +16,7 @@ from model.order_info import OrderInfo
 class CFFExchange(Exchange, ABC):
     def __init__(self, config: AccountConfig, config_file_path: str):
         super().__init__(config, config_file_path)
-        self.type = ExchangeType.CFFEX.value
+        self.type = ExchangeType.CFFEX
         print(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
 
     def connect_market_data(self):
@@ -32,7 +32,7 @@ class CFFExchange(Exchange, ABC):
         self.market_data_user_api.Init()
 
     def connect_trader(self):
-        print("连接中金交易中心")
+        print(f"连接{self.type.value}交易中心")
         self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
         self.trader_user_spi = Trader(self.trader_user_api, self.config)
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
@@ -118,7 +118,7 @@ class CFFExchange(Exchange, ABC):
     # 查询合约
     def query_instrument(self):
         query_file = ThostFtdcApi.CThostFtdcQryInstrumentField()
-        query_file.ExchangeID = self.type
+        query_file.ExchangeID = self.type.name
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
         if ret == 0:
             print('发送查询合约成功！')

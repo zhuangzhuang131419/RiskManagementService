@@ -24,14 +24,16 @@ INDEX_FUTURE_PREFIXES = ['IH', 'IF', 'IM']
 # 指数期权的品种列表
 INDEX_OPTION_PREFIXES = ['HO', 'IO', 'MO']
 # ETF的品种列表
+ETF_PREFIXES = ['510050', '510300', '510500', '159919', '159901']
 
 
 OPTION_PUT_CALL_DICT = {'C': 0, 'P': 1}
 
 INTEREST_RATE = 0.025
 DIVIDEND = 0
+TIMEOUT = 30
 
-def is_index_future(instrument_id: str) -> bool:
+def filter_index_future(instrument_id: str) -> bool:
     """
     :param instrument_id: 合约id
     :return: 是否是指数期货
@@ -39,13 +41,19 @@ def is_index_future(instrument_id: str) -> bool:
     return any(instrument_id.startswith(future_prefix) for future_prefix in INDEX_FUTURE_PREFIXES) and validate_future_id(instrument_id)
 
 # 判断合约是不是在option
-def is_index_option(instrument_id: str) -> bool:
+def filter_index_option(instrument_id: str) -> bool:
     """
     :param instrument_id: 合约id
     :return: 是否是指数期权
     """
     return any(instrument_id.startswith(option_prefix) for option_prefix in INDEX_OPTION_PREFIXES) and validate_option_id(instrument_id)
 
+def filter_etf(instrument_id: str) -> bool:
+    """
+    :param instrument_id: 合约id
+    :return: 是否是关注的期权
+    """
+    return any(instrument_id.startswith(etf_prefix) for etf_prefix in ETF_PREFIXES)
 
 
 YEAR_TRADING_DAY=244
@@ -87,9 +95,9 @@ def count_sundays(start_date, end_date):
     return sundays
 
 if __name__ == '__main__':
-    print(f'2503-P-4400:{is_index_option("2503-P-4400")}')
-    print(f'2503-P-4400:{is_index_future("2503-P-4400")}')
-    print(f'2412-C-3800:{is_index_future("2412-C-3800")}')
-    print(f'2412-C-3800:{is_index_option("2412-C-3800")}')
+    print(f'2503-P-4400:{filter_index_option("2503-P-4400")}')
+    print(f'2503-P-4400:{filter_index_future("2503-P-4400")}')
+    print(f'2412-C-3800:{filter_index_future("2412-C-3800")}')
+    print(f'2412-C-3800:{filter_index_option("2412-C-3800")}')
     print(validate_option_id("HO2412-C-3800"))
-    print(f'HO2412-C-3800:{is_index_option("HO2412-C-3800")}')
+    print(f'HO2412-C-3800:{filter_index_option("HO2412-C-3800")}')

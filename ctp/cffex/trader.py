@@ -108,7 +108,7 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
             print('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
         if pInstrument is not None:
-            if is_index_future(pInstrument.InstrumentID) or is_index_option(pInstrument.InstrumentID):
+            if filter_index_future(pInstrument.InstrumentID) or filter_index_option(pInstrument.InstrumentID):
                 self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
                 self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
 

@@ -4,6 +4,7 @@ import os
 
 from psutil import users
 
+from memory.memory_manager import MemoryManager
 from model.config.account_config import AccountConfig
 from model.exchange.cff_exchange import CFFExchange
 from model.exchange.exchange_type import ExchangeType
@@ -11,6 +12,11 @@ from model.exchange.ss_sz_exchange import SSSZExchange
 
 
 class User:
+
+    # 内存中心
+    memory : MemoryManager
+
+
     def __init__(self, config_path: str):
         self.config = configparser.ConfigParser()
 
@@ -24,7 +30,8 @@ class User:
             print(f"Error reading configuration file {config_path}: {e}")
             raise
         self.user_id = self.config.get('USER', 'UserID')
-        print(f'切换{self.user_id}')
+        self.user_name = self.config.get('USER', 'Name')
+        print(f'切换{self.user_name}')
         self.accounts = {}
         # accounts = {
         #   "CFFEX": {
@@ -43,7 +50,7 @@ class User:
         # }
 
         for section in self.config.sections():
-            if section == ExchangeType.CFFEX.value or section == ExchangeType.SSE.value or section == ExchangeType.SZSE.value:
+            if section == ExchangeType.CFFEX.name or section == ExchangeType.SSE.name or section == ExchangeType.SZSE.name:
                 self.accounts[section] = AccountConfig(
                     broker_name=self.config.get(section, 'BrokerName'),
                     broker_id=self.config.get(section, 'BrokerID'),
@@ -71,12 +78,12 @@ class User:
 
         exchange = None
 
-        if account_id == ExchangeType.CFFEX.value:
-            exchange = CFFExchange(self.accounts[account_id], "conf/ss_sz/")
-        elif account_id == ExchangeType.SSE.value:
-            exchange = SSSZExchange(self.accounts[account_id], "conf/ss/", exchange_type=ExchangeType.SSE.value)
-        elif account_id == ExchangeType.SZSE.value:
-            exchange = SSSZExchange(self.accounts[account_id], "conf/sz/", exchange_type=ExchangeType.SZSE.value)
+        if account_id == ExchangeType.CFFEX.name:
+            exchange = CFFExchange(self.accounts[account_id], "con_file/ss_sz/")
+        elif account_id == ExchangeType.SSE.name:
+            exchange = SSSZExchange(self.accounts[account_id], "con_file/ss/", exchange_type=ExchangeType.SSE)
+        elif account_id == ExchangeType.SZSE.name:
+            exchange = SSSZExchange(self.accounts[account_id], "con_file/sz/", exchange_type=ExchangeType.SZSE)
 
         self.exchanges[account_id] = exchange
         # print(f'共需要连接{len(self.exchanges)}个交易所')

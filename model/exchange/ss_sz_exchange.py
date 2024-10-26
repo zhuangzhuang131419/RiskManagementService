@@ -15,13 +15,13 @@ from model.order_info import OrderInfo
 
 
 class SSSZExchange(Exchange, ABC):
-    def __init__(self, config, config_file_path, exchange_type):
+    def __init__(self, config, config_file_path, exchange_type: ExchangeType):
         super().__init__(config, config_file_path)
-        self.exchange_type = exchange_type
+        self.type = exchange_type
         print(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
 
     def connect_market_data(self):
-        print(f"连接{self.exchange_type}行情中心")
+        print(f"连接{self.type.value}行情中心")
         # 创建API实例
         self.market_data_user_api = ThostFtdcApiSOpt.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
@@ -33,7 +33,7 @@ class SSSZExchange(Exchange, ABC):
         self.market_data_user_api.Init()
 
     def connect_trader(self):
-        print(f"连接{self.exchange_type}交易中心")
+        print(f"连接{self.type.value}交易中心")
         self.trader_user_api = ThostFtdcApiSOpt.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
         self.trader_user_spi = Trader(self.trader_user_api, self.config)
 
@@ -50,7 +50,7 @@ class SSSZExchange(Exchange, ABC):
 
     def query_instrument(self):
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInstrumentField()
-        query_file.ExchangeID = self.exchange_type
+        query_file.ExchangeID = self.type.name
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
         if ret == 0:
             print('发送查询合约成功！')

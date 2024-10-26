@@ -1,12 +1,14 @@
 import time
 import numpy as np
 
+from memory.memory_manager import MemoryManager
 from model.ctp_manager import CTPManager
 from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
 from model.response.option_market_resp import OptionMarketResp, OptionData
 from model.response.option_greeks import OptionGreeksData, OptionGreeksResp
 from model.response.option_resp_base import StrikePrices
+from model.response.user import UserResp
 
 np.set_printoptions(suppress=True)
 from threading import Thread
@@ -31,44 +33,8 @@ ctp_manager = CTPManager()
 def init_ctp():
     # 初始化
     global ctp_manager
-
     ctp_manager.switch_to_user("test123")
-    user = ctp_manager.current_user
 
-
-    # # 查询合约
-    # user.query_instrument(ExchangeType.CFFEX.value)
-    # while not ctp_manager.current_user.is_query_finish(ExchangeType.CFFEX.value):
-    #     time.sleep(3)
-    #
-    # cffex_instrument_ids = list(user.exchanges[ExchangeType.CFFEX.value].trader_user_spi.exchange_id.keys())
-    # print('当前中金所订阅的合约数量为:{}'.format(len(cffex_instrument_ids)))
-
-    # user.subscribe_market_data(ExchangeType.CFFEX.value, cffex_instrument_ids)
-
-
-    user.query_instrument(ExchangeType.SSE.value)
-    while not ctp_manager.current_user.is_query_finish(ExchangeType.SSE.value):
-        time.sleep(3)
-
-    ssex_instrument_ids = list(user.exchanges[ExchangeType.SSE.value].trader_user_spi.exchange_id.keys())
-    print('当前上交所订阅的合约数量为:{}'.format(len(ssex_instrument_ids)))
-    print(f'{ssex_instrument_ids}')
-
-    user.subscribe_market_data(ExchangeType.SSE.value, ssex_instrument_ids)
-
-    user.query_instrument(ExchangeType.SZSE.value)
-    while not ctp_manager.current_user.is_query_finish(ExchangeType.SZSE.value):
-        time.sleep(3)
-    szsex_instrument_ids = list(user.exchanges[ExchangeType.SSE.value].trader_user_spi.exchange_id.keys())
-    print('当前深交所订阅的合约数量为:{}'.format(len(szsex_instrument_ids)))
-    print(f'{szsex_instrument_ids}')
-    # ssex_instrument_ids = list(user.exchanges[ExchangeType.SSE.value].trader_user_spi.exchange_id.keys())
-    # print('当前上交所订阅的合约数量为:{}'.format(len(ssex_instrument_ids)))
-    # print(f'{ssex_instrument_ids}')
-
-    # 初始化内存
-    # ctp_manager.memory = MemoryManager(ctp_manager.cffex_trader_user_spi.expire_date)
 
 def main():
     # print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.memory.future_manager.index_futures)))
@@ -142,6 +108,14 @@ def main():
 def index():
     return render_template('index.html')
 
+@app.route('/api/users')
+def get_users():
+    result = []
+    for user in ctp_manager.users:
+        resp = UserResp(user.user_id, user.user_name)
+        result.append(resp)
+    return jsonify(result)
+
 @app.route('/api/get_all_market_data', methods=['GET'])
 def get_all_market_data():
     # 返回当前行情数据
@@ -149,19 +123,19 @@ def get_all_market_data():
 
 @app.route('/api/options', methods=['GET'])
 def get_all_option():
-    print(f'get_all_option: {ctp_manager.memory.option_manager.index_option_month_forward_id}')
-    return jsonify(ctp_manager.memory.option_manager.index_option_month_forward_id)
+    print(f'get_all_option: {ctp_manager.current_user.memory.option_manager.index_option_month_forward_id}')
+    return jsonify(ctp_manager.current_user.memory.option_manager.index_option_month_forward_id)
 
 @app.route('/api/futures', methods=['GET'])
 def get_all_future():
-    print(f'get_all_future: {ctp_manager.memory.future_manager.index_future_month_id}')
-    return jsonify(ctp_manager.memory.future_manager.index_future_month_id)
+    print(f'get_all_future: {ctp_manager.current_user.memory.future_manager.index_future_month_id}')
+    return jsonify(ctp_manager.current_user.memory.future_manager.index_future_month_id)
 
 @app.route('/api/option/market_data', methods=['GET'])
 def get_option_forward_price():
 
     symbol = request.args.get('symbol')
-    option_manager = ctp_manager.memory.option_manager
+    option_manager = ctp_manager.current_user.memory.option_manager
     resp = OptionMarketResp(symbol)
 
     try:
@@ -191,7 +165,7 @@ def get_option_forward_price():
 @app.route('/api/option/greeks', methods=['GET'])
 def get_option_greeks():
     symbol = request.args.get('symbol')
-    option_manager = ctp_manager.memory.option_manager
+    option_manager = ctp_manager.current_user.memory.option_manager
     resp = OptionGreeksResp(symbol)
 
     try:
@@ -224,6 +198,6 @@ def get_option_greeks():
 if __name__ == "__main__":
     init_ctp()
     Thread(target=main).start()
-    # app.run(debug=True, use_reloader=False)
+    app.run(debug=True, use_reloader=False)
 
 

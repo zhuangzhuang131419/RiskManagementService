@@ -12,6 +12,10 @@ class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
         self.market_data_user_api = market_data_user_api
         self.config = config
         self.market_data = Queue()
+        self.memory_manager = None
+
+    def set_memory_manager(self, memory_manager):
+        self.memory_manager = memory_manager
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
     def OnFrontConnected(self):
@@ -49,9 +53,9 @@ class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData):
-        if is_index_future(pDepthMarketData.InstrumentID) or is_index_option(pDepthMarketData.InstrumentID):
+        if filter_etf(pDepthMarketData.InstrumentID):
             print('SSEX OnRtnDepthMarketData')
-            self.market_data.put(copy.copy(pDepthMarketData))
+            self.memory_manager.market_data.put(copy.copy(pDepthMarketData))
 
 
 

@@ -7,9 +7,10 @@ import ScrollBox from './ScrollBox';
 import { symbolName } from 'typescript';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 import TopDataBar from './TopDataBar';
-import { TopBarData } from '../Model/Account';
+import { Account, TopBarData } from '../Model/Account';
 import { futureDataProvider } from '../DataProvider/FutureDataProvider';
 import { etfDataProvider } from '../DataProvider/ETFDataProvider';
+import { userDataProvider } from '../DataProvider/UserDataProvider';
 
 const stackStyles = {
     root: {
@@ -29,16 +30,15 @@ const TradingDashboard: React.FC = () => {
 
     const [selectedKey, setSelectedKey] = React.useState<string>('B'); // 设置默认选中 'B'
 
-    const accounts = [
+    const { data: userItems, isFetching: isUserFetching } = useQuery(
+        ['users'],
+        userDataProvider.fetchUsers,
         {
-            name: "账户一",
-            id: "account1"
-        },
-        {
-            name: "账户二",
-            id: "account2"
+            select(data) {
+                return data
+            },
         }
-    ];
+    );
 
     const { data: optionItems, isFetching: isOptionFetching } = useQuery(
         ['options'],
@@ -79,7 +79,9 @@ const TradingDashboard: React.FC = () => {
             {/* 顶部：账户选择器和数据展示 */}
             <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { alignItems: 'center' } }}>
                 <Stack.Item grow={1}>
-                    <AccountSelector accounts={accounts} onSelect={setSelectedAccount} />
+                    {!isUserFetching &&(
+                        <AccountSelector accounts={userItems as Account[]} onSelect={setSelectedAccount} />
+                    )}
                 </Stack.Item>
                 <Stack.Item grow={2}>
                     <TopDataBar data={topBarData} />

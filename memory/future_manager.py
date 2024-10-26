@@ -22,7 +22,7 @@ class FutureManager:
     def __init__(self, index_futures:[Future]):
         self.init_index_future_dict(index_futures)
         self.init_index_future_month_id()
-        self.init_index_option_market_data()
+        self.init_index_future_market_data()
 
     def init_index_future_dict(self, index_futures:[Future]):
         for future in index_futures:
@@ -39,7 +39,7 @@ class FutureManager:
             unique_month_ids.add(future_symbol)
         self.index_future_month_id = sorted(list(unique_month_ids))
 
-    def init_index_option_market_data(self):
+    def init_index_future_market_data(self):
         """
 
         :return:

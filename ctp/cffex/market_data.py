@@ -1,7 +1,7 @@
 import copy
 
 from api_cffex import ThostFtdcApi
-from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
+from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, CThostFtdcDepthMarketDataField
 from helper.helper import *
 from queue import Queue
 
@@ -13,6 +13,10 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
         self.market_data_user_api = market_data_user_api
         self.config = account_config
         self.market_data = Queue()
+        self.memory_manager = None
+
+    def set_memory_manager(self, memory_manager):
+        self.memory_manager = memory_manager
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
     def OnFrontConnected(self):
@@ -49,10 +53,11 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
         #         print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
 
     # 深度行情通知
-    def OnRtnDepthMarketData(self, pDepthMarketData):
-        if is_index_future(pDepthMarketData.InstrumentID) or is_index_option(pDepthMarketData.InstrumentID):
-            print('CFFEX OnRtnDepthMarketData')
-            self.market_data.put(copy.copy(pDepthMarketData))
+    def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
+        if filter_index_future(pDepthMarketData.InstrumentID) or filter_index_option(pDepthMarketData.InstrumentID):
+            if self.memory_manager:
+                self.memory_manager.market_data.put(copy.copy(pDepthMarketData))
+
 
 
 
