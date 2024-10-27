@@ -11,6 +11,8 @@ import { Account, TopBarData } from '../Model/Account';
 import { futureDataProvider } from '../DataProvider/FutureDataProvider';
 import { etfDataProvider } from '../DataProvider/ETFDataProvider';
 import { userDataProvider } from '../DataProvider/UserDataProvider';
+import WingModelBar from './WingModelBar';
+import { WingModelData } from '../Model/OptionData';
 
 const stackStyles = {
     root: {
@@ -58,9 +60,20 @@ const TradingDashboard: React.FC = () => {
         etfDataProvider.fetchFutureSymbols,
     );
 
+    const { data: wingModel, isFetching: isWingModelFetching } = useQuery(
+        ['wingModel', selectedOption],
+        () => optionDataProvider.fetchWingModelPara(selectedOption as string),
+        {
+            select(data) {
+                const wingModelData: WingModelData[] = [data]
+                return wingModelData
+            },
+        }
+    );
+
     // console.log("optionItems" + optionItems)
 
-    const topBarData: TopBarData = {
+    const topBarData: TopBarData[] = [{
         greekLetters: {
             delta: 0.5,
             vega: 0.3,
@@ -70,7 +83,7 @@ const TradingDashboard: React.FC = () => {
         etfOptionCount: 80,
         futureCount: 50,
         cashCombined: 1000000,
-    };
+    }];
 
     return (
 
@@ -93,34 +106,43 @@ const TradingDashboard: React.FC = () => {
                 {/* 左侧：ScrollBox */}
                 <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
                     {!isOptionFetching && (
-                        <ScrollBox
-                            items={optionItems as string[]}
-                            onClick={setSelectedOption}
-                            renderItem={(item) => item as string}
-                            title='期权'
-                        />
+                        <Stack styles={{ root: { height: '30%' } }}>
+                            <ScrollBox
+                                items={optionItems as string[]}
+                                onClick={setSelectedOption}
+                                renderItem={(item) => item as string}
+                                title='期权'
+                            />
+                        </Stack>
                     )}
                     {!isFutureFetching && (
-                        <ScrollBox
-                            items={futureItems as string[]}
-                            onClick={setSelectedFuture}
-                            renderItem={(item) => item as string}
-                            title='期货'
-                        />
+                        <Stack styles={{ root: { height: '30%' } }}>
+                            <ScrollBox
+                                items={futureItems as string[]}
+                                onClick={setSelectedFuture}
+                                renderItem={(item) => item as string}
+                                title='期货'
+                            />
+                        </Stack> 
                     )}
                     {!isEtfFetching && (
-                        <ScrollBox
-                            items={etfItems as string[]}
-                            onClick={setSelectedETF}
-                            renderItem={(item) => item as string}
-                            title='ETF'
-                        />
+                        <Stack styles={{ root: { height: '30%' } }}>
+                            <ScrollBox
+                                items={etfItems as string[]}
+                                onClick={setSelectedETF}
+                                renderItem={(item) => item as string}
+                                title='ETF'
+                            />
+                        </Stack> 
                     )}
                 </Stack>
 
                 {/* 右侧：OptionGreeks */}
                 <Stack horizontal tokens={{ childrenGap: 10 }} grow={1} styles={{ root: { height: '100%' }}}>
-                    <OptionGreeks symbol={selectedOption} />
+                    <Stack>
+                        {!isWingModelFetching && (<WingModelBar data={wingModel as WingModelData[]}></WingModelBar>)}
+                        <OptionGreeks symbol={selectedOption} />
+                    </Stack>
                     <OptionGreeks symbol={selectedETF} />
                 </Stack>
             </Stack>

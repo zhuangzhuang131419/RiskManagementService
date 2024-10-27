@@ -1,6 +1,7 @@
 import copy
 
-from api_ssex import ThostFtdcApiSOpt
+from api_se import ThostFtdcApiSOpt
+from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField
 from helper.helper import *
 
 class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
@@ -44,7 +45,7 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             print('发送穿透式认证请求失败！')
             judge_ret(ret)
 
-    def OnRspAuthenticate(self, pRspAuthenticateField: "CThostFtdcRspAuthenticateField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspAuthenticate(self, pRspAuthenticateField: CThostFtdcRspAuthenticateField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo.ErrorID != 0 and pRspInfo is not None:
             print('穿透式认证失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
@@ -125,7 +126,7 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         else:
             print('下单成功, 风控通过')
 
-    def OnRtnOrder(self, pOrder: "CThostFtdcOrderField") -> "void":
+    def OnRtnOrder(self, pOrder: CThostFtdcOrderField) -> "void":
         try:
             # 报单已提交
             if pOrder.OrderStatus == 'a':

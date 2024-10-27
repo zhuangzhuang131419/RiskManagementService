@@ -10,13 +10,13 @@ interface ScrollBoxProps<T> {
 }
 
 const ScrollBox = <T extends unknown>({ items, onClick, renderItem, title }: ScrollBoxProps<T>) => {
-  // 自定义样式：只允许上下滚动
-  const scrollBoxStyle: React.CSSProperties = {
-    maxHeight: '100%', // 限制高度以产生滚动条
-    maxWidth: '100%',
-    overflowY: 'auto',  // 只允许上下滚动
-    overflowX: 'hidden', // 禁止左右滚动
-  };
+    // 自定义样式：只允许上下滚动
+    const scrollBoxStyle: React.CSSProperties = {
+        maxHeight: '100%', // 限制高度以产生滚动条
+        maxWidth: '100%',
+        overflowY: 'auto',  // 只允许上下滚动
+        overflowX: 'hidden', // 禁止左右滚动
+    };
 
     const columns: IColumn[] = [
         { 

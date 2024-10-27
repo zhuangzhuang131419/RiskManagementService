@@ -4,10 +4,10 @@ from abc import ABC
 
 from py_vollib.ref_python.black.greeks.analytical import theta
 
-from ctp.ss_sz.market_data import MarketData
-from ctp.ss_sz.trader import Trader
+from ctp.se.market_data import MarketData
+from ctp.se.trader import Trader
 from model.exchange.exchange import Exchange
-from api_ssex import ThostFtdcApiSOpt
+from api_se import ThostFtdcApiSOpt
 from helper.helper import judge_ret
 from model.direction import Direction
 from model.exchange.exchange_type import ExchangeType

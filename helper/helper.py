@@ -31,7 +31,7 @@ OPTION_PUT_CALL_DICT = {'C': 0, 'P': 1}
 
 INTEREST_RATE = 0.025
 DIVIDEND = 0
-TIMEOUT = 30
+TIMEOUT = 15
 
 def filter_index_future(instrument_id: str) -> bool:
     """

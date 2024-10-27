@@ -9,6 +9,7 @@ from model.response.option_market_resp import OptionMarketResp, OptionData
 from model.response.option_greeks import OptionGreeksData, OptionGreeksResp
 from model.response.option_resp_base import StrikePrices
 from model.response.user import UserResp
+from model.response.wing_model_resp import WingModelResp
 
 np.set_printoptions(suppress=True)
 from threading import Thread
@@ -37,18 +38,18 @@ def init_ctp():
 
 
 def main():
-    # print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.memory.future_manager.index_futures)))
-    # print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.memory.option_manager.option_series_dict)))
-    # print('当前订阅期货合约月份为：{}'.format(ctp_manager.memory.future_manager.index_future_month_id))
-    # print('当前订阅期权合约月份为：{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_id))
-    # print('当前订阅期权合约到期月为：{}'.format(ctp_manager.memory.option_manager.option_expired_date))
-    # print('当前订阅期权合约剩余天数为：{}'.format(ctp_manager.memory.option_manager.index_option_remain_year))
-    # print('当前订阅期权合约行权价为：{}'.format(ctp_manager.memory.option_manager.option_series_dict['HO2411'].strike_price_options.keys()))
-    # # print('HO2410的看涨期权的第一个行权价的行权价：{}'.format(ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]))
-    # # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
-    # #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
-    # Thread(target=ctp_manager.tick).start()
-    # Thread(target=ctp_manager.memory.option_manager.index_volatility_calculator).start()
+    print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures)))
+    print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
+    print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.memory.future_manager.index_future_month_id))
+    print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
+    print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_expired_date))
+    print('当前订阅期权合约剩余天数为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_remain_year))
+    print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO2411'].strike_price_options.keys()))
+    # print('HO2410的看涨期权的第一个行权价的行权价：{}'.format(ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]))
+    # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
+    #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
+    Thread(target=ctp_manager.tick).start()
+    Thread(target=ctp_manager.current_user.memory.cffex_option_manager.index_volatility_calculator).start()
 
 
     # print('HO2410的看涨期权的第一个行权价相关信息：{}'.format(
@@ -111,9 +112,9 @@ def index():
 @app.route('/api/users')
 def get_users():
     result = []
-    for user in ctp_manager.users:
+    for user in ctp_manager.users.values():
         resp = UserResp(user.user_id, user.user_name)
-        result.append(resp)
+        result.append(resp.to_dict())
     return jsonify(result)
 
 @app.route('/api/get_all_market_data', methods=['GET'])
@@ -123,49 +124,49 @@ def get_all_market_data():
 
 @app.route('/api/options', methods=['GET'])
 def get_all_option():
-    print(f'get_all_option: {ctp_manager.current_user.memory.option_manager.index_option_month_forward_id}')
-    return jsonify(ctp_manager.current_user.memory.option_manager.index_option_month_forward_id)
+    #print(f'get_all_option: {ctp_manager.current_user.memory.option_manager.index_option_month_forward_id}')
+    return jsonify(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id)
 
 @app.route('/api/futures', methods=['GET'])
 def get_all_future():
-    print(f'get_all_future: {ctp_manager.current_user.memory.future_manager.index_future_month_id}')
+    # print(f'get_all_future: {ctp_manager.current_user.memory.future_manager.index_future_month_id}')
     return jsonify(ctp_manager.current_user.memory.future_manager.index_future_month_id)
 
-@app.route('/api/option/market_data', methods=['GET'])
-def get_option_forward_price():
-
-    symbol = request.args.get('symbol')
-    option_manager = ctp_manager.current_user.memory.option_manager
-    resp = OptionMarketResp(symbol)
-
-    try:
-        # 获取 symbol 对应的 index
-        symbol_index = option_manager.index_option_month_forward_id.index(symbol)
-    except ValueError:
-        return jsonify({"error": f"Symbol {symbol} not found"}), 404
-
-    strike_num = option_manager.index_option_month_strike_num[symbol_index]
-
-    for i in range(strike_num):
-        bid = option_manager.index_option_market_data[symbol_index, 0, i, 2]
-        bid_volume = option_manager.index_option_market_data[symbol_index, 0, i, 3]
-        ask = option_manager.index_option_market_data[symbol_index, 0, i, 4]
-        ask_volume = option_manager.index_option_market_data[symbol_index, 0, i, 5]
-        call_option = OptionData(bid, bid_volume, ask, ask_volume)
-
-        bid = option_manager.index_option_market_data[symbol_index, 1, i, 2]
-        bid_volume = option_manager.index_option_market_data[symbol_index, 1, i, 3]
-        ask = option_manager.index_option_market_data[symbol_index, 1, i, 4]
-        ask_volume = option_manager.index_option_market_data[symbol_index, 1, i, 5]
-        put_option = OptionData(bid, bid_volume, ask, ask_volume)
-        resp.strike_prices[option_manager.index_option_market_data[symbol_index, 0, i, 0]] = StrikePrices(call_option, put_option)
-
-    return jsonify(resp.to_dict())
+# @app.route('/api/option/market_data', methods=['GET'])
+# def get_option_forward_price():
+#
+#     symbol = request.args.get('symbol')
+#     option_manager = ctp_manager.current_user.memory.cffex_option_manager
+#     resp = OptionMarketResp(symbol)
+#
+#     try:
+#         # 获取 symbol 对应的 index
+#         symbol_index = option_manager.index_option_month_forward_id.index(symbol)
+#     except ValueError:
+#         return jsonify({"error": f"Symbol {symbol} not found"}), 404
+#
+#     strike_num = option_manager.index_option_month_strike_num[symbol_index]
+#
+#     for i in range(strike_num):
+#         bid = option_manager.index_option_market_data[symbol_index, 0, i, 2]
+#         bid_volume = option_manager.index_option_market_data[symbol_index, 0, i, 3]
+#         ask = option_manager.index_option_market_data[symbol_index, 0, i, 4]
+#         ask_volume = option_manager.index_option_market_data[symbol_index, 0, i, 5]
+#         call_option = OptionData(bid, bid_volume, ask, ask_volume)
+#
+#         bid = option_manager.index_option_market_data[symbol_index, 1, i, 2]
+#         bid_volume = option_manager.index_option_market_data[symbol_index, 1, i, 3]
+#         ask = option_manager.index_option_market_data[symbol_index, 1, i, 4]
+#         ask_volume = option_manager.index_option_market_data[symbol_index, 1, i, 5]
+#         put_option = OptionData(bid, bid_volume, ask, ask_volume)
+#         resp.strike_prices[option_manager.index_option_market_data[symbol_index, 0, i, 0]] = StrikePrices(call_option, put_option)
+#
+#     return jsonify(resp.to_dict())
 
 @app.route('/api/option/greeks', methods=['GET'])
 def get_option_greeks():
     symbol = request.args.get('symbol')
-    option_manager = ctp_manager.current_user.memory.option_manager
+    option_manager = ctp_manager.current_user.memory.cffex_option_manager
     resp = OptionGreeksResp(symbol)
 
     try:
@@ -177,22 +178,33 @@ def get_option_greeks():
     strike_num = option_manager.index_option_month_strike_num[symbol_index]
 
     with option_manager.greeks_lock:
-        for i in range(strike_num):
-            call_delta = option_manager.index_option_month_greeks[symbol_index, i, 1]
-            put_delta = option_manager.index_option_month_greeks[symbol_index, i, 2]
-            gamma = option_manager.index_option_month_greeks[symbol_index, i, 3]
-            vega = option_manager.index_option_month_greeks[symbol_index, i, 4]
-            call_theta = option_manager.index_option_month_greeks[symbol_index, i, 5]
-            put_theta = option_manager.index_option_month_greeks[symbol_index, i, 6]
-            vanna_vs = option_manager.index_option_month_greeks[symbol_index, i, 7]
-            vanna_sv = option_manager.index_option_month_greeks[symbol_index, i, 8]
 
-            call_option = OptionGreeksData(call_delta, gamma, vega, call_theta)
-            put_option = OptionGreeksData(put_delta, gamma, vega, put_theta)
-            resp.strike_prices[option_manager.index_option_month_greeks[symbol_index, i, 0]] = StrikePrices(call_option, put_option)
+        for strike_price, option_tuple in option_manager.option_series_dict[symbol].strike_price_options.items():
+            call_delta = option_tuple.call.greeks.delta
+            put_delta = option_tuple.put.greeks.delta
+            gamma = option_tuple.call.greeks.gamma
+            vega = option_tuple.call.greeks.vega
+            call_theta = option_tuple.call.greeks.theta
+            put_theta = option_tuple.put.greeks.theta
+            vanna_vs = option_tuple.call.greeks.vanna_vs
+            vanna_sv = option_tuple.call.greeks.vanna_sv
+            call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
+            put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
+            resp.strike_prices[strike_price] = StrikePrices(call_option, put_option)
 
     print(resp.to_dict())
     return jsonify(resp.to_dict())
+
+@app.route('/api/option/wing_model', methods=['GET'])
+def get_wing_model():
+    symbol = request.args.get('symbol')
+    wing_model_para = ctp_manager.current_user.memory.cffex_option_manager.option_series_dict[symbol].wing_model_para
+    atm_volatility = ctp_manager.current_user.memory.cffex_option_manager.option_series_dict[symbol].atm_volatility
+    resp = WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)
+    return jsonify(resp.to_dict())
+
+
+
 
 
 if __name__ == "__main__":

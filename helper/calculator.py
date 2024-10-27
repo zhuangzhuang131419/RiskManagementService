@@ -44,7 +44,7 @@ def calculate_x_distance(S, K, t, r, v, q):
     return x_distance
 
 
-def calculate_imply_volatility(option_type: str, underlying_price, strike_price, remaining_year: float, interest_rate: float, option_price, dividend_rate) -> float:
+def calculate_imply_volatility(option_type, underlying_price, strike_price, remaining_year: float, interest_rate: float, option_price, dividend_rate):
     """
     计算期权的隐含波动率。
 
@@ -63,7 +63,7 @@ def calculate_imply_volatility(option_type: str, underlying_price, strike_price,
     """
     try:
         # 计算隐含波动率，忽略计算中的错误
-        volatility = py_vollib_vectorized.vectorized_implied_volatility(price=option_price, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, flag=option_type, q=dividend_rate, model='black_scholes_merton', return_as='numpy', on_error='ignore')
+        volatility = py_vollib_vectorized.vectorized_implied_volatility(price=option_price, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, flag=option_type, q=dividend_rate, model='black_scholes_merton', return_as='array', on_error='ignore')[0]
 
         # 只返回大于 0 的波动率
         if volatility > 0:
@@ -72,26 +72,26 @@ def calculate_imply_volatility(option_type: str, underlying_price, strike_price,
             return -1
     except Exception as e:
         # 捕获任何异常并返回 None
-        print(f"Error calculating implied volatility: {e}\n price = {option_price}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n")
+        print(f"Error calculating implied volatility: {e}\n price = {option_price}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n flag = {option_type}")
         return -1
 
-def calculate_delta(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
+def calculate_delta(option_type: str, underlying_price: float, strike_price, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
     try:
-        delta = py_vollib_vectorized.vectorized_delta(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='numpy')
+        delta = py_vollib_vectorized.vectorized_delta(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='array')[0]
         return delta
     except Exception as e:
-        print(f"Error calculating delta: {e}")
+        print(f"Error calculating delta: {e}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n flag = {option_type}")
 
 def calculate_gamma(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
     try:
-        gamma = py_vollib_vectorized.vectorized_gamma(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='numpy')
+        gamma = py_vollib_vectorized.vectorized_gamma(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='array')[0]
         return gamma
     except Exception as e:
         print(f"Error calculating gamma: {e}")
 
-def calculate_vega(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, option_price: float, dividend_rate: float):
+def calculate_vega(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
     try:
-        vega = py_vollib_vectorized.vectorized_vega(option_type, underlying_price, strike_price, remaining_year, interest_rate, option_type, q=dividend_rate, model='black_scholes_merton', return_as='numpy')
+        vega = py_vollib_vectorized.vectorized_vega(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='array')[0]
         return vega
     except Exception as e:
         print(f"Error calculating vega: {e}")
@@ -103,5 +103,8 @@ def estimate_atm_volatility(strike_price_list: np.ndarray, volatility_list: np.n
     para = np.matmul(inverse, volatility_list)
     # 将当前价格 price 代入拟合的二次多项式
     return np.dot(np.array([1, price, price * price]), para)
+
+def is_close(a, b, precision=3):
+    return round(a, precision) == round(b, precision)
 
 

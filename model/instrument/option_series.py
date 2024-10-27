@@ -1,4 +1,7 @@
-from model.instrument.option import Option
+from model.instrument.option import Option, OptionTuple
+from model.memory.atm_volatility import ATMVolatility
+from model.memory.imply_price import ImplyPrice
+from model.memory.wing_model_para import WingModelPara
 
 
 class OptionSeries:
@@ -17,17 +20,25 @@ class OptionSeries:
 
         for option in options:
             if option.strike_price not in self.strike_price_options:
-                self.strike_price_options[option.strike_price] = [None, None]
+                self.strike_price_options[option.strike_price] = OptionTuple()
 
             if option.is_call_option():
-                self.strike_price_options[option.strike_price][self.CALL] = option
+                self.strike_price_options[option.strike_price].set_call(option)
             elif option.is_put_option():
-                self.strike_price_options[option.strike_price][self.PUT] = option
+                self.strike_price_options[option.strike_price].set_put(option)
 
-        self.strike_price_options = dict(sorted(self.strike_price_options.items()))
+        # self.strike_price_options = dict(sorted(self.strike_price_options.items()))
+
+        # 数据结构
+        self.imply_price = ImplyPrice()
+        self.atm_volatility = ATMVolatility()
+        self.wing_model_para = WingModelPara()
 
     def get_option(self, strike_price, is_put):
-        return self.strike_price_options[strike_price][is_put]
+        if is_put:
+            return self.strike_price_options[strike_price].put
+        else:
+            return self.strike_price_options[strike_price].call
 
     def get_all_options(self):
         """

@@ -26,10 +26,14 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
                         callGamma: strikeData.call_option.gamma,
                         callVega: strikeData.call_option.vega,
                         callTheta: strikeData.call_option.theta,
+                        callVanna_sv: strikeData.call_option.vanna_sv,
+                        callVanna_vs: strikeData.call_option.vanna_vs,
                         putDelta: strikeData.put_option.delta,
                         putGamma: strikeData.put_option.gamma,
                         putVega: strikeData.put_option.vega,
                         putTheta: strikeData.put_option.theta,
+                        putVanna_sv: strikeData.put_option.vanna_sv,
+                        putVanna_vs: strikeData.put_option.vanna_vs,
                     };
                 });
 
@@ -55,16 +59,14 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
 
     // 设置列
     const columns: IColumn[] = [
-        
-        { key: 'callDelta', name: 'Call Delta', fieldName: 'callDelta', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'callGamma', name: 'Call Gamma', fieldName: 'callGamma', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'callVega', name: 'Call Vega', fieldName: 'callVega', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'callTheta', name: 'Call Theta', fieldName: 'callTheta', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'strikePrice', name: 'Strike Price', fieldName: 'strikePrice', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'callDelta', name: 'Call Delta', fieldName: 'callDelta', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'putDelta', name: 'Put Delta', fieldName: 'putDelta', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'putGamma', name: 'Put Gamma', fieldName: 'putGamma', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'putVega', name: 'Put Vega', fieldName: 'putVega', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'vega', name: 'Vega', fieldName: 'callVega', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'callTheta', name: 'Call Theta', fieldName: 'callTheta', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'putTheta', name: 'Put Theta', fieldName: 'putTheta', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'vanana_vs', name: 'Vanana vs', fieldName: 'callVanana_vs', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'vanana_sv', name: 'Vanana sv', fieldName: 'callVanana_sv', minWidth: 10, maxWidth: 80, isResizable: true },
     ];
 
     const scrollBoxStyles = {

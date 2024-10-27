@@ -1,6 +1,7 @@
 import copy
 
-from api_ssex import ThostFtdcApiSOpt
+from api_se import ThostFtdcApiSOpt
+from api_se.ThostFtdcApiSOpt import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
 from helper.helper import *
 from queue import Queue
 
@@ -37,7 +38,7 @@ class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
             judge_ret(ret)
 
     # ReqUserLogin
-    def OnRspUserLogin(self, pRspUserLogin: 'CThostFtdcRspUserLoginField', pRspInfo: 'CThostFtdcRspInfoField', nRequestID: 'int', bIsLast: 'bool') -> "void":
+    def OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         if pRspInfo.ErrorID != 0 and pRspInfo is not None:
             print('行情连接失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:

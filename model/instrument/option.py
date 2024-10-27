@@ -1,8 +1,9 @@
 import re
 
-from numba.cuda.libdevice import trunc
-
 from model.instrument.instrument import Instrument
+from model.memory.greeks import Greeks
+from model.memory.imply_price import ImplyPrice
+from model.memory.t_imply_volatility import TImplyVolatility
 
 
 def validate_option_id(instrument_id):
@@ -19,9 +20,11 @@ class Option(Instrument):
         if validate_option_id(instrument_id):
             self.symbol = self.id.split('-')[0]
             self.option_type = self.id[7]
-            self.strike_price = self.id.split('-')[-1]
+            self.strike_price = float(self.id.split('-')[-1])
         else:
             raise ValueError(f'期权{instrument_id}不符合')
+
+        self.greeks = Greeks()
 
     def is_call_option(self):
         """判断是否为看涨期权"""
@@ -37,6 +40,21 @@ class Option(Instrument):
                 f"到期日期: {self.expired_date}\n"
                 f"期权类型: {self.option_type}\n"
                 f"行权价: {self.strike_price}")
+
+
+class OptionTuple:
+    def __init__(self):
+        self.call = None
+        self.put = None
+        self.imply_volatility = TImplyVolatility()
+
+    def set_call(self, call: Option):
+        self.call = call
+
+    def set_put(self, put: Option):
+        self.put = put
+
+
 
 if __name__ == '__main__':
     o = Option("IO2410-C-4100", "")

@@ -3,11 +3,13 @@ import time
 from queue import Queue
 from threading import Thread
 
+from helper.calculator import is_close
 from memory.memory_manager import MemoryManager
 from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
 from model.instrument.instrument import Future
 from model.instrument.option import Option
+from model.memory.market_data import MarketData
 from model.user import User
 from helper.helper import *
 
@@ -84,6 +86,7 @@ class CTPManager:
     def tick(self):
         while True:
             depth_market_date = self.current_user.memory.market_data.get(True)
+            # print(depth_market_date)
 
             # update_time = depth_market_date.UpdateTime
             instrument_id = depth_market_date.InstrumentID
@@ -91,27 +94,45 @@ class CTPManager:
 
             if filter_index_future(instrument_id) or filter_index_option(instrument_id):
                 market_data_list = [round(time.time()), depth_market_date.BidPrice1, depth_market_date.BidVolume1, depth_market_date.AskPrice1, depth_market_date.AskVolume1, 0]
+
+
                 for i, data in enumerate(market_data_list):
                     # 遍历所有的行情字段，判断是否double最大值
                     if (isinstance(data, int) or isinstance(data, float)) and (abs(data - 1.7976931348623157e+308) < 0.000001):
                         market_data_list[i] = -1
 
-                market_data_list = [market_data_list[0], round(market_data_list[1], 1), int(market_data_list[2]), round(market_data_list[3], 3), int(market_data_list[4]), 0]
+                # market_data_list = [market_data_list[0], round(market_data_list[1], 1), int(market_data_list[2]), round(market_data_list[3], 3), int(market_data_list[4]), 0]
+
+                market_data = MarketData()
+                market_data.time = market_data_list[0]
+                market_data.bid_price = round(market_data_list[1], 1)
+                market_data.bid_volume = int(market_data_list[2])
+                market_data.ask_price = round(market_data_list[3], 3)
+                market_data.ask_volume = int(market_data_list[4])
 
                 # 判断是否可交易
                 if depth_market_date.BidVolume1 >= 1 and depth_market_date.AskVolume1 >= 1 and depth_market_date.BidPrice1 > 0 and depth_market_date.AskPrice1 > 0:
                     market_data_list[5] = 1
+                    market_data.available = 1
                 else:
                     market_data_list[5] = 0
+                    market_data.available = 0
 
                 if filter_index_option(instrument_id):
                     # 导入期权行情
                     try:
                         o = Option(instrument_id, "")
-                        l1 = self.current_user.memory.option_manager.index_option_month_forward_id.index(o.symbol)
+                        l1 = self.current_user.memory.cffex_option_manager.index_option_month_forward_id.index(o.symbol)
                         l2 = OPTION_PUT_CALL_DICT[o.option_type]
-                        l3 = self.current_user.memory.option_manager.option_series_dict[o.symbol].get_all_strike_price().index(o.strike_price)
-                        self.current_user.memory.option_manager.index_option_market_data[l1, l2, l3, 1:7] = market_data_list[:6]
+                        l3 = self.current_user.memory.cffex_option_manager.option_series_dict[o.symbol].get_all_strike_price().index(o.strike_price)
+                        self.current_user.memory.cffex_option_manager.index_option_market_data[l1, l2, l3, 1:7] = market_data_list[:6]
+
+                        if OPTION_PUT_CALL_DICT[o.option_type] == 0:
+                            # call
+                            self.current_user.memory.cffex_option_manager.option_series_dict[o.symbol].strike_price_options[o.strike_price].call.market_data = market_data
+                        elif OPTION_PUT_CALL_DICT[o.option_type] == 1:
+                            # put
+                            self.current_user.memory.cffex_option_manager.option_series_dict[o.symbol].strike_price_options[o.strike_price].put.market_data = market_data
                     except ValueError as e:
                         print(f"ValueError: {e} - Couldn't find the symbol or strike price in the list. instrument: {instrument_id}")
                     except Exception as e:

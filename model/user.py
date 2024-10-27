@@ -8,13 +8,12 @@ from memory.memory_manager import MemoryManager
 from model.config.account_config import AccountConfig
 from model.exchange.cff_exchange import CFFExchange
 from model.exchange.exchange_type import ExchangeType
-from model.exchange.ss_sz_exchange import SSSZExchange
+from model.exchange.se_exchange import SSSZExchange
 
 
 class User:
 
-    # 内存中心
-    memory : MemoryManager
+
 
 
     def __init__(self, config_path: str):
@@ -64,6 +63,9 @@ class User:
                 )
         print(f'accounts={len(self.accounts)}')
 
+        # 内存中心
+        self.memory = None
+
     def query_instrument(self, account_id: str):
         """
         连接 account_id 对应的合约
@@ -79,7 +81,7 @@ class User:
         exchange = None
 
         if account_id == ExchangeType.CFFEX.name:
-            exchange = CFFExchange(self.accounts[account_id], "con_file/ss_sz/")
+            exchange = CFFExchange(self.accounts[account_id], "con_file/cff/")
         elif account_id == ExchangeType.SSE.name:
             exchange = SSSZExchange(self.accounts[account_id], "con_file/ss/", exchange_type=ExchangeType.SSE)
         elif account_id == ExchangeType.SZSE.name:

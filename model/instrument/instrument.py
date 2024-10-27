@@ -1,5 +1,8 @@
 import re
 
+from model.memory.market_data import MarketData
+
+
 def validate_future_id(instrument_id):
     pattern = r'^[A-Z]{2}\d{4}$'
     if not re.match(pattern, instrument_id, re.IGNORECASE):
@@ -9,15 +12,11 @@ def validate_future_id(instrument_id):
 class Instrument:
     id: str
     symbol: str
-    bid = 0.0
-    ask = 0.0
-    bid_volume = 0
-    ask_volume = 0
-    available = False
 
     def __init__(self, instrument_id, expired_date):
         self.id = instrument_id
         self.expired_date = expired_date
+        self.market_data = MarketData()
 
 class Future(Instrument):
 
