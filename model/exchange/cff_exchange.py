@@ -2,8 +2,8 @@ import time
 import os
 from abc import ABC
 
-from ctp.cffex.market_data import MarketData
-from ctp.cffex.trader import Trader
+from ctp.cffex.market_data_service import MarketDataService
+from ctp.cffex.trader_service import TraderService
 from model.config.account_config import AccountConfig
 from model.exchange.exchange import Exchange
 from api_cffex import ThostFtdcApi
@@ -24,7 +24,7 @@ class CFFExchange(Exchange, ABC):
         # 创建API实例
         self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
-        self.market_data_user_spi = MarketData(self.market_data_user_api, self.config)
+        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config)
         # 连接行情前置服务器
         self.market_data_user_api.RegisterFront(self.config.market_server_front)
         # 将spi注册给api
@@ -34,7 +34,7 @@ class CFFExchange(Exchange, ABC):
     def connect_trader(self):
         print(f"连接{self.type.value}交易中心")
         self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
-        self.trader_user_spi = Trader(self.trader_user_api, self.config)
+        self.trader_user_spi = TraderService(self.trader_user_api, self.config)
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
         self.trader_user_api.RegisterFront(self.config.trade_server_front)
 

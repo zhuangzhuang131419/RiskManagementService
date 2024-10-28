@@ -1,12 +1,13 @@
 import copy
 
 from api_se import ThostFtdcApiSOpt
-from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, CThostFtdcInstrumentField
+from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
+    CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField
 from helper.helper import *
 from model.instrument.option import Option, ETFOption
 
 
-class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
+class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
     # key: order_ref, value: order_info
     order_map = {}
 
@@ -89,7 +90,7 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 print('发送结算单确认请求失败！')
                 judge_ret(ret)
 
-    def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: "CThostFtdcSettlementInfoConfirmField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: CThostFtdcSettlementInfoConfirmField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('结算单确认失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
@@ -108,8 +109,8 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             # InstrumentID: 10008312, ExchangeID: SSE, ExpiredData: 20250625, underlyinfInstrID: 510500
             if filter_etf(pInstrument.UnderlyingInstrID) and len(pInstrument.InstrumentID) == 8:
                 # print(f'InstrumentID = {pInstrument.InstrumentID}, ProductClass= {pInstrument.ProductClass}, ProductID= {pInstrument.ProductID}, OptionsType = {pInstrument.OptionsType}, VolumeMultiple = {pInstrument.VolumeMultiple}, DeliveryYear = {pInstrument.DeliveryYear}, DeliveryMonth = {pInstrument.DeliveryMonth}, ExpireDate = {pInstrument.ExpireDate}')
-                option = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.InstrumentID, pInstrument.OptionsType, float(pInstrument.StrikePrice), pInstrument.ExchangeID)
-                self.subscribe_instrument[pInstrument.InstrumentID] = option
+                option = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.OptionsType, pInstrument.StrikePrice, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
+                self.subscribe_instrument[option.symbol] = option
 
         if bIsLast:
             self.query_finish = True
@@ -122,7 +123,7 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         if pInvestorPositionDetail.Volume == 0:
             return
 
-    def OnRspOrderInsert(self, pInputOrder: "CThostFtdcInputOrderField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspOrderInsert(self, pInputOrder: CThostFtdcInputOrderField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('下单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
@@ -164,7 +165,7 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         except Exception as e:
             red_print(e)
 
-    def OnRtnTrade(self, pTrade: "CThostFtdcTradeField") -> "void":
+    def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         del self.order_map[pTrade.OrderRef]
 
 

@@ -9,7 +9,7 @@ from model.instrument.option import IndexOption
 from model.order_info import OrderInfo
 
 
-class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
+class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
     # key: order_ref, value: order_info
     order_map = {}
 
@@ -110,10 +110,10 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
         if pInstrument is not None:
             if filter_index_option(pInstrument.InstrumentID):
                 option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID)
-                self.subscribe_instrument[pInstrument.InstrumentID] = option
+                self.subscribe_instrument[option.symbol] = option
             elif filter_index_future(pInstrument.InstrumentID):
                 future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID)
-                self.subscribe_instrument[pInstrument.InstrumentID] = future
+                self.subscribe_instrument[future.symbol] = future
 
         if bIsLast:
             self.query_finish = True

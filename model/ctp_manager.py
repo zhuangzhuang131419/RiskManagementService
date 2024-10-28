@@ -79,9 +79,13 @@ class CTPManager:
         # 初始化内存
         self.current_user.memory.init_cffex_instrument(self.current_user.exchanges[ExchangeType.CFFEX.name].trader_user_spi.subscribe_instrument)
 
+
+
         # 合并上交所 深交所的instrument
-        se_instrument = {**self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument, **self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument}
-        self.current_user.memory.init_se_instrument(se_instrument)
+        se_instruments = {**self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument, **self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument}
+
+
+        self.current_user.memory.init_se_instrument(se_instruments)
 
         for exchange_type in ExchangeType:
             if self.current_user.is_login(exchange_type.name):
@@ -117,10 +121,10 @@ class CTPManager:
 
                 market_data = MarketData()
                 market_data.time = market_data_list[0]
-                market_data.bid_price = round(market_data_list[1], 1)
-                market_data.bid_volume = int(market_data_list[2])
-                market_data.ask_price = round(market_data_list[3], 3)
-                market_data.ask_volume = int(market_data_list[4])
+                market_data.bid_price[0] = round(market_data_list[1], 1)
+                market_data.bid_volume[0] = int(market_data_list[2])
+                market_data.ask_price[0] = round(market_data_list[3], 3)
+                market_data.ask_volume[0] = int(market_data_list[4])
 
                 # 判断是否可交易
                 if depth_market_date.BidVolume1 >= 1 and depth_market_date.AskVolume1 >= 1 and depth_market_date.BidPrice1 > 0 and depth_market_date.AskPrice1 > 0:

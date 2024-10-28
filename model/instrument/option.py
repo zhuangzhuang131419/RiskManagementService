@@ -32,11 +32,12 @@ class Option(Instrument):
 
 
 class ETFOption(Option):
-    def __init__(self, instrument_id: str, expired_date: str, symbol: str, option_type: str, strike_price: str, exchange_id: str):
+    def __init__(self, instrument_id: str, expired_date: str, option_type: str, strike_price: str, exchange_id: str, underlying_instr_id: str):
         super().__init__(instrument_id, expired_date, exchange_id)
         self.strike_price = float(strike_price)
         self.option_type = option_type
-        self.symbol = symbol
+        self.symbol = underlying_instr_id + "-" + expired_date
+        self.instrument_id = self.symbol + "-" + option_type + "-" + strike_price
 
     def is_call_option(self):
         """判断是否为看涨期权"""

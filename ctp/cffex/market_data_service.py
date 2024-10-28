@@ -1,17 +1,17 @@
 import copy
 
-from api_se import ThostFtdcApiSOpt
-from api_se.ThostFtdcApiSOpt import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField
+from api_cffex import ThostFtdcApi
+from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, CThostFtdcDepthMarketDataField
 from helper.helper import *
 from queue import Queue
 
 
-class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
+class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
 
-    def __init__(self, market_data_user_api, config):
+    def __init__(self, market_data_user_api, account_config):
         super().__init__()
         self.market_data_user_api = market_data_user_api
-        self.config = config
+        self.config = account_config
         self.market_data = Queue()
         self.memory_manager = None
 
@@ -23,7 +23,7 @@ class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
         print("开始建立行情连接")
 
 
-        login_field = ThostFtdcApiSOpt.CThostFtdcReqUserLoginField()
+        login_field = ThostFtdcApi.CThostFtdcReqUserLoginField()
 
         login_field.BrokerID = self.config.broker_id
         login_field.UserID = self.config.user_id
@@ -38,7 +38,7 @@ class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
             judge_ret(ret)
 
     # ReqUserLogin
-    def OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+    def OnRspUserLogin(self, pRspUserLogin: 'CThostFtdcRspUserLoginField', pRspInfo: 'CThostFtdcRspInfoField', nRequestID: 'int', bIsLast: 'bool') -> "void":
         if pRspInfo.ErrorID != 0 and pRspInfo is not None:
             print('行情连接失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
@@ -49,15 +49,17 @@ class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
         if pRspInfo.ErrorID != 0:
             print(f"订阅行情失败，合约: {pSpecificInstrument.InstrumentID}, 错误信息: {pRspInfo.ErrorMsg}")
         # else:
-        #     if not is_index_option(pSpecificInstrument.InstrumentID) and not is_index_future(pSpecificInstrument.InstrumentID):
-        #         print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
+            # print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
 
     # 深度行情通知
-    def OnRtnDepthMarketData(self, pDepthMarketData):
-        if filter_etf(pDepthMarketData.InstrumentID):
-            print('SSEX OnRtnDepthMarketData')
-            print(pDepthMarketData)
-            self.memory_manager.market_data.put(copy.copy(pDepthMarketData))
+    def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
+
+        if filter_index_future(pDepthMarketData.InstrumentID) or filter_index_option(pDepthMarketData.InstrumentID):
+            if self.memory_manager is not None:
+
+
+                self.memory_manager.market_data.put(copy.copy(pDepthMarketData))
+
 
 
 

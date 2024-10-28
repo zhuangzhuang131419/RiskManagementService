@@ -23,6 +23,9 @@ class MemoryManager:
         self.cffex_option_manager = None
         self.se_option_manager = None
 
+        # 负责把ETF instrument_id 转成可读的 instrument_id
+        self.se_instrument = {}
+
 
     def init_cffex_instrument(self, instruments: dict):
         index_options = []
@@ -40,8 +43,9 @@ class MemoryManager:
 
     def init_se_instrument(self, instruments: dict):
         etf_options = []
-        for instrument_id, instrument in instruments.items():
+        for instrument in instruments.values():
             etf_options.append(instrument)
+            self.se_instrument[instrument.id] = instrument.instrument_id
 
         if len(etf_options) > 0:
             self.se_option_manager = OptionManager(etf_options)

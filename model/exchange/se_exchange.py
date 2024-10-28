@@ -4,8 +4,8 @@ from abc import ABC
 
 from py_vollib.ref_python.black.greeks.analytical import theta
 
-from ctp.se.market_data import MarketData
-from ctp.se.trader import Trader
+from ctp.se.market_data_service import MarketDataService
+from ctp.se.trader_service import TraderService
 from model.exchange.exchange import Exchange
 from api_se import ThostFtdcApiSOpt
 from helper.helper import judge_ret
@@ -25,7 +25,7 @@ class SSSZExchange(Exchange, ABC):
         # 创建API实例
         self.market_data_user_api = ThostFtdcApiSOpt.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
-        self.market_data_user_spi = MarketData(self.market_data_user_api, self.config)
+        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config)
         # 连接行情前置服务器
         self.market_data_user_api.RegisterFront(self.config.market_server_front)
         # 将spi注册给api
@@ -35,7 +35,7 @@ class SSSZExchange(Exchange, ABC):
     def connect_trader(self):
         print(f"连接{self.type.value}交易中心")
         self.trader_user_api = ThostFtdcApiSOpt.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
-        self.trader_user_spi = Trader(self.trader_user_api, self.config)
+        self.trader_user_spi = TraderService(self.trader_user_api, self.config)
 
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
         self.trader_user_api.RegisterFront(self.config.trade_server_front)
