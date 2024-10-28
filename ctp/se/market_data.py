@@ -56,6 +56,7 @@ class MarketData(ThostFtdcApiSOpt.CThostFtdcMdSpi):
     def OnRtnDepthMarketData(self, pDepthMarketData):
         if filter_etf(pDepthMarketData.InstrumentID):
             print('SSEX OnRtnDepthMarketData')
+            print(pDepthMarketData)
             self.memory_manager.market_data.put(copy.copy(pDepthMarketData))
 
 

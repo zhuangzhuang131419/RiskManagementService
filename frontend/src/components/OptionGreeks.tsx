@@ -19,7 +19,7 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
             onSuccess(data) {
                 const formattedItems = Object.keys(data.strike_prices).map((strikePrice) => {
                     const strikeData = data.strike_prices[strikePrice];
-                    console.log('Response data: ', strikeData);
+                    // console.log('Response data: ', strikeData);
                     return {
                         strikePrice, // 行权价格
                         callDelta: strikeData.call_option.delta,
@@ -71,7 +71,7 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
 
     const scrollBoxStyles = {
         root: {
-            height: '100%',   // 固定高度
+            height: '90%',   // 固定高度
             overflowX: 'hidden', // 禁用水平滚动
             overflowY: 'auto', // 垂直滚动
             // border: '1px solid #ccc', // 可选：添加边框

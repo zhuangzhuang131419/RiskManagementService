@@ -106,8 +106,13 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
         if pInstrument is not None:
             # if is_index_future(pInstrument.InstrumentID) or is_index_option(pInstrument.InstrumentID):
-            self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
-            self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
+            if filter_etf(pInstrument.UnderlyingInstrID):
+                self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
+                self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
+                # InstrumentID: 10008312, ExchangeID: SSE, ExpiredData: 20250625, underlyinfInstrID: 510500
+                # InstrumentID: 10008080&10007890, ExchangeID: SSE, ExpiredData: 20241127, underlyinfInstrID: 510300&510300
+                print(f"InstrumentID: {pInstrument.InstrumentID}, ExchangeID: {pInstrument.ExchangeID}, ExpiredData: {pInstrument.ExpireDate}, underlyinfInstrID: {pInstrument.UnderlyingInstrID}")
+                print()
 
         if bIsLast:
             self.query_finish = True

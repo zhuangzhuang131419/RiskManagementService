@@ -210,21 +210,19 @@ class OptionManager:
     def calculate_wing_model_para(self, index, symbol):
         # underlying_price = (self.index_option_month_forward_price[index, 12] + self.index_option_month_forward_price[index, 13]) / 2
         underlying_price = (self.option_series_dict[symbol].imply_price.imply_s_ask + self.option_series_dict[symbol].imply_price.imply_s_bid) / 2
-        strike_prices = self.index_option_market_data[index, 0, :, 0]
+        strike_prices = self.option_series_dict[symbol].get_all_strike_price()
         remain_time = self.index_option_remain_year[index]
         volatility = self.option_series_dict[symbol].atm_volatility.atm_volatility_protected
 
-        sample_volatility = []
-        sample_available = []
-        for strike_price, option_tuple in self.option_series_dict[symbol].strike_price_options.items():
-            sample_volatility.append(option_tuple.imply_volatility.sample_volatility)
-            sample_available.append(option_tuple.imply_volatility.sample_valid)
-
-        strike_price_num = self.index_option_month_strike_num[index]
+        strike_price_num = self.option_series_dict[symbol].get_num_strike_price()
 
         wing_model_para = WingModelPara()
 
-        available_num = np.count_nonzero(sample_available)
+        available_num = 0
+        for strike_price, option_tuple in self.option_series_dict[symbol].strike_price_options.items():
+            if option_tuple.imply_volatility.sample_valid != 0:
+                available_num += 1
+
         if available_num <= 3:
             wing_model_para.S = underlying_price
             wing_model_para.k1 = 0
@@ -238,16 +236,21 @@ class OptionManager:
         cut_point = 2
         x_array = np.zeros((strike_price_num, 3))
         y_array = np.zeros(strike_price_num)
+
+
+
         for j in range(strike_price_num):
             x_distance = calculate_x_distance(S=underlying_price, K=strike_prices[j], t=remain_time, r=INTEREST_RATE, v=volatility, q=DIVIDEND)
+            sample_available = self.option_series_dict[symbol].strike_price_options[strike_prices[j]].imply_volatility.sample_valid
+            sample_volatility = self.option_series_dict[symbol].strike_price_options[strike_prices[j]].imply_volatility.sample_volatility
             if -cut_point < x_distance <= 0:
-                x_array[j, 0] = x_distance * x_distance * sample_available[j]
-                x_array[j, 2] = x_distance * sample_available[j]
-                y_array[j] = (sample_volatility[j] - volatility) * sample_available[j]
+                x_array[j, 0] = x_distance * x_distance * sample_available
+                x_array[j, 2] = x_distance * sample_available
+                y_array[j] = (sample_volatility - volatility) * sample_available
             elif 0 < x_distance <= cut_point:
-                x_array[j, 1] = x_distance * x_distance * sample_available[j]
-                x_array[j, 2] = x_distance * sample_available[j]
-                y_array[j] = (sample_volatility[j] - volatility) * sample_available[j]
+                x_array[j, 1] = x_distance * x_distance * sample_available
+                x_array[j, 2] = x_distance * sample_available
+                y_array[j] = (sample_volatility - volatility) * sample_available
 
         # 参数估计
         para_array = np.dot(np.dot(np.linalg.inv(np.dot(np.transpose(x_array), x_array)), np.transpose(x_array)),y_array)

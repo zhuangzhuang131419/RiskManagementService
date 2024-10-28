@@ -60,16 +60,7 @@ const TradingDashboard: React.FC = () => {
         etfDataProvider.fetchFutureSymbols,
     );
 
-    const { data: wingModel, isFetching: isWingModelFetching } = useQuery(
-        ['wingModel', selectedOption],
-        () => optionDataProvider.fetchWingModelPara(selectedOption as string),
-        {
-            select(data) {
-                const wingModelData: WingModelData[] = [data]
-                return wingModelData
-            },
-        }
-    );
+    
 
     // console.log("optionItems" + optionItems)
 
@@ -140,10 +131,10 @@ const TradingDashboard: React.FC = () => {
                 {/* 右侧：OptionGreeks */}
                 <Stack horizontal tokens={{ childrenGap: 10 }} grow={1} styles={{ root: { height: '100%' }}}>
                     <Stack>
-                        {!isWingModelFetching && (<WingModelBar data={wingModel as WingModelData[]}></WingModelBar>)}
+                        <WingModelBar symbol={selectedOption}></WingModelBar>
                         <OptionGreeks symbol={selectedOption} />
                     </Stack>
-                    <OptionGreeks symbol={selectedETF} />
+                    {/* <OptionGreeks symbol={selectedETF} /> */}
                 </Stack>
             </Stack>
         </Stack>
