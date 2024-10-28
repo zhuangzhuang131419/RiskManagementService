@@ -55,15 +55,10 @@ class CTPManager:
             time.sleep(3)
 
         # 获取订阅的合约ID列表
-        instrument_ids = list(self.current_user.exchanges[exchange_type.name].trader_user_spi.exchange_id.keys())
+        instrument_ids = list(self.current_user.exchanges[exchange_type.name].trader_user_spi.subscribe_instrument.keys())
         print(f'当前{exchange_type.value}订阅的合约数量为:{len(instrument_ids)}')
 
-        # 初始化内存
-        self.current_user.memory = MemoryManager(self.current_user.exchanges[exchange_type.name].trader_user_spi.expire_date)
-        # 把内存传给交易中心
-        self.current_user.exchanges[exchange_type.name].market_data_user_spi.set_memory_manager(self.current_user.memory)
 
-        self.current_user.subscribe_market_data(exchange_type.name, instrument_ids)
 
 
     def switch_to_user(self, user_id: str):
@@ -81,12 +76,29 @@ class CTPManager:
 
         print("用户切换成功")
 
+        # 初始化内存
+        self.current_user.memory.init_cffex_instrument(self.current_user.exchanges[ExchangeType.CFFEX.name].trader_user_spi.subscribe_instrument)
+
+        # 合并上交所 深交所的instrument
+        se_instrument = {**self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument, **self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument}
+        self.current_user.memory.init_se_instrument(se_instrument)
+
+        for exchange_type in ExchangeType:
+            if self.current_user.is_login(exchange_type.name):
+                # 把内存传给交易中心
+                self.current_user.exchanges[exchange_type.name].market_data_user_spi.set_memory_manager(self.current_user.memory)
+
+                # 批量订阅数据
+                instrument_ids = list(self.current_user.exchanges[exchange_type.name].trader_user_spi.subscribe_instrument.keys())
+                self.current_user.subscribe_batches_market_data(exchange_type.name, instrument_ids)
+
+
 
 
     def tick(self):
         while True:
             depth_market_date = self.current_user.memory.market_data.get(True)
-            # print(depth_market_date)
+            print(f'tick：{depth_market_date}')
 
             # update_time = depth_market_date.UpdateTime
             instrument_id = depth_market_date.InstrumentID
@@ -121,7 +133,7 @@ class CTPManager:
                 if filter_index_option(instrument_id):
                     # 导入期权行情
                     try:
-                        o = Option(instrument_id, "")
+                        o = Option(instrument_id, "", "")
                         l1 = self.current_user.memory.cffex_option_manager.index_option_month_forward_id.index(o.symbol)
                         l2 = OPTION_PUT_CALL_DICT[o.option_type]
                         l3 = self.current_user.memory.cffex_option_manager.option_series_dict[o.symbol].get_all_strike_price().index(o.strike_price)

@@ -49,13 +49,13 @@ class MarketData(ThostFtdcApi.CThostFtdcMdSpi):
         if pRspInfo.ErrorID != 0:
             print(f"订阅行情失败，合约: {pSpecificInstrument.InstrumentID}, 错误信息: {pRspInfo.ErrorMsg}")
         # else:
-        #     if not is_index_option(pSpecificInstrument.InstrumentID) and not is_index_future(pSpecificInstrument.InstrumentID):
-        #         print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
+            # print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
+
         if filter_index_future(pDepthMarketData.InstrumentID) or filter_index_option(pDepthMarketData.InstrumentID):
-            if self.memory_manager:
+            if self.memory_manager is not None:
                 self.memory_manager.market_data.put(copy.copy(pDepthMarketData))
 
 

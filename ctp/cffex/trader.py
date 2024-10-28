@@ -4,13 +4,12 @@ from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField
 from helper.helper import *
+from model.instrument.instrument import Future
+from model.instrument.option import IndexOption
 from model.order_info import OrderInfo
 
 
 class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
-    exchange_id = dict()
-    expire_date = dict()
-
     # key: order_ref, value: order_info
     order_map = {}
 
@@ -29,6 +28,7 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
+        self.subscribe_instrument = {}
 
 
     def OnFrontConnected(self):
@@ -103,14 +103,17 @@ class Trader(ThostFtdcApi.CThostFtdcTraderSpi):
 
     # 请求查询合约响应，当执行ReqQryInstrument后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINSTRUMENT.html
-    def OnRspQryInstrument(self, pInstrument: "CThostFtdcInstrumentField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
         if pInstrument is not None:
-            if filter_index_future(pInstrument.InstrumentID) or filter_index_option(pInstrument.InstrumentID):
-                self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
-                self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
+            if filter_index_option(pInstrument.InstrumentID):
+                option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID)
+                self.subscribe_instrument[pInstrument.InstrumentID] = option
+            elif filter_index_future(pInstrument.InstrumentID):
+                future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID)
+                self.subscribe_instrument[pInstrument.InstrumentID] = future
 
         if bIsLast:
             self.query_finish = True

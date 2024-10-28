@@ -1,13 +1,12 @@
 import copy
 
 from api_se import ThostFtdcApiSOpt
-from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField
+from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, CThostFtdcInstrumentField
 from helper.helper import *
+from model.instrument.option import Option, ETFOption
+
 
 class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
-    exchange_id = dict()
-    expire_date = dict()
-
     # key: order_ref, value: order_info
     order_map = {}
 
@@ -26,6 +25,7 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
+        self.subscribe_instrument = {}
 
 
     def OnFrontConnected(self):
@@ -100,19 +100,16 @@ class Trader(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
     # 请求查询合约响应，当执行ReqQryInstrument后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINSTRUMENT.html
-    def OnRspQryInstrument(self, pInstrument: "CThostFtdcInstrumentField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
         if pInstrument is not None:
-            # if is_index_future(pInstrument.InstrumentID) or is_index_option(pInstrument.InstrumentID):
-            if filter_etf(pInstrument.UnderlyingInstrID):
-                self.exchange_id[pInstrument.InstrumentID] = pInstrument.ExchangeID
-                self.expire_date[pInstrument.InstrumentID] = pInstrument.ExpireDate
-                # InstrumentID: 10008312, ExchangeID: SSE, ExpiredData: 20250625, underlyinfInstrID: 510500
-                # InstrumentID: 10008080&10007890, ExchangeID: SSE, ExpiredData: 20241127, underlyinfInstrID: 510300&510300
-                print(f"InstrumentID: {pInstrument.InstrumentID}, ExchangeID: {pInstrument.ExchangeID}, ExpiredData: {pInstrument.ExpireDate}, underlyinfInstrID: {pInstrument.UnderlyingInstrID}")
-                print()
+            # InstrumentID: 10008312, ExchangeID: SSE, ExpiredData: 20250625, underlyinfInstrID: 510500
+            if filter_etf(pInstrument.UnderlyingInstrID) and len(pInstrument.InstrumentID) == 8:
+                # print(f'InstrumentID = {pInstrument.InstrumentID}, ProductClass= {pInstrument.ProductClass}, ProductID= {pInstrument.ProductID}, OptionsType = {pInstrument.OptionsType}, VolumeMultiple = {pInstrument.VolumeMultiple}, DeliveryYear = {pInstrument.DeliveryYear}, DeliveryMonth = {pInstrument.DeliveryMonth}, ExpireDate = {pInstrument.ExpireDate}')
+                option = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.InstrumentID, pInstrument.OptionsType, float(pInstrument.StrikePrice), pInstrument.ExchangeID)
+                self.subscribe_instrument[pInstrument.InstrumentID] = option
 
         if bIsLast:
             self.query_finish = True

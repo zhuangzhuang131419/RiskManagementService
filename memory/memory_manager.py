@@ -15,26 +15,35 @@ class MemoryManager:
 
 
 
-    def __init__(self, instruments: dict):
+    def __init__(self):
 
-        self.init_future_option(instruments)
+        # self.init_future_option(instruments)
         self.market_data = Queue()
+        self.future_manager = None
+        self.cffex_option_manager = None
+        self.se_option_manager = None
 
 
-    def init_future_option(self, instruments: dict):
+    def init_cffex_instrument(self, instruments: dict):
         index_options = []
         index_futures = []
-        etf_options = []
-        for instrument_id, expired_date in instruments.items():
+        for instrument_id, instrument in instruments.items():
             if filter_index_option(instrument_id):
-                index_options.append(Option(instrument_id, expired_date))
+                index_options.append(instrument)
             elif filter_index_future(instrument_id):
-                index_futures.append(Future(instrument_id, expired_date))
-            elif filter_etf(instrument_id):
-                etf_options.append(instrument_id)
+                index_futures.append(instrument)
+        if len(index_futures) > 0:
+            self.future_manager = FutureManager(index_futures)
+        if len(index_options) > 0:
+            self.cffex_option_manager = OptionManager(index_options)
 
 
-        self.future_manager = FutureManager(index_futures)
-        self.cffex_option_manager = OptionManager(index_options)
-        # self.se_option_manager = OptionManager(etf_options)
+    def init_se_instrument(self, instruments: dict):
+        etf_options = []
+        for instrument_id, instrument in instruments.items():
+            etf_options.append(instrument)
+
+        if len(etf_options) > 0:
+            self.se_option_manager = OptionManager(etf_options)
+
 

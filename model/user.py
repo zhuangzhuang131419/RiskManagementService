@@ -61,10 +61,9 @@ class User:
                     market_server_front=self.config.get(section, 'MarketServerFront'),
                     trade_server_front=self.config.get(section, 'TradeServerFront')
                 )
-        print(f'accounts={len(self.accounts)}')
 
         # 内存中心
-        self.memory = None
+        self.memory = MemoryManager()
 
     def query_instrument(self, account_id: str):
         """

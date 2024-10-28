@@ -1,4 +1,5 @@
 import re
+from abc import abstractmethod
 
 from model.instrument.instrument import Instrument
 from model.memory.greeks import Greeks
@@ -12,19 +13,58 @@ def validate_option_id(instrument_id):
         return False
     return True
 
-
 class Option(Instrument):
-    def __init__(self, instrument_id: str, expired_date: str):
-        super().__init__(instrument_id, expired_date)
+    option_type: str
+    strike_price: float
+
+    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
+        super().__init__(instrument_id, expired_date, exchange_id)
+        self.greeks = Greeks()
+
+    @abstractmethod
+    def is_call_option(self):
+        """判断是否为看涨期权"""
+        pass
+
+    def is_put_option(self):
+        """判断是否为看跌期权"""
+        pass
+
+
+class ETFOption(Option):
+    def __init__(self, instrument_id: str, expired_date: str, symbol: str, option_type: str, strike_price: str, exchange_id: str):
+        super().__init__(instrument_id, expired_date, exchange_id)
+        self.strike_price = float(strike_price)
+        self.option_type = option_type
+        self.symbol = symbol
+
+    def is_call_option(self):
+        """判断是否为看涨期权"""
+        return self.option_type == 1
+
+    def is_put_option(self):
+        """判断是否为看跌期权"""
+        return self.option_type == 2
+
+    def __str__(self):
+        """返回期权的详细信息"""
+        return (f"期权标的物: {self.symbol}\n"
+                f"到期日期: {self.expired_date}\n"
+                f"期权类型: {self.option_type}\n"
+                f"行权价: {self.strike_price}")
+
+class IndexOption(Option):
+    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
         # eg. io2410-C-4100
+        super().__init__(instrument_id, expired_date, exchange_id)
         if validate_option_id(instrument_id):
-            self.symbol = self.id.split('-')[0]
-            self.option_type = self.id[7]
-            self.strike_price = float(self.id.split('-')[-1])
+            self.symbol = instrument_id.split('-')[0]
+            self.option_type = instrument_id[7]
+            self.strike_price = float(instrument_id.split('-')[-1])
         else:
             raise ValueError(f'期权{instrument_id}不符合')
 
-        self.greeks = Greeks()
+
 
     def is_call_option(self):
         """判断是否为看涨期权"""

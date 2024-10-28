@@ -38,17 +38,33 @@ def init_ctp():
 
 
 def main():
-    # print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures)))
-    # print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
-    # print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.memory.future_manager.index_future_month_id))
-    # print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
-    # print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_expired_date))
-    # print('当前订阅期权合约剩余天数为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_remain_year))
-    # print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO2411'].strike_price_options.keys()))
+    future_manager = ctp_manager.current_user.memory.future_manager
+    se_option_manager = ctp_manager.current_user.memory.se_option_manager
+    cffex_option_manager = ctp_manager.current_user.memory.cffex_option_manager
+
+    if se_option_manager is not None:
+        print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.se_option_manager.option_series_dict)))
+        print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.se_option_manager.index_option_month_forward_id))
+        print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.se_option_manager.option_expired_date))
+
+    if future_manager is not None:
+        print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures)))
+        print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.memory.future_manager.index_future_month_id))
+
+    if cffex_option_manager is not None:
+        print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
+        print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
+        print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_expired_date))
+        print('当前订阅期权合约剩余天数为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_remain_year))
+        print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO2411'].strike_price_options.keys()))
+
+
+
+
     # print('HO2410的看涨期权的第一个行权价的行权价：{}'.format(ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]))
     # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
     #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
-    # Thread(target=ctp_manager.tick).start()
+    Thread(target=ctp_manager.tick).start()
     # Thread(target=ctp_manager.current_user.memory.cffex_option_manager.index_volatility_calculator).start()
 
 
