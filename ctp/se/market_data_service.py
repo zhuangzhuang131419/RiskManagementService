@@ -59,12 +59,12 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
         # if filter_etf(pDepthMarketData.InstrumentID):
-        if pDepthMarketData.InstrumentID in self.memory_manager.se_instrument[pDepthMarketData.InstrumentID]:
+        if pDepthMarketData.InstrumentID in self.memory_manager.se_instrument:
             instrument_id = self.memory_manager.se_instrument[pDepthMarketData.InstrumentID]
-            print(f'SSEX OnRtnDepthMarketData: {instrument_id}')
+
 
             depth_market_data = DepthMarketData()
-            depth_market_data.time = time.time()
+            depth_market_data.time = round(time.time())
             depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)
             depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
             depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
@@ -93,9 +93,13 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
 
             depth_market_data.exchange_id = pDepthMarketData.ExchangeID
 
+
+
             # 把se的instrument_id转换成可读的
-            depth_market_data.instrument_id = self.memory_manager.se_instrument[pDepthMarketData.InstrumentID]
+            depth_market_data.instrument_id = instrument_id
             depth_market_data.set_available()
+
+            # print(f'SSEX OnRtnDepthMarketData: {instrument_id}, exchange_id: {pDepthMarketData.ExchangeID} ask_volumes:{depth_market_data.ask_volumes} bid_volumes:{depth_market_data.ask_volumes} ask_prices:{depth_market_data.ask_prices} bid_prices:{depth_market_data.bid_prices}')
 
             depth_market_data.clean_data()
             self.memory_manager.market_data.put(depth_market_data)

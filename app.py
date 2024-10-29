@@ -65,7 +65,10 @@ def main():
     # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
     #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
     Thread(target=ctp_manager.tick).start()
-    # Thread(target=ctp_manager.current_user.memory.cffex_option_manager.index_volatility_calculator).start()
+    if cffex_option_manager is not None:
+        Thread(target=ctp_manager.current_user.memory.cffex_option_manager.index_volatility_calculator).start()
+    if se_option_manager is not None:
+        Thread(target=ctp_manager.current_user.memory.se_option_manager.index_volatility_calculator).start()
 
 
     # print('HO2410的看涨期权的第一个行权价相关信息：{}'.format(

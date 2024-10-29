@@ -61,7 +61,7 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
             if self.memory_manager is not None:
 
                 depth_market_data = DepthMarketData()
-                depth_market_data.time = time.time()
+                depth_market_data.time = round(time.time())
                 depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)
                 depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
                 depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)

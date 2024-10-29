@@ -7,8 +7,10 @@ from psutil import users
 from memory.memory_manager import MemoryManager
 from model.config.account_config import AccountConfig
 from model.exchange.cff_exchange import CFFExchange
+from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
 from model.exchange.se_exchange import SSSZExchange
+from typing import Dict
 
 
 class User:
@@ -31,7 +33,7 @@ class User:
         self.user_id = self.config.get('USER', 'UserID')
         self.user_name = self.config.get('USER', 'Name')
         print(f'切换{self.user_name}')
-        self.accounts = {}
+        self.accounts: Dict[str, AccountConfig] = {}
         # accounts = {
         #   "CFFEX": {
         #       "BrokerName": "",
@@ -42,7 +44,7 @@ class User:
         #       ...
         #   }
         # }
-        self.exchanges = {}
+        self.exchanges: Dict[str, Exchange] = {}
         # exchange = {
         #   "CFFEX": CFFEXExchange(),
         #   "SSE": SSEExchange()
@@ -63,7 +65,7 @@ class User:
                 )
 
         # 内存中心
-        self.memory = MemoryManager()
+        self.memory: MemoryManager = MemoryManager()
 
     def query_instrument(self, account_id: str):
         """

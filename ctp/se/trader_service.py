@@ -103,7 +103,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
     # 请求查询合约响应，当执行ReqQryInstrument后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINSTRUMENT.html
-    def OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
@@ -113,7 +113,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 # print(f'InstrumentID = {pInstrument.InstrumentID}, ProductClass= {pInstrument.ProductClass}, ProductID= {pInstrument.ProductID}, OptionsType = {pInstrument.OptionsType}, VolumeMultiple = {pInstrument.VolumeMultiple}, DeliveryYear = {pInstrument.DeliveryYear}, DeliveryMonth = {pInstrument.DeliveryMonth}, ExpireDate = {pInstrument.ExpireDate}')
                 option_type = 'C' if pInstrument.OptionsType == 1 else 'P'
                 o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, pInstrument.StrikePrice, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
-                self.subscribe_instrument[o.instrument_id] = o
+                self.subscribe_instrument[o.id] = o
 
         if bIsLast:
             self.query_finish = True

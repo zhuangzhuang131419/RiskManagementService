@@ -11,7 +11,7 @@ from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
 from model.instrument.instrument import Future
 from model.instrument.option import Option
-from model.memory.market_data import MarketData
+from model.memory.market_data import MarketData, DepthMarketData
 from model.user import User
 from helper.helper import *
 
@@ -25,7 +25,7 @@ class CTPManager:
     users = {}
 
     def __init__(self):
-        self.market_data = Queue()
+        self.market_data: Queue = Queue()
         self.init_user()
         if not os.path.exists(self.CONFIG_FILE_PATH):
             os.makedirs(self.CONFIG_FILE_PATH)
@@ -64,7 +64,7 @@ class CTPManager:
 
 
     def switch_to_user(self, user_id: str):
-        self.current_user = self.users[user_id]
+        self.current_user: User = self.users[user_id]
 
         threads = []
         for exchange_type in ExchangeType:
@@ -109,11 +109,11 @@ class CTPManager:
 
     def tick(self):
         while True:
-            depth_market_date = self.current_user.memory.market_data.get(True)
-            print(f'tick：{depth_market_date}')
+            depth_market_date: DepthMarketData = self.current_user.memory.market_data.get(True)
+            # print(f'tick：{depth_market_date}')
 
             # update_time = depth_market_date.UpdateTime
-            instrument_id = depth_market_date.InstrumentID
+            instrument_id = depth_market_date.instrument_id
             # 清洗编码问题，数据分类：-1为编码错误
 
             if filter_index_future(instrument_id) or filter_index_option(instrument_id):
@@ -135,7 +135,7 @@ class CTPManager:
                 market_data.ask_volumes[0] = int(market_data_list[4])
 
                 # 判断是否可交易
-                if depth_market_date.BidVolume1 >= 1 and depth_market_date.AskVolume1 >= 1 and depth_market_date.BidPrice1 > 0 and depth_market_date.AskPrice1 > 0:
+                if depth_market_date.bid_volumes[0] >= 1 and depth_market_date.ask_volumes[0] >= 1 and depth_market_date.bid_prices[0] > 0 and depth_market_date.ask_prices[0] > 0:
                     market_data_list[5] = 1
                     market_data.available = 1
                 else:
@@ -171,11 +171,12 @@ class CTPManager:
                     except ValueError as e:
                         print(f"ValueError: {e} - Couldn't find the symbol in the list. future: {f}")
                     except Exception as e:
-                        print(f"Exception: {e} - instrument id: {depth_market_date.InstrumentID}")
+                        print(f"Exception: {e} - instrument id: {depth_market_date.instrument_id}")
                         continue
             else:
                 # 非订阅行情
-                if depth_market_date.exchang_id == ExchangeType.SSE.name or depth_market_date.exchang_id == ExchangeType.SZSE.name:
+                if depth_market_date.exchange_id == ExchangeType.SSE.name or depth_market_date.exchange_id == ExchangeType.SZSE.name:
+                    # print(f'depth_market_date:{depth_market_date}')
                     symbol = instrument_id.split('-')[0]
                     option_type = instrument_id.split('-')[1]
                     strike_price = float(instrument_id.split('-')[-1])
