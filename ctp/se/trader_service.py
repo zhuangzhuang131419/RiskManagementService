@@ -1,5 +1,7 @@
 import copy
 
+from click import option
+
 from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
     CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField
@@ -109,8 +111,9 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             # InstrumentID: 10008312, ExchangeID: SSE, ExpiredData: 20250625, underlyinfInstrID: 510500
             if filter_etf(pInstrument.UnderlyingInstrID) and len(pInstrument.InstrumentID) == 8:
                 # print(f'InstrumentID = {pInstrument.InstrumentID}, ProductClass= {pInstrument.ProductClass}, ProductID= {pInstrument.ProductID}, OptionsType = {pInstrument.OptionsType}, VolumeMultiple = {pInstrument.VolumeMultiple}, DeliveryYear = {pInstrument.DeliveryYear}, DeliveryMonth = {pInstrument.DeliveryMonth}, ExpireDate = {pInstrument.ExpireDate}')
-                option = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.OptionsType, pInstrument.StrikePrice, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
-                self.subscribe_instrument[option.symbol] = option
+                option_type = 'C' if pInstrument.OptionsType == 1 else 'P'
+                o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, pInstrument.StrikePrice, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
+                self.subscribe_instrument[o.instrument_id] = o
 
         if bIsLast:
             self.query_finish = True

@@ -3,6 +3,8 @@ import time
 from queue import Queue
 from threading import Thread
 
+from numba.cpython.setobj import set_intersection
+
 from helper.calculator import is_close
 from memory.memory_manager import MemoryManager
 from model.exchange.exchange import Exchange
@@ -79,11 +81,17 @@ class CTPManager:
         # 初始化内存
         self.current_user.memory.init_cffex_instrument(self.current_user.exchanges[ExchangeType.CFFEX.name].trader_user_spi.subscribe_instrument)
 
-
+        # se_instruments = {}
+        #
+        # for key, value in self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument:
+        #     se_instruments[key] = value
+        # for key, value in self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument:
+        #     se_instruments[key] = value
 
         # 合并上交所 深交所的instrument
-        se_instruments = {**self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument, **self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument}
+        se_instruments = {**self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument, **self.current_user.exchanges[ExchangeType.SZSE.name].trader_user_spi.subscribe_instrument}
 
+        print(f"上交所深交所共有{len(se_instruments)}个合约")
 
         self.current_user.memory.init_se_instrument(se_instruments)
 
@@ -109,7 +117,7 @@ class CTPManager:
             # 清洗编码问题，数据分类：-1为编码错误
 
             if filter_index_future(instrument_id) or filter_index_option(instrument_id):
-                market_data_list = [round(time.time()), depth_market_date.BidPrice1, depth_market_date.BidVolume1, depth_market_date.AskPrice1, depth_market_date.AskVolume1, 0]
+                market_data_list = [round(time.time()), depth_market_date.bid_prices[0], depth_market_date.bid_volumes[0], depth_market_date.ask_prices[0], depth_market_date.ask_volumes[0], 0]
 
 
                 for i, data in enumerate(market_data_list):
@@ -121,10 +129,10 @@ class CTPManager:
 
                 market_data = MarketData()
                 market_data.time = market_data_list[0]
-                market_data.bid_price[0] = round(market_data_list[1], 1)
-                market_data.bid_volume[0] = int(market_data_list[2])
-                market_data.ask_price[0] = round(market_data_list[3], 3)
-                market_data.ask_volume[0] = int(market_data_list[4])
+                market_data.bid_prices[0] = round(market_data_list[1], 1)
+                market_data.bid_volumes[0] = int(market_data_list[2])
+                market_data.ask_prices[0] = round(market_data_list[3], 3)
+                market_data.ask_volumes[0] = int(market_data_list[4])
 
                 # 判断是否可交易
                 if depth_market_date.BidVolume1 >= 1 and depth_market_date.AskVolume1 >= 1 and depth_market_date.BidPrice1 > 0 and depth_market_date.AskPrice1 > 0:
@@ -156,7 +164,7 @@ class CTPManager:
                         continue
                 elif filter_index_future(instrument_id):
                     # 导入期货行情
-                    f = Future(instrument_id, "")
+                    f = Future(instrument_id, "", "")
                     try:
                         l1 = self.current_user.memory.future_manager.index_future_month_id.index(f.symbol)
                         self.current_user.memory.future_manager.index_future_market_data[l1, 0:6] = market_data_list[:6]
@@ -167,7 +175,17 @@ class CTPManager:
                         continue
             else:
                 # 非订阅行情
-                continue
+                if depth_market_date.exchang_id == ExchangeType.SSE.name or depth_market_date.exchang_id == ExchangeType.SZSE.name:
+                    symbol = instrument_id.split('-')[0]
+                    option_type = instrument_id.split('-')[1]
+                    strike_price = float(instrument_id.split('-')[-1])
+
+                    if option_type == 1:
+                        self.current_user.memory.se_option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
+                    elif option_type == 2:
+                        self.current_user.memory.se_option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
+
+
 
 
 

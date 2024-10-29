@@ -1,9 +1,12 @@
 import copy
+import time
 
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, CThostFtdcDepthMarketDataField
 from helper.helper import *
 from queue import Queue
+
+from model.memory.market_data import DepthMarketData
 
 
 class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
@@ -57,8 +60,18 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
         if filter_index_future(pDepthMarketData.InstrumentID) or filter_index_option(pDepthMarketData.InstrumentID):
             if self.memory_manager is not None:
 
+                depth_market_data = DepthMarketData()
+                depth_market_data.time = time.time()
+                depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)
+                depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
+                depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
+                depth_market_data.bid_prices[0] = round(pDepthMarketData.BidPrice1, 2)
+                depth_market_data.exchange_id = pDepthMarketData.ExchangeID
+                depth_market_data.instrument_id = pDepthMarketData.InstrumentID
 
-                self.memory_manager.market_data.put(copy.copy(pDepthMarketData))
+                depth_market_data.clean_data()
+                depth_market_data.set_available()
+                self.memory_manager.market_data.put(depth_market_data)
 
 
 

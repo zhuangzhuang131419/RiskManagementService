@@ -109,11 +109,11 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         if pInstrument is not None:
             if filter_index_option(pInstrument.InstrumentID):
-                option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID)
-                self.subscribe_instrument[option.symbol] = option
+                option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
+                self.subscribe_instrument[pInstrument.InstrumentID] = option
             elif filter_index_future(pInstrument.InstrumentID):
-                future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID)
-                self.subscribe_instrument[future.symbol] = future
+                future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
+                self.subscribe_instrument[pInstrument.InstrumentID] = future
 
         if bIsLast:
             self.query_finish = True

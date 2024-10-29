@@ -16,36 +16,26 @@ def validate_option_id(instrument_id):
 class Option(Instrument):
     option_type: str
     strike_price: float
-
-    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
+    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str, underlying_id: str):
         super().__init__(instrument_id, expired_date, exchange_id)
+        self.symbol = underlying_id + "-" + expired_date
         self.greeks = Greeks()
 
-    @abstractmethod
     def is_call_option(self):
         """判断是否为看涨期权"""
-        pass
+        return self.option_type == 'C'
 
     def is_put_option(self):
         """判断是否为看跌期权"""
-        pass
+        return self.option_type == 'P'
 
 
 class ETFOption(Option):
     def __init__(self, instrument_id: str, expired_date: str, option_type: str, strike_price: str, exchange_id: str, underlying_instr_id: str):
-        super().__init__(instrument_id, expired_date, exchange_id)
-        self.strike_price = float(strike_price)
+        super().__init__(instrument_id, expired_date, exchange_id, underlying_instr_id)
         self.option_type = option_type
-        self.symbol = underlying_instr_id + "-" + expired_date
-        self.instrument_id = self.symbol + "-" + option_type + "-" + strike_price
-
-    def is_call_option(self):
-        """判断是否为看涨期权"""
-        return self.option_type == 1
-
-    def is_put_option(self):
-        """判断是否为看跌期权"""
-        return self.option_type == 2
+        self.strike_price = float(strike_price)
+        self.instrument_id = self.symbol + "-" + self.option_type + "-" + str(strike_price)
 
     def __str__(self):
         """返回期权的详细信息"""
@@ -55,25 +45,17 @@ class ETFOption(Option):
                 f"行权价: {self.strike_price}")
 
 class IndexOption(Option):
-    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
+    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str, underlying_id: str):
         # eg. io2410-C-4100
-        super().__init__(instrument_id, expired_date, exchange_id)
+        super().__init__(instrument_id, expired_date, exchange_id, underlying_id)
         if validate_option_id(instrument_id):
-            self.symbol = instrument_id.split('-')[0]
             self.option_type = instrument_id[7]
             self.strike_price = float(instrument_id.split('-')[-1])
+            self.instrument_id = instrument_id
         else:
             raise ValueError(f'期权{instrument_id}不符合')
 
 
-
-    def is_call_option(self):
-        """判断是否为看涨期权"""
-        return self.option_type == 'C'
-
-    def is_put_option(self):
-        """判断是否为看跌期权"""
-        return self.option_type == 'P'
 
     def __str__(self):
         """返回期权的详细信息"""

@@ -43,9 +43,12 @@ class MemoryManager:
 
     def init_se_instrument(self, instruments: dict):
         etf_options = []
+
         for instrument in instruments.values():
             etf_options.append(instrument)
             self.se_instrument[instrument.id] = instrument.instrument_id
+
+        print(f"se_instrument:{self.se_instrument}")
 
         if len(etf_options) > 0:
             self.se_option_manager = OptionManager(etf_options)

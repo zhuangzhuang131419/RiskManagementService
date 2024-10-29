@@ -53,7 +53,7 @@ def filter_etf(instrument_id: str) -> bool:
     :param instrument_id: 合约id
     :return: 是否是关注的期权
     """
-    return any(instrument_id.startswith(etf_prefix) for etf_prefix in ETF_PREFIXES) and len(instrument_id) == 8
+    return any(instrument_id.startswith(etf_prefix) for etf_prefix in ETF_PREFIXES)
 
 
 YEAR_TRADING_DAY=244
