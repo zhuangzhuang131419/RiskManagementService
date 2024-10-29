@@ -44,8 +44,7 @@ def main():
 
     if se_option_manager is not None:
         print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.se_option_manager.option_series_dict)))
-        print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.se_option_manager.index_option_month_forward_id))
-        print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.se_option_manager.option_expired_date))
+        print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.se_option_manager.option_series_dict.keys()))
 
     if future_manager is not None:
         print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures)))
@@ -54,8 +53,6 @@ def main():
     if cffex_option_manager is not None:
         print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
         print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
-        print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_expired_date))
-        print('当前订阅期权合约剩余天数为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_remain_year))
         print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO2411'].strike_price_options.keys()))
 
 
@@ -189,14 +186,6 @@ def get_option_greeks():
         return jsonify({"error": f"Symbol invalid"}), 404
     option_manager = ctp_manager.current_user.memory.cffex_option_manager
     resp = OptionGreeksResp(symbol)
-
-    try:
-        # 获取 symbol 对应的 index
-        symbol_index = option_manager.index_option_month_forward_id.index(symbol)
-    except ValueError:
-        return jsonify({"error": f"Symbol {symbol} not found"}), 404
-
-    strike_num = option_manager.index_option_month_strike_num[symbol_index]
 
     with option_manager.greeks_lock:
 

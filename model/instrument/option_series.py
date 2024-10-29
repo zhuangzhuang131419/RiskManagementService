@@ -1,3 +1,7 @@
+from datetime import datetime
+from typing import Dict
+
+from helper.helper import count_trading_days, HOLIDAYS, YEAR_TRADING_DAY
 from model.instrument.option import Option, OptionTuple
 from model.memory.atm_volatility import ATMVolatility
 from model.memory.imply_price import ImplyPrice
@@ -8,15 +12,16 @@ class OptionSeries:
     CALL = 0  # 看涨期权在列表中的位置
     PUT = 1  # 看跌期权在列表中的位置
 
-    def __init__(self, name: str, options: [Option]):
+    def __init__(self, symbol: str, options: [Option]):
         """
         初始化期权系列。
 
-        :param name: 期权的名字，例如 'HO2410' 表示某个品种（HO）和月份（2410）的期权系列。
+        :param symbol: 期权的名字，例如 'HO-2410' 表示某个品种（HO）和月份（2410）的期权系列。
         :param options: 期权对象列表，包含该系列的所有期权。
         """
-        self.name = name # 期权名字，例如 'HO2410'
-        self.strike_price_options = {}
+        self.name = symbol # 期权名字，例如 'HO2410'
+        self.strike_price_options: Dict[float, OptionTuple] = {}
+        self.expired_date = symbol.split("-")[1]
 
         for option in options:
             if option.strike_price not in self.strike_price_options:
@@ -33,6 +38,9 @@ class OptionSeries:
         self.imply_price = ImplyPrice()
         self.atm_volatility = ATMVolatility()
         self.wing_model_para = WingModelPara()
+        end_date = datetime.strptime(self.expired_date, "%Y%m%d").date()
+        day_count = count_trading_days(datetime.now().date(), end_date, HOLIDAYS)
+        self.remaining_year = round((day_count - 1) / YEAR_TRADING_DAY, 4)
 
     def get_option(self, strike_price, is_put):
         if is_put:

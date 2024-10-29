@@ -8,11 +8,11 @@ class MarketData:
     ask_prices: List[float] = field(default_factory=lambda: [-1.0] * 5)
     bid_volumes: List[int] = field(default_factory=lambda: [-1] * 5)
     ask_volumes: List[int] = field(default_factory=lambda: [-1] * 5)
-    available: int = 0
+    available: bool = False
     time: time = None
 
     def set_available(self):
-        self.available = 1 if self.ask_volumes[0] > 0 and self.bid_volumes[0] > 0 and self.ask_prices[0] > 0 and self.bid_prices[0] > 0 else 0
+        self.available = True if self.ask_volumes[0] > 0 and self.bid_volumes[0] > 0 and self.ask_prices[0] > 0 and self.bid_prices[0] > 0 else False
 
 @dataclass
 class DepthMarketData(MarketData):

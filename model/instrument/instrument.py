@@ -1,5 +1,4 @@
 import re
-
 from model.memory.market_data import MarketData
 
 

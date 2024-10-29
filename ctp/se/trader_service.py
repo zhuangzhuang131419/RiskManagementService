@@ -110,8 +110,10 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         if pInstrument is not None:
             # InstrumentID: 10008312, ExchangeID: SSE, ExpiredData: 20250625, underlyinfInstrID: 510500
             if filter_etf(pInstrument.UnderlyingInstrID) and len(pInstrument.InstrumentID) == 8:
-                # print(f'InstrumentID = {pInstrument.InstrumentID}, ProductClass= {pInstrument.ProductClass}, ProductID= {pInstrument.ProductID}, OptionsType = {pInstrument.OptionsType}, VolumeMultiple = {pInstrument.VolumeMultiple}, DeliveryYear = {pInstrument.DeliveryYear}, DeliveryMonth = {pInstrument.DeliveryMonth}, ExpireDate = {pInstrument.ExpireDate}')
-                option_type = 'C' if pInstrument.OptionsType == 1 else 'P'
+
+                # if pInstrument.UnderlyingInstrID == "510050" and pInstrument.ExpireDate == "20241225" and str(pInstrument.StrikePrice) == "2.25":
+                #     print(f'InstrumentID = {pInstrument.InstrumentID}, OptionsType = {pInstrument.OptionsType}, StrikePrice = {pInstrument.StrikePrice} ')
+                option_type = 'C' if int(pInstrument.OptionsType) == 1 else 'P'
                 o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, pInstrument.StrikePrice, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
                 self.subscribe_instrument[o.id] = o
 

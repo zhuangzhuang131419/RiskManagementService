@@ -66,16 +66,17 @@ class IndexOption(Option):
 
 
 class OptionTuple:
+    call: Option = None
+    put: Option = None
+
     def __init__(self):
-        self.call = None
-        self.put = None
         self.imply_volatility = TImplyVolatility()
 
     def set_call(self, call: Option):
-        self.call = call
+        self.call: Option = call
 
     def set_put(self, put: Option):
-        self.put = put
+        self.put: Option = put
 
 
 

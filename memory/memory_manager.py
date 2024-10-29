@@ -1,5 +1,6 @@
 from queue import Queue
 
+from typing import Dict
 from flask import Flask, jsonify, Blueprint
 from helper.helper import filter_index_future, filter_index_option, filter_etf
 from memory.future_manager import FutureManager
@@ -9,22 +10,17 @@ from model.instrument.option import Option
 
 
 class MemoryManager:
-    cffex_option_manager = None
-    future_manager = None
-    se_option_manager = None
-
-
+    cffex_option_manager: OptionManager = None
+    future_manager: FutureManager = None
+    se_option_manager: OptionManager = None
 
     def __init__(self):
 
         # self.init_future_option(instruments)
         self.market_data = Queue()
-        self.future_manager = None
-        self.cffex_option_manager = None
-        self.se_option_manager = None
 
         # 负责把ETF instrument_id 转成可读的 instrument_id
-        self.se_instrument = {}
+        self.se_instrument: Dict[str, str] = {}
 
 
     def init_cffex_instrument(self, instruments: dict):
