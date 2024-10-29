@@ -16,9 +16,8 @@ def validate_option_id(instrument_id):
 class Option(Instrument):
     option_type: str
     strike_price: float
-    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str, underlying_id: str):
+    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
         super().__init__(instrument_id, expired_date, exchange_id)
-        self.symbol = underlying_id + "-" + expired_date
         self.greeks = Greeks()
 
     def is_call_option(self):
@@ -32,9 +31,10 @@ class Option(Instrument):
 
 class ETFOption(Option):
     def __init__(self, instrument_id: str, expired_date: str, option_type: str, strike_price: str, exchange_id: str, underlying_instr_id: str):
-        super().__init__(instrument_id, expired_date, exchange_id, underlying_instr_id)
+        super().__init__(instrument_id, expired_date, exchange_id)
         self.option_type = option_type
         self.strike_price = float(strike_price)
+        self.symbol = underlying_instr_id + expired_date
         self.instrument_id = self.symbol + "-" + self.option_type + "-" + str(strike_price)
 
     def __str__(self):
@@ -45,13 +45,14 @@ class ETFOption(Option):
                 f"行权价: {self.strike_price}")
 
 class IndexOption(Option):
-    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str, underlying_id: str):
+    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
         # eg. io2410-C-4100
-        super().__init__(instrument_id, expired_date, exchange_id, underlying_id)
+        super().__init__(instrument_id, expired_date, exchange_id)
         if validate_option_id(instrument_id):
             self.option_type = instrument_id[7]
             self.strike_price = float(instrument_id.split('-')[-1])
-            self.instrument_id = instrument_id
+            self.symbol = instrument_id[:2] + expired_date
+            self.instrument_id = self.symbol + "-" + self.option_type + "-" + str(self.strike_price)
         else:
             raise ValueError(f'期权{instrument_id}不符合')
 

@@ -81,13 +81,6 @@ class CTPManager:
         # 初始化内存
         self.current_user.memory.init_cffex_instrument(self.current_user.exchanges[ExchangeType.CFFEX.name].trader_user_spi.subscribe_instrument)
 
-        # se_instruments = {}
-        #
-        # for key, value in self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument:
-        #     se_instruments[key] = value
-        # for key, value in self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument:
-        #     se_instruments[key] = value
-
         # 合并上交所 深交所的instrument
         se_instruments = {**self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument, **self.current_user.exchanges[ExchangeType.SZSE.name].trader_user_spi.subscribe_instrument}
 
@@ -116,74 +109,30 @@ class CTPManager:
             instrument_id = depth_market_date.instrument_id
             # 清洗编码问题，数据分类：-1为编码错误
 
-            if filter_index_future(instrument_id) or filter_index_option(instrument_id):
-                market_data_list = [round(time.time()), depth_market_date.bid_prices[0], depth_market_date.bid_volumes[0], depth_market_date.ask_prices[0], depth_market_date.ask_volumes[0], 0]
-
-
-                for i, data in enumerate(market_data_list):
-                    # 遍历所有的行情字段，判断是否double最大值
-                    if (isinstance(data, int) or isinstance(data, float)) and (abs(data - 1.7976931348623157e+308) < 0.000001):
-                        market_data_list[i] = -1
-
-                # market_data_list = [market_data_list[0], round(market_data_list[1], 1), int(market_data_list[2]), round(market_data_list[3], 3), int(market_data_list[4]), 0]
-
-                market_data = MarketData()
-                market_data.time = market_data_list[0]
-                market_data.bid_prices[0] = round(market_data_list[1], 1)
-                market_data.bid_volumes[0] = int(market_data_list[2])
-                market_data.ask_prices[0] = round(market_data_list[3], 3)
-                market_data.ask_volumes[0] = int(market_data_list[4])
-
-                # 判断是否可交易
-                if depth_market_date.bid_volumes[0] >= 1 and depth_market_date.ask_volumes[0] >= 1 and depth_market_date.bid_prices[0] > 0 and depth_market_date.ask_prices[0] > 0:
-                    market_data_list[5] = 1
-                    market_data.available = 1
-                else:
-                    market_data_list[5] = 0
-                    market_data.available = 0
-
+            if depth_market_date.exchange_id == ExchangeType.CFFEX.name:
                 if filter_index_option(instrument_id):
                     # 导入期权行情
-                    try:
-                        o = Option(instrument_id, "", "")
-                        l1 = self.current_user.memory.cffex_option_manager.index_option_month_forward_id.index(o.symbol)
-                        l2 = OPTION_PUT_CALL_DICT[o.option_type]
-                        l3 = self.current_user.memory.cffex_option_manager.option_series_dict[o.symbol].get_all_strike_price().index(o.strike_price)
-                        self.current_user.memory.cffex_option_manager.index_option_market_data[l1, l2, l3, 1:7] = market_data_list[:6]
+                    symbol = instrument_id.split('-')[0]
+                    option_type = instrument_id.split('-')[1]
+                    strike_price = float(instrument_id.split('-')[-1])
 
-                        if OPTION_PUT_CALL_DICT[o.option_type] == 0:
-                            # call
-                            self.current_user.memory.cffex_option_manager.option_series_dict[o.symbol].strike_price_options[o.strike_price].call.market_data = market_data
-                        elif OPTION_PUT_CALL_DICT[o.option_type] == 1:
-                            # put
-                            self.current_user.memory.cffex_option_manager.option_series_dict[o.symbol].strike_price_options[o.strike_price].put.market_data = market_data
-                    except ValueError as e:
-                        print(f"ValueError: {e} - Couldn't find the symbol or strike price in the list. instrument: {instrument_id}")
-                    except Exception as e:
-                        print(f"Exception: {e} - instrument id: {instrument_id}")
-                        continue
+                    if option_type == 'C':
+                        self.current_user.memory.cffex_option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
+                    elif option_type == 'P':
+                        self.current_user.memory.cffex_option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
                 elif filter_index_future(instrument_id):
                     # 导入期货行情
-                    f = Future(instrument_id, "", "")
-                    try:
-                        l1 = self.current_user.memory.future_manager.index_future_month_id.index(f.symbol)
-                        self.current_user.memory.future_manager.index_future_market_data[l1, 0:6] = market_data_list[:6]
-                    except ValueError as e:
-                        print(f"ValueError: {e} - Couldn't find the symbol in the list. future: {f}")
-                    except Exception as e:
-                        print(f"Exception: {e} - instrument id: {depth_market_date.instrument_id}")
-                        continue
-            else:
-                # 非订阅行情
-                if depth_market_date.exchange_id == ExchangeType.SSE.name or depth_market_date.exchange_id == ExchangeType.SZSE.name:
+                    symbol = instrument_id.split('-')[0]
+                    self.current_user.memory.future_manager.index_futures_dict[symbol].market_data = depth_market_date
+            elif depth_market_date.exchange_id == ExchangeType.SSE.name or depth_market_date.exchange_id == ExchangeType.SZSE.name:
                     # print(f'depth_market_date:{depth_market_date}')
                     symbol = instrument_id.split('-')[0]
                     option_type = instrument_id.split('-')[1]
                     strike_price = float(instrument_id.split('-')[-1])
 
-                    if option_type == 1:
+                    if option_type == 'C':
                         self.current_user.memory.se_option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
-                    elif option_type == 2:
+                    elif option_type == 'P':
                         self.current_user.memory.se_option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
 
 

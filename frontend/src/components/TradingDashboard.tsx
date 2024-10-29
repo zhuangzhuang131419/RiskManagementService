@@ -9,7 +9,6 @@ import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 import TopDataBar from './TopDataBar';
 import { Account, TopBarData } from '../Model/Account';
 import { futureDataProvider } from '../DataProvider/FutureDataProvider';
-import { etfDataProvider } from '../DataProvider/ETFDataProvider';
 import { userDataProvider } from '../DataProvider/UserDataProvider';
 import WingModelBar from './WingModelBar';
 import { WingModelData } from '../Model/OptionData';
@@ -26,7 +25,7 @@ document.documentElement.style.overflow = 'hidden';
 
 const TradingDashboard: React.FC = () => {
     const [selectedAccount, setSelectedAccount] = useState<string>("account1");
-    const [selectedOption, setSelectedOption] = useState<string | null>(null);
+    const [selectedIndexOption, setSelectedIndexOption] = useState<string | null>(null);
     const [selectedFuture, setSelectedFuture] = useState<string | null>(null);
     const [selectedETF, setSelectedETF] = useState<string | null>(null);
 
@@ -42,9 +41,9 @@ const TradingDashboard: React.FC = () => {
         }
     );
 
-    const { data: optionItems, isFetching: isOptionFetching } = useQuery(
-        ['options'],
-        optionDataProvider.fetchOptionSymbols,
+    const { data: indexOptionItems, isFetching: isIndexOptionFetching } = useQuery(
+        ['indexOptions'],
+        optionDataProvider.fetchIndexOptionSymbols,
         {
             onSuccess(data) {},
         }
@@ -55,9 +54,9 @@ const TradingDashboard: React.FC = () => {
         futureDataProvider.fetchFutureSymbols,
     );
 
-    const { data: etfItems, isFetching: isEtfFetching } = useQuery(
-        ['etfs'],
-        etfDataProvider.fetchFutureSymbols,
+    const { data: etfOptionItems, isFetching: isETFOptionFetching } = useQuery(
+        ['etfOptions'],
+        optionDataProvider.fetchETFOptionSymbols,
     );
 
     
@@ -96,11 +95,11 @@ const TradingDashboard: React.FC = () => {
             <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { height: '100%' } }}>
                 {/* 左侧：ScrollBox */}
                 <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
-                    {!isOptionFetching && (
+                    {!isIndexOptionFetching && (
                         <Stack styles={{ root: { height: '30%' } }}>
                             <ScrollBox
-                                items={optionItems as string[]}
-                                onClick={setSelectedOption}
+                                items={indexOptionItems as string[]}
+                                onClick={setSelectedIndexOption}
                                 renderItem={(item) => item as string}
                                 title='期权'
                             />
@@ -116,10 +115,10 @@ const TradingDashboard: React.FC = () => {
                             />
                         </Stack> 
                     )}
-                    {!isEtfFetching && (
+                    {!isETFOptionFetching && (
                         <Stack styles={{ root: { height: '30%' } }}>
                             <ScrollBox
-                                items={etfItems as string[]}
+                                items={etfOptionItems as string[]}
                                 onClick={setSelectedETF}
                                 renderItem={(item) => item as string}
                                 title='ETF'
@@ -131,8 +130,8 @@ const TradingDashboard: React.FC = () => {
                 {/* 右侧：OptionGreeks */}
                 <Stack horizontal tokens={{ childrenGap: 10 }} grow={1} styles={{ root: { height: '100%' }}}>
                     <Stack>
-                        <WingModelBar symbol={selectedOption}></WingModelBar>
-                        <OptionGreeks symbol={selectedOption} />
+                        <WingModelBar symbol={selectedIndexOption}></WingModelBar>
+                        {/* <OptionGreeks symbol={selectedOption} /> */}
                     </Stack>
                     {/* <OptionGreeks symbol={selectedETF} /> */}
                 </Stack>

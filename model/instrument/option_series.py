@@ -21,7 +21,7 @@ class OptionSeries:
         """
         self.name = symbol # 期权名字，例如 'HO2410'
         self.strike_price_options: Dict[float, OptionTuple] = {}
-        self.expired_date = symbol.split("-")[1]
+        self.expired_date = symbol[2:]
 
         for option in options:
             if option.strike_price not in self.strike_price_options:

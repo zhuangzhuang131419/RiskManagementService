@@ -20,6 +20,7 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
         onSuccess(data) {
           const formattedItems: WingModelData[] = [data]
           setItems(formattedItems); // 更新表格项
+          console.log(formattedItems)
         },
         refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
         enabled: !!symbol,  // 只有当 symbol 存在时才启用查询
@@ -37,7 +38,8 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
   
   const scrollBoxStyles = {
     root: {
-        height: '10%',   // 固定高度
+        // height: '30%',   // 固定高度
+        overflowX: 'hidden', // 禁用水平滚动
     },
 };
 

@@ -103,17 +103,17 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
     # 请求查询合约响应，当执行ReqQryInstrument后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINSTRUMENT.html
-    def OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
         if pInstrument is not None:
             if filter_index_option(pInstrument.InstrumentID):
-                option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
-                self.subscribe_instrument[pInstrument.InstrumentID] = option
+                option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID)
+                self.subscribe_instrument[option.id] = option
             elif filter_index_future(pInstrument.InstrumentID):
                 future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
-                self.subscribe_instrument[pInstrument.InstrumentID] = future
+                self.subscribe_instrument[future.id] = future
 
         if bIsLast:
             self.query_finish = True

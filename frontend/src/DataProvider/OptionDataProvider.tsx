@@ -1,20 +1,30 @@
 import { GreeksResponse, WingModelData } from "../Model/OptionData";
 
 export interface IOptionDataProvider {
-    fetchOptionSymbols(): Promise<string[]>;
+    fetchIndexOptionSymbols(): Promise<string[]>;
+    fetchETFOptionSymbols(): Promise<string[]>;
     fetchOptionGreeks(symbol: string): Promise<GreeksResponse>;
     fetchWingModelPara(symbol: string): Promise<WingModelData>;
 }
 
 class OptionDataProvider implements IOptionDataProvider {
-    fetchOptionSymbols = async (): Promise<string[]> => {
-        const response = await fetch('/api/options');
+    fetchIndexOptionSymbols = async (): Promise<string[]> => {
+        const response = await fetch('/api/cffex/options');
         if (!response.ok) {
             throw new Error('Failed to fetch options');
         }
         return response.json();
         // return ["IO2410", "IO2411", "IO2412", "HO2410", "HO2411", "HO2412"];
     };
+
+    fetchETFOptionSymbols = async (): Promise<string[]> => {
+      const response = await fetch('/api/se/options');
+      if (!response.ok) {
+          throw new Error('Failed to fetch options');
+      }
+      return response.json();
+      // return ["IO2410", "IO2411", "IO2412", "HO2410", "HO2411", "HO2412"];
+  };
 
     fetchOptionGreeks = async (symbol: string): Promise<GreeksResponse> => {
         const response = await fetch(`/api/option/greeks?symbol=${symbol}`);

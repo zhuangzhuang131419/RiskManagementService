@@ -2,15 +2,12 @@ import datetime
 import math
 import threading
 import time
-from random import sample
 
-import numpy as np
-from numpy.core.records import ndarray
-from typing import Dict
+from typing import Dict, Tuple
 
 from helper.calculator import *
 from helper.wing_model import *
-from helper.helper import INDEX_OPTION_PREFIXES, count_trading_days, HOLIDAYS, YEAR_TRADING_DAY, INTEREST_RATE, DIVIDEND
+from helper.helper import INTEREST_RATE, DIVIDEND
 from model.instrument.option import Option, OptionTuple
 from model.instrument.option_series import OptionSeries
 from model.memory.atm_volatility import ATMVolatility
@@ -26,16 +23,6 @@ class OptionManager:
 
     # 期权品种月份列表
     index_option_month_forward_id = []
-
-    """
-    # 期权行情结构
-    第一个维度：品种月份维度，顺序与期权品种月份列表对齐，[0, : , : , : ]代表HO2410
-    第二个维度：固定大小为2，看涨or 看跌，看涨期权为0，看跌期权为1
-    第三个维度：行权价维度
-    第四个维度：字段维度固定大写为7，七个字段存放内容为：行权价，字段时间，bid, bidv, ask, askv, available
-    例如要取HO2410的看涨期权的第一个行权价的bid价格，index_option_market_data[0, 0, 0, 2]
-    """
-    index_option_market_data = ndarray
 
     def __init__(self, index_options):
         self.init_option_series(index_options)
@@ -70,7 +57,7 @@ class OptionManager:
         for name in self.option_series_dict.keys():
             self.index_option_month_forward_id.append(name)
 
-        sorted(self.index_option_month_forward_id)
+        self.index_option_month_forward_id = sorted(self.index_option_month_forward_id)
 
 
     # def get_option(self, instrument_id):
@@ -214,13 +201,7 @@ class OptionManager:
         k3_strike = self.option_series_dict[symbol].imply_price.k3
         k4_strike = self.option_series_dict[symbol].imply_price.k4
 
-
-        # if index == 1:
-        #     print(f"k1:{k1_strike}, k2:{k2_strike}, k3:{k3_strike}, k4:{k4_strike}")
-        strike_prices = self.index_option_market_data[index, 0, :, 0]
         # option ask bid 取中间价
-        call_price = (self.index_option_market_data[index, 0, :, 4] + self.index_option_market_data[index, 0, :, 2]) / 2
-        put_price = (self.index_option_market_data[index, 1, :, 4] + self.index_option_market_data[index, 1, :, 2]) / 2
         remain_time = self.option_series_dict[symbol].remaining_year
         # 对应标的物的远期价格
         underlying_price = (self.option_series_dict[symbol].imply_price.imply_s_ask + self.option_series_dict[
@@ -232,46 +213,40 @@ class OptionManager:
 
         # 判断离平值期权最近的
         if k2_strike != -1 and k3_strike != -1:
-            k2_strike_index = list(strike_prices).index(k2_strike)
-            k3_strike_index = k2_strike_index + 1
-            # if index == 1:
-            #     print(f"calculate_imply_volatility: underlying price:{underlying_price}, k2:{k2_strike}, remain_time:{remain_time}, call_price:{call_price[k2_strike_index]}")
 
-            # 对于K1 K4 行权价只计算call 或者 put
-            k1_strike_index = k2_strike_index - 1
-            k4_strike_index = k3_strike_index + 1
+            strike_prices = [k1_strike, k2_strike, k3_strike, k4_strike]
+            volatility_dict: Dict[float, tuple] = {}
 
-            # option_price = [put_price[k1_strike_index], call_price[k2_strike_index], put_price[k2_strike_index], call_price[k3_strike_index], put_price[k3_strike_index], call_price[k4_strike_index]]
-            # [k1_put_volatility, k2_call_volatility, k2_put_volatility, k3_call_volatility, k3_put_volatility, k4_call_volatility] = calculate_imply_volatility(["p", "c", "p", "c", "p", "c"], underlying_price, [k1_strike, k2_strike, k2_strike, k3_strike, k3_strike, k4_strike], remain_time, INTEREST_RATE, option_price, DIVIDEND)
-            # print(f"{k1_put_volatility}, {k2_call_volatility}, {k2_put_volatility}, {k3_call_volatility}, {k3_put_volatility}, {k4_call_volatility}")
-            k2_call_volatility = calculate_imply_volatility('c', underlying_price, k2_strike, remain_time, INTEREST_RATE, call_price[k2_strike_index], DIVIDEND)
-            k2_put_volatility = calculate_imply_volatility('p', underlying_price, k2_strike, remain_time, INTEREST_RATE, put_price[k2_strike_index], DIVIDEND)
-            k3_call_volatility = calculate_imply_volatility('c', underlying_price, k3_strike, remain_time, INTEREST_RATE, call_price[k3_strike_index], DIVIDEND)
-            k3_put_volatility = calculate_imply_volatility('p', underlying_price, k3_strike, remain_time, INTEREST_RATE, put_price[k3_strike_index], DIVIDEND)
-            k1_put_volatility = calculate_imply_volatility('p', underlying_price, k1_strike, remain_time, INTEREST_RATE, put_price[k1_strike_index], DIVIDEND)
-            k4_call_volatility = calculate_imply_volatility('c', underlying_price, k4_strike, remain_time, INTEREST_RATE, call_price[k4_strike_index], DIVIDEND)
-
-            volatility = [k1_put_volatility, (k2_call_volatility + k2_put_volatility) / 2, (k3_call_volatility + k3_put_volatility) / 2, k4_call_volatility]
+            for k_strike_price in strike_prices:
+                k_option_tuple = self.option_series_dict[symbol].strike_price_options[k_strike_price]
+                call_price = (k_option_tuple.call.market_data.ask_prices[0] + k_option_tuple.call.market_data.bid_prices[0]) / 2
+                put_price = (k_option_tuple.put.market_data.ask_prices[0] + k_option_tuple.put.market_data.bid_prices[0]) / 2
+                call_volatility = calculate_imply_volatility('c', underlying_price, k_strike_price, remain_time, INTEREST_RATE, call_price, DIVIDEND)
+                put_volatility = calculate_imply_volatility('p', underlying_price, k_strike_price, remain_time, INTEREST_RATE, put_price, DIVIDEND)
+                volatility_dict[k_strike_price] = (call_volatility, put_volatility)
 
             # 左右行权价计算的波动率无效
-            if k2_call_volatility != -1 and k2_put_volatility != -1 and k3_call_volatility != -1 and k3_put_volatility != -1:
+            if volatility_dict[k2_strike][0] != -1 and volatility_dict[k2_strike][1] != -1 and volatility_dict[k3_strike][0] != -1 and volatility_dict[k3_strike][1] != -1:
                 atm_volatility.atm_valid = 1
-                atm_volatility.k1_volatility = k1_put_volatility
-                atm_volatility.k2_volatility = (k2_call_volatility + k2_put_volatility) / 2
-                atm_volatility.k3_volatility = (k3_call_volatility + k3_put_volatility) / 2
-                atm_volatility.k4_volatility = k4_call_volatility
+                # 对于K1 K4 行权价只计算call 或者 put
+                atm_volatility.k1_volatility = volatility_dict[k1_strike][1] # put
+                atm_volatility.k2_volatility = (volatility_dict[k2_strike][0] + volatility_dict[k2_strike][1]) / 2
+                atm_volatility.k3_volatility = (volatility_dict[k3_strike][0] + volatility_dict[k3_strike][1]) / 2
+                atm_volatility.k4_volatility = volatility_dict[k4_strike][0] # call
 
-                if k1_put_volatility != -1 and k4_call_volatility == -1:
+                volatility = [atm_volatility.k1_volatility, atm_volatility.k2_volatility, atm_volatility.k3_volatility, atm_volatility.k4_volatility]
+
+                if atm_volatility.k1_volatility != -1 and atm_volatility.k4_volatility == -1:
                     # 左中有效 右无效
                     atm_volatility.atm_volatility_protected = estimate_atm_volatility(np.array([k1_strike, k2_strike, k3_strike]), np.array(volatility[0:3]), forward_underlying_price)
-                if k1_put_volatility == -1 and k4_call_volatility != -1:
+                if atm_volatility.k1_volatility == -1 and atm_volatility.k4_volatility != -1:
                     # 左无效 右中有效
                     atm_volatility.atm_volatility_protected = estimate_atm_volatility(np.array([k2_strike, k3_strike, k4_strike]), np.array(volatility[1:]), forward_underlying_price)
-                if k1_put_volatility != -1 and k4_call_volatility != -1:
+                if atm_volatility.k1_volatility != -1 and atm_volatility.k4_volatility != -1:
                     # 全部有效
                     atm_volatility.atm_volatility_protected = (estimate_atm_volatility(np.array([k1_strike, k2_strike, k3_strike]), np.array(volatility[0:3]),forward_underlying_price) +
                                                                estimate_atm_volatility(np.array([k2_strike, k3_strike, k4_strike]), np.array(volatility[1:]),forward_underlying_price)) / 2
-                if k1_put_volatility == -1 and k4_call_volatility == -1:
+                if atm_volatility.k1_volatility == -1 and atm_volatility.k4_volatility == -1:
                     # 仅中间有效
                     atm_volatility.atm_volatility_protected = self.option_series_dict[symbol].atm_volatility.atm_volatility_protected
 

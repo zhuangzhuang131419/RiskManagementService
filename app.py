@@ -5,6 +5,9 @@ from memory.memory_manager import MemoryManager
 from model.ctp_manager import CTPManager
 from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
+from model.instrument.option_series import OptionSeries
+from model.memory.atm_volatility import ATMVolatility
+from model.memory.wing_model_para import WingModelPara
 from model.response.option_market_resp import OptionMarketResp, OptionData
 from model.response.option_greeks import OptionGreeksData, OptionGreeksResp
 from model.response.option_resp_base import StrikePrices
@@ -47,13 +50,13 @@ def main():
         print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.se_option_manager.option_series_dict.keys()))
 
     if future_manager is not None:
-        print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures)))
+        print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures_dict)))
         print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.memory.future_manager.index_future_month_id))
 
     if cffex_option_manager is not None:
         print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
         print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
-        print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO2411'].strike_price_options.keys()))
+        print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO20241115'].strike_price_options.keys()))
 
 
 
@@ -138,15 +141,26 @@ def get_all_market_data():
     # 返回当前行情数据
     return None
 
-@app.route('/api/options', methods=['GET'])
-def get_all_option():
-    #print(f'get_all_option: {ctp_manager.current_user.memory.option_manager.index_option_month_forward_id}')
-    return jsonify(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id)
+@app.route('/api/cffex/options', methods=['GET'])
+def get_cffex_option():
+    if ctp_manager.current_user.memory.cffex_option_manager is not None:
+        return jsonify(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id)
+    else:
+        return jsonify([])
+
+@app.route('/api/se/options', methods=['GET'])
+def get_se_option():
+    if ctp_manager.current_user.memory.se_option_manager is not None:
+        return jsonify(ctp_manager.current_user.memory.se_option_manager.index_option_month_forward_id)
+    else:
+        return jsonify([])
 
 @app.route('/api/futures', methods=['GET'])
 def get_all_future():
-    # print(f'get_all_future: {ctp_manager.current_user.memory.future_manager.index_future_month_id}')
-    return jsonify(ctp_manager.current_user.memory.future_manager.index_future_month_id)
+    if ctp_manager.current_user.memory.cffex_option_manager is not None:
+        return jsonify(ctp_manager.current_user.memory.future_manager.index_future_month_id)
+    else:
+        return jsonify([])
 
 # @app.route('/api/option/market_data', methods=['GET'])
 # def get_option_forward_price():
@@ -207,23 +221,21 @@ def get_option_greeks():
 
 @app.route('/api/option/wing_model', methods=['GET'])
 def get_wing_model():
-    symbol = request.args.get('symbol')
+    symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
-    print(f"get wing model parameter for {symbol}")
+    # print(f"get wing model parameter for {symbol}")
 
     try:
-        option_series = ctp_manager.current_user.memory.cffex_option_manager.option_series_dict[symbol]
+        option_series: OptionSeries = ctp_manager.current_user.memory.cffex_option_manager.option_series_dict[symbol]
+        wing_model_para: WingModelPara = option_series.wing_model_para
+        atm_volatility: ATMVolatility = option_series.atm_volatility
+        resp: WingModelResp = WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)
+        # print(resp.to_dict())
+        return jsonify(resp.to_dict())
     except ValueError:
         return jsonify({"error": f"Symbol {symbol} not found"}), 404
 
-    option_series = ctp_manager.current_user.memory.cffex_option_manager.option_series_dict[symbol]
-    wing_model_para = option_series.wing_model_para
-    atm_volatility = option_series.atm_volatility
-    resp = WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2,
-                         wing_model_para.b, atm_volatility.atm_valid)
-    print(resp.to_dict())
-    return jsonify(resp.to_dict())
 
 
 
@@ -232,6 +244,6 @@ def get_wing_model():
 if __name__ == "__main__":
     init_ctp()
     Thread(target=main).start()
-    # app.run(debug=True, use_reloader=False)
+    app.run(debug=True, use_reloader=False)
 
 
