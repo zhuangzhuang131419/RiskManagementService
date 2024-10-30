@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
-import { Stack, DetailsList, IColumn, Text } from '@fluentui/react';
+import { Stack, DetailsList, IColumn, Text, SelectionMode } from '@fluentui/react';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 
 interface OptionGreeksProps {
     symbol: string | null;
+    style?: React.CSSProperties;
 }
 
-const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
+const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
 
     const [items, setItems] = useState<any[]>([]);
 
@@ -71,25 +72,20 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
 
     const scrollBoxStyles = {
         root: {
-            height: '90%',   // 固定高度
             overflowX: 'hidden', // 禁用水平滚动
-            overflowY: 'auto', // 垂直滚动
-            // border: '1px solid #ccc', // 可选：添加边框
-            // padding: '10px',   // 内边距
+            // overflowY: 'auto', // 垂直滚动
         },
     };
 
     return (
-        <Stack tokens={{ childrenGap: 15 }}>
-            <Text variant="large">Greeks for {symbol}</Text>
+        <div style={{ ...style }}>
             <DetailsList
                 items={items}
                 columns={columns}
-                setKey="set"
-                layoutMode={0} // 默认布局
+                selectionMode={SelectionMode.none}
                 styles={scrollBoxStyles}
             />
-        </Stack>
+        </div>
     );
 };
 

@@ -35,7 +35,7 @@ class ETFOption(Option):
         self.option_type = option_type
         self.strike_price = float(strike_price)
         self.symbol = underlying_instr_id + expired_date
-        self.instrument_id = self.symbol + "-" + self.option_type + "-" + str(strike_price)
+        self.full_symbol = self.symbol + "-" + self.option_type + "-" + str(strike_price)
 
     def __str__(self):
         """返回期权的详细信息"""
@@ -52,7 +52,7 @@ class IndexOption(Option):
             self.option_type = instrument_id[7]
             self.strike_price = float(instrument_id.split('-')[-1])
             self.symbol = instrument_id[:2] + expired_date
-            self.instrument_id = self.symbol + "-" + self.option_type + "-" + str(self.strike_price)
+            self.full_symbol = self.symbol + "-" + self.option_type + "-" + str(self.strike_price)
         else:
             raise ValueError(f'期权{instrument_id}不符合')
 

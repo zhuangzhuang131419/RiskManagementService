@@ -1,7 +1,6 @@
 import time
 import numpy as np
 
-from memory.memory_manager import MemoryManager
 from model.ctp_manager import CTPManager
 from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
@@ -84,13 +83,18 @@ def main():
     # ctp_manager.query_investor_position_detail()
 
     while True:
-        # k1_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 1]
-        # k2_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 2]
-        # k3_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 3]
-        # k4_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 4]
-        # atm_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 5]
-        # atm_vega = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 6]
-        # print(f'HO2410的atm相关信息：k1_volatility: {k1_volatility}, k2_volatility: {k2_volatility}, k3_volatility: {k3_volatility}, k4_volatility: {k4_volatility}, atm_volatility: {atm_volatility}, atm_vega: {atm_vega}')
+        if cffex_option_manager is not None:
+            # print(f"{cffex_option_manager.option_series_dict['HO20241115'].imply_price}")
+            print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].call.market_data}")
+            print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].put.market_data}")
+            # k1_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 1]
+            # k2_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 2]
+            # k3_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 3]
+            # k4_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 4]
+            # atm_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 5]
+            # # atm_vega = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 6]
+            # print(f'HO2410的atm相关信息：k1_volatility: {k1_volatility}, k2_volatility: {k2_volatility}, k3_volatility: {k3_volatility}, k4_volatility: {k4_volatility}, atm_volatility: {atm_volatility}, atm_vega: {atm_vega}')
+
 
 
         # strike_index = 22

@@ -4,6 +4,7 @@ from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField
 from helper.helper import *
+from memory.memory_manager import MemoryManager
 from model.instrument.instrument import Future
 from model.instrument.option import IndexOption
 from model.order_info import OrderInfo
@@ -23,12 +24,17 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
     login_finish = False
     query_finish = False
 
+    memory_manager: MemoryManager = None
+
 
     def __init__(self, trader_user_api, config):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
         self.subscribe_instrument = {}
+
+    def set_memory_manager(self, memory_manager):
+        self.memory_manager = memory_manager
 
 
     def OnFrontConnected(self):
@@ -114,7 +120,6 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             elif filter_index_future(pInstrument.InstrumentID):
                 future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
                 self.subscribe_instrument[future.id] = future
-
         if bIsLast:
             self.query_finish = True
             print('查询合约完成')

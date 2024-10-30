@@ -6,10 +6,11 @@ import React, { useState, useEffect } from 'react';
 
 interface WingModelProps {
   symbol: string | null;
+  style?: React.CSSProperties;
 }
 
 
-const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
+const WingModelBar: React.FC<WingModelProps> = ({ symbol, style }) => {
 
   const [items, setItems] = useState<WingModelData[]>([]);
 
@@ -38,10 +39,10 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
   
   const scrollBoxStyles = {
     root: {
-        // height: '30%',   // 固定高度
         overflowX: 'hidden', // 禁用水平滚动
+        overflowY: 'hidden', // 禁用滚动
     },
-};
+  };
 
   const columns = [
     { key: 'atmVol', name: 'ATM波动率', fieldName: 'atm_vol', minWidth: 100, maxWidth: 150, isResizable: true },
@@ -52,12 +53,15 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
 ];
   
   return (
-    <DetailsList
-      items={items}
-      selectionMode={SelectionMode.none}
-      columns={columns}
-      styles={scrollBoxStyles}
-    />
+    <div style={{ ...style }}>
+      <DetailsList
+        items={items}
+        selectionMode={SelectionMode.none}
+        columns={columns}
+        styles={scrollBoxStyles}
+      />
+    </div>
+    
   );
 };
 

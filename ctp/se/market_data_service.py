@@ -6,18 +6,19 @@ from api_se.ThostFtdcApiSOpt import CThostFtdcRspInfoField, CThostFtdcRspUserLog
 from helper.helper import *
 from queue import Queue
 
+from memory.memory_manager import MemoryManager
 from model.instrument.option import Option, ETFOption
 from model.memory.market_data import MarketData, DepthMarketData
 
 
 class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
+    memory_manager: MemoryManager = None
 
     def __init__(self, market_data_user_api, config):
         super().__init__()
         self.market_data_user_api = market_data_user_api
         self.config = config
         self.market_data = Queue()
-        self.memory_manager = None
 
     def set_memory_manager(self, memory_manager):
         self.memory_manager = memory_manager
@@ -58,51 +59,43 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
-        # if filter_etf(pDepthMarketData.InstrumentID):
-        if pDepthMarketData.InstrumentID in self.memory_manager.se_instrument:
-            instrument_id = self.memory_manager.se_instrument[pDepthMarketData.InstrumentID]
+        if self.memory_manager is not None and self.memory_manager.se_option_manager is not None:
+            if pDepthMarketData.InstrumentID in self.memory_manager.se_option_manager.instrument_transform_full_symbol:
+                depth_market_data = DepthMarketData()
+                depth_market_data.symbol = self.memory_manager.se_option_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 
+                depth_market_data.time = round(time.time())
+                depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)
+                depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
+                depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
+                depth_market_data.bid_prices[0] = round(pDepthMarketData.BidPrice1, 2)
 
-            depth_market_data = DepthMarketData()
-            depth_market_data.time = round(time.time())
-            depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)
-            depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
-            depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
-            depth_market_data.bid_prices[0] = round(pDepthMarketData.BidPrice1, 2)
+                depth_market_data.ask_volumes[1] = int(pDepthMarketData.AskVolume2)
+                depth_market_data.bid_volumes[1] = int(pDepthMarketData.BidVolume2)
+                depth_market_data.ask_prices[1] = round(pDepthMarketData.AskPrice2, 2)
+                depth_market_data.bid_prices[1] = round(pDepthMarketData.BidPrice2, 2)
 
-            depth_market_data.ask_volumes[1] = int(pDepthMarketData.AskVolume2)
-            depth_market_data.bid_volumes[1] = int(pDepthMarketData.BidVolume2)
-            depth_market_data.ask_prices[1] = round(pDepthMarketData.AskPrice2, 2)
-            depth_market_data.bid_prices[1] = round(pDepthMarketData.BidPrice2, 2)
+                depth_market_data.ask_volumes[2] = int(pDepthMarketData.AskVolume3)
+                depth_market_data.bid_volumes[2] = int(pDepthMarketData.BidVolume3)
+                depth_market_data.ask_prices[2] = round(pDepthMarketData.AskPrice3, 2)
+                depth_market_data.bid_prices[2] = round(pDepthMarketData.BidPrice3, 2)
 
-            depth_market_data.ask_volumes[2] = int(pDepthMarketData.AskVolume3)
-            depth_market_data.bid_volumes[2] = int(pDepthMarketData.BidVolume3)
-            depth_market_data.ask_prices[2] = round(pDepthMarketData.AskPrice3, 2)
-            depth_market_data.bid_prices[2] = round(pDepthMarketData.BidPrice3, 2)
+                depth_market_data.ask_volumes[3] = int(pDepthMarketData.AskVolume4)
+                depth_market_data.bid_volumes[3] = int(pDepthMarketData.BidVolume4)
+                depth_market_data.ask_prices[3] = round(pDepthMarketData.AskPrice4, 2)
+                depth_market_data.bid_prices[3] = round(pDepthMarketData.BidPrice4, 2)
 
-            depth_market_data.ask_volumes[3] = int(pDepthMarketData.AskVolume4)
-            depth_market_data.bid_volumes[3] = int(pDepthMarketData.BidVolume4)
-            depth_market_data.ask_prices[3] = round(pDepthMarketData.AskPrice4, 2)
-            depth_market_data.bid_prices[3] = round(pDepthMarketData.BidPrice4, 2)
+                depth_market_data.ask_volumes[4] = int(pDepthMarketData.AskVolume5)
+                depth_market_data.bid_volumes[4] = int(pDepthMarketData.BidVolume5)
+                depth_market_data.ask_prices[4] = round(pDepthMarketData.AskPrice5, 2)
+                depth_market_data.bid_prices[4] = round(pDepthMarketData.BidPrice5, 2)
 
-            depth_market_data.ask_volumes[4] = int(pDepthMarketData.AskVolume5)
-            depth_market_data.bid_volumes[4] = int(pDepthMarketData.BidVolume5)
-            depth_market_data.ask_prices[4] = round(pDepthMarketData.AskPrice5, 2)
-            depth_market_data.bid_prices[4] = round(pDepthMarketData.BidPrice5, 2)
+                depth_market_data.exchange_id = pDepthMarketData.ExchangeID
+                depth_market_data.set_available()
 
+                depth_market_data.clean_data()
+                self.memory_manager.market_data.put(depth_market_data)
 
-            depth_market_data.exchange_id = pDepthMarketData.ExchangeID
-
-
-
-            # 把se的instrument_id转换成可读的
-            depth_market_data.instrument_id = instrument_id
-            depth_market_data.set_available()
-
-            # print(f'SSEX OnRtnDepthMarketData: {instrument_id}, exchange_id: {pDepthMarketData.ExchangeID} ask_volumes:{depth_market_data.ask_volumes} bid_volumes:{depth_market_data.ask_volumes} ask_prices:{depth_market_data.ask_prices} bid_prices:{depth_market_data.bid_prices}')
-
-            depth_market_data.clean_data()
-            self.memory_manager.market_data.put(depth_market_data)
 
 
 

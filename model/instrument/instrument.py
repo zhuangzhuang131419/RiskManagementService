@@ -9,11 +9,12 @@ def validate_future_id(instrument_id):
     return True
 
 class Instrument:
+    full_symbol: str
     def __init__(self, instrument_id, expired_date, exchange_id):
         self.id = instrument_id
         self.expired_date = expired_date
         self.exchange_id = exchange_id
-        self.market_data = MarketData()
+        self.market_data: MarketData = MarketData()
 
 class Future(Instrument):
 
@@ -22,6 +23,7 @@ class Future(Instrument):
         super().__init__(instrument_id, expired_date, exchange_id)
         if validate_future_id(instrument_id):
             self.symbol = underlying_id + expired_date
+            self.full_symbol = self.symbol
         else:
             raise ValueError(f"期货代码格式无效：{instrument_id}")
 

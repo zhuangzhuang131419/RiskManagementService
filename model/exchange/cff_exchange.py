@@ -108,7 +108,7 @@ class CFFExchange(Exchange, ABC):
             self.trader_user_spi.order_map[str(order_ref)] = OrderInfo(order_ref, strategy_id, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
             # 报单回报里的报单价格和品种数据不对，所以自己记录数据
             self.trader_user_spi.order_map[str(order_ref)].order_price = price
-            self.trader_user_spi.order_map[str(order_ref)].instrument_id = code
+            self.trader_user_spi.order_map[str(order_ref)].symbol = code
             print(self.trader_user_spi.order_map[str(order_ref)])
         else:
             print('发送下单请求失败！')

@@ -14,13 +14,12 @@ class MemoryManager:
     future_manager: FutureManager = None
     se_option_manager: OptionManager = None
 
+
+
     def __init__(self):
 
         # self.init_future_option(instruments)
         self.market_data = Queue()
-
-        # 负责把ETF instrument_id 转成可读的 instrument_id
-        self.se_instrument: Dict[str, str] = {}
 
 
     def init_cffex_instrument(self, instruments: dict):
@@ -36,15 +35,11 @@ class MemoryManager:
         if len(index_options) > 0:
             self.cffex_option_manager = OptionManager(index_options)
 
-
     def init_se_instrument(self, instruments: dict):
         etf_options = []
 
         for instrument in instruments.values():
             etf_options.append(instrument)
-            self.se_instrument[instrument.id] = instrument.instrument_id
-
-        print(f"se_instrument:{self.se_instrument}")
 
         if len(etf_options) > 0:
             self.se_option_manager = OptionManager(etf_options)

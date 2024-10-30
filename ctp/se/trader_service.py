@@ -6,6 +6,7 @@ from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
     CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField
 from helper.helper import *
+from memory.memory_manager import MemoryManager
 from model.instrument.option import Option, ETFOption
 
 
@@ -23,12 +24,18 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
     login_finish = False
     query_finish = False
 
+    memory_manager: MemoryManager = None
+
 
     def __init__(self, trader_user_api, config):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
         self.subscribe_instrument = {}
+
+
+    def set_memory_manager(self, memory_manager):
+        self.memory_manager = memory_manager
 
 
     def OnFrontConnected(self):

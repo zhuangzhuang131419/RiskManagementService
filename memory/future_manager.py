@@ -9,6 +9,9 @@ class FutureManager:
     # 期货合约
     index_futures_dict: Dict[str, Future] = {}
 
+    # 把来自交易所的instrument_id 映射到我们自己的symbol
+    instrument_transform_full_symbol: Dict[str, str] = {}
+
     # 3*4 [IH2410,IH2411,IH2412,IH2503,IF2410,IF2411,IF2412,IF2503,IM2410,IM2411,IM2412,IM2503]
     # 合成唯一的期货月份列表
     index_future_month_id = []
@@ -17,10 +20,14 @@ class FutureManager:
         self.init_index_future_dict(index_futures)
         self.init_index_future_month_id()
 
+
     def init_index_future_dict(self, index_futures:[Future]):
         for future in index_futures:
             if future.symbol not in self.index_futures_dict:
                 self.index_futures_dict[future.symbol] = future
+            self.instrument_transform_full_symbol[future.id] = future.full_symbol
+
+        print(f"instrument_transform_symbol: {self.instrument_transform_full_symbol}")
 
 
     def init_index_future_month_id(self):

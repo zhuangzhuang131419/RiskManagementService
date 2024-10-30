@@ -92,6 +92,7 @@ class CTPManager:
             if self.current_user.is_login(exchange_type.name):
                 # 把内存传给交易中心
                 self.current_user.exchanges[exchange_type.name].market_data_user_spi.set_memory_manager(self.current_user.memory)
+                self.current_user.exchanges[exchange_type.name].market_data_user_spi.set_memory_manager(self.current_user.memory)
 
                 # 批量订阅数据
                 instrument_ids = list(self.current_user.exchanges[exchange_type.name].trader_user_spi.subscribe_instrument.keys())
@@ -103,37 +104,43 @@ class CTPManager:
     def tick(self):
         while True:
             depth_market_date: DepthMarketData = self.current_user.memory.market_data.get(True)
-            # print(f'tick：{depth_market_date}')
 
             # update_time = depth_market_date.UpdateTime
-            instrument_id = depth_market_date.instrument_id
+            full_symbol = depth_market_date.symbol
             # 清洗编码问题，数据分类：-1为编码错误
 
-            if depth_market_date.exchange_id == ExchangeType.CFFEX.name:
-                if filter_index_option(instrument_id):
-                    # 导入期权行情
-                    symbol = instrument_id.split('-')[0]
-                    option_type = instrument_id.split('-')[1]
-                    strike_price = float(instrument_id.split('-')[-1])
+            if filter_index_option(full_symbol):
+                # 导入期权行情
+                try:
+                    symbols = full_symbol.split('-')
+                    symbol = symbols[0]
+                    option_type = symbols[1]
+                    strike_price = float(symbols[-1])
+                except IndexError:
+                    print(f"full_symbol:{full_symbol}")
+                    raise IndexError
 
-                    if option_type == 'C':
-                        self.current_user.memory.cffex_option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
-                    elif option_type == 'P':
-                        self.current_user.memory.cffex_option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
-                elif filter_index_future(instrument_id):
-                    # 导入期货行情
-                    symbol = instrument_id.split('-')[0]
-                    self.current_user.memory.future_manager.index_futures_dict[symbol].market_data = depth_market_date
-            elif depth_market_date.exchange_id == ExchangeType.SSE.name or depth_market_date.exchange_id == ExchangeType.SZSE.name:
-                    # print(f'depth_market_date:{depth_market_date}')
-                    symbol = instrument_id.split('-')[0]
-                    option_type = instrument_id.split('-')[1]
-                    strike_price = float(instrument_id.split('-')[-1])
+                if option_type == 'C':
+                    self.current_user.memory.cffex_option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
+                elif option_type == 'P':
+                    self.current_user.memory.cffex_option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
+            elif filter_index_future(full_symbol):
+                # 导入期货行情
+                symbol = full_symbol.split('-')[0]
+                self.current_user.memory.future_manager.index_futures_dict[symbol].market_data = depth_market_date
+
+            elif filter_etf(full_symbol):
+                    symbols = full_symbol.split('-')
+                    symbol = symbols[0]
+                    option_type = symbols[1]
+                    strike_price = float(symbols[-1])
 
                     if option_type == 'C':
                         self.current_user.memory.se_option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
                     elif option_type == 'P':
                         self.current_user.memory.se_option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
+            else:
+                print(f"exception: {depth_market_date}")
 
 
 

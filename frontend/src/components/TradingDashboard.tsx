@@ -27,7 +27,7 @@ const TradingDashboard: React.FC = () => {
     const [selectedAccount, setSelectedAccount] = useState<string>("account1");
     const [selectedIndexOption, setSelectedIndexOption] = useState<string | null>(null);
     const [selectedFuture, setSelectedFuture] = useState<string | null>(null);
-    const [selectedETF, setSelectedETF] = useState<string | null>(null);
+    const [selectedETFOption, setSelectedETF] = useState<string | null>(null);
 
     const [selectedKey, setSelectedKey] = React.useState<string>('B'); // 设置默认选中 'B'
 
@@ -129,9 +129,13 @@ const TradingDashboard: React.FC = () => {
 
                 {/* 右侧：OptionGreeks */}
                 <Stack horizontal tokens={{ childrenGap: 10 }} grow={1} styles={{ root: { height: '100%' }}}>
-                    <Stack>
-                        <WingModelBar symbol={selectedIndexOption}></WingModelBar>
-                        {/* <OptionGreeks symbol={selectedOption} /> */}
+                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { flex: 1 }}}>
+                        <WingModelBar symbol={selectedIndexOption} style={{ flex: '0 0 10%' }}/>
+                        <OptionGreeks symbol={selectedIndexOption} style={{ flex: '1 1 auto', overflowY: 'auto', height: '90%' }}/>
+                    </Stack>
+                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { flex: 1 }}}>
+                        <WingModelBar symbol={selectedETFOption} style={{ flex: '0 0 10%' }}/>
+                        <OptionGreeks symbol={selectedETFOption} style={{ flex: '1 1 auto', overflowY: 'auto', height: '90%' }}/>
                     </Stack>
                     {/* <OptionGreeks symbol={selectedETF} /> */}
                 </Stack>

@@ -1,6 +1,5 @@
 import datetime
 
-from model.instrument.instrument import validate_future_id
 from model.instrument.option import validate_option_id
 
 
@@ -41,19 +40,19 @@ def filter_index_future(instrument_id: str) -> bool:
     return any(instrument_id.startswith(future_prefix) for future_prefix in INDEX_FUTURE_PREFIXES)
 
 # 判断合约是不是在option
-def filter_index_option(instrument_id: str) -> bool:
+def filter_index_option(symbol: str) -> bool:
     """
-    :param instrument_id: 合约id
+    :param symbol: 合约id
     :return: 是否是指数期权
     """
-    return any(instrument_id.startswith(option_prefix) for option_prefix in INDEX_OPTION_PREFIXES)
+    return any(symbol.startswith(option_prefix) for option_prefix in INDEX_OPTION_PREFIXES)
 
-def filter_etf(instrument_id: str) -> bool:
+def filter_etf(symbol: str) -> bool:
     """
-    :param instrument_id: 合约id
+    :param symbol: 合约id
     :return: 是否是关注的期权
     """
-    return any(instrument_id.startswith(etf_prefix) for etf_prefix in ETF_PREFIXES)
+    return any(symbol.startswith(etf_prefix) for etf_prefix in ETF_PREFIXES)
 
 
 YEAR_TRADING_DAY=244

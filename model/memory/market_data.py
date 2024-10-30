@@ -16,8 +16,7 @@ class MarketData:
 
 @dataclass
 class DepthMarketData(MarketData):
-    instrument_id: str = ""
-    exchange_id: str = ""
+    symbol: str = ""
 
     def clean_data(self):
         threshold = 1.7976931348623157e+308

@@ -6,17 +6,19 @@ from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLogi
 from helper.helper import *
 from queue import Queue
 
+from memory.memory_manager import MemoryManager
 from model.memory.market_data import DepthMarketData
 
 
 class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
+    memory_manager: MemoryManager = None
 
     def __init__(self, market_data_user_api, account_config):
         super().__init__()
         self.market_data_user_api = market_data_user_api
         self.config = account_config
         self.market_data = Queue()
-        self.memory_manager = None
+
 
     def set_memory_manager(self, memory_manager):
         self.memory_manager = memory_manager
@@ -52,13 +54,12 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
         if pRspInfo.ErrorID != 0:
             print(f"订阅行情失败，合约: {pSpecificInstrument.InstrumentID}, 错误信息: {pRspInfo.ErrorMsg}")
         # else:
-            # print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
+            print(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
-
-        if filter_index_future(pDepthMarketData.InstrumentID) or filter_index_option(pDepthMarketData.InstrumentID):
-            if self.memory_manager is not None:
+        if self.memory_manager is not None and self.memory_manager.cffex_option_manager is not None and self.memory_manager.future_manager is not None:
+            if pDepthMarketData.InstrumentID in self.memory_manager.cffex_option_manager.instrument_transform_full_symbol or pDepthMarketData.InstrumentID in self.memory_manager.future_manager.instrument_transform_full_symbol:
 
                 depth_market_data = DepthMarketData()
                 depth_market_data.time = round(time.time())
@@ -66,8 +67,11 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
                 depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
                 depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
                 depth_market_data.bid_prices[0] = round(pDepthMarketData.BidPrice1, 2)
-                depth_market_data.exchange_id = pDepthMarketData.ExchangeID
-                depth_market_data.instrument_id = pDepthMarketData.InstrumentID
+
+                if pDepthMarketData.InstrumentID in self.memory_manager.cffex_option_manager.instrument_transform_full_symbol:
+                    depth_market_data.symbol = self.memory_manager.cffex_option_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
+                elif pDepthMarketData.InstrumentID in self.memory_manager.future_manager.instrument_transform_full_symbol:
+                    depth_market_data.symbol = self.memory_manager.future_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 
                 depth_market_data.clean_data()
                 depth_market_data.set_available()
