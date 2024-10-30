@@ -14,7 +14,7 @@ from model.exchange.exchange_type import ExchangeType
 from model.order_info import OrderInfo
 
 
-class SSSZExchange(Exchange, ABC):
+class SExchange(Exchange, ABC):
     def __init__(self, config, config_file_path, exchange_type: ExchangeType):
         super().__init__(config, config_file_path)
         self.type = exchange_type
@@ -136,8 +136,8 @@ class SSSZExchange(Exchange, ABC):
 
     # 查看持仓明细
     def query_investor_position_detail(self):
-        query_file = self.trader_user_api.CThostFtdcQryInvestorPositionDetailField()
-        query_file.BrokerID = self.config.broker_id
+        query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionDetailField()
+        # query_file.BrokerID = self.config.broker_id
         ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
         if ret == 0:
             print('发送查询持仓明细成功！')
@@ -145,7 +145,7 @@ class SSSZExchange(Exchange, ABC):
             print('发送查询持仓明细失败！')
             judge_ret(ret)
             while ret != 0:
-                query_file = self.trader_user_api.CThostFtdcQryInvestorPositionDetailField()
+                query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionDetailField()
                 ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
                 print('正在查询持仓明细...')
                 time.sleep(5)
@@ -172,3 +172,14 @@ class SSSZExchange(Exchange, ABC):
             while ret != 0:
                 ret = self.market_data_user_api.mduserapi.SubscribeMarketData(instrument_ids)
                 print('正在订阅{}行情...'.format(str(instrument_ids)))
+
+    def query_investor_position(self):
+        query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
+        query_file.ExchangeID = self.type.name
+        ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
+        if ret == 0:
+            pass
+        else:
+            print(f"发送查询投资者持仓请求失败")
+            judge_ret(ret)
+

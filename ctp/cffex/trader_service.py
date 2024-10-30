@@ -2,7 +2,7 @@ import copy
 
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
-    CThostFtdcInstrumentField
+    CThostFtdcInstrumentField, CThostFtdcTradeField, CThostFtdcInvestorPositionField
 from helper.helper import *
 from memory.memory_manager import MemoryManager
 from model.instrument.instrument import Future
@@ -174,8 +174,21 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         except Exception as e:
             red_print(e)
 
-    def OnRtnTrade(self, pTrade: "CThostFtdcTradeField") -> "void":
+    def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         del self.order_map[pTrade.OrderRef]
+
+    def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+        else:
+            print('查询投资者持仓成功,')
+
+        print(f"今日持仓：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID}")
+
+        if bIsLast:
+            print('查询投资者持仓完成')
+
+
 
 
 

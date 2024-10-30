@@ -4,7 +4,7 @@ from click import option
 
 from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
-    CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField
+    CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField
 from helper.helper import *
 from memory.memory_manager import MemoryManager
 from model.instrument.option import Option, ETFOption
@@ -131,9 +131,16 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
     # 请求查询投资者持仓明细响应，当执行ReqQryInvestorPositionDetail后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINVESTORPOSITIONDETAIL.html
-    def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: "CThostFtdcInvestorPositionDetailField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
-        if pInvestorPositionDetail.Volume == 0:
-            return
+    def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: CThostFtdcInvestorPositionDetailField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('查询投资者持仓明细失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+        else:
+            print('查询投资者持仓明细成功,')
+
+        print(f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice}")
+
+        if bIsLast:
+            print('查询投资者持仓明细完成')
 
     def OnRspOrderInsert(self, pInputOrder: CThostFtdcInputOrderField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
@@ -179,6 +186,18 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         del self.order_map[pTrade.OrderRef]
+
+    def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+        else:
+            print('查询投资者持仓成功,')
+
+        if pInvestorPosition is not None:
+            print(f"今日持仓：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID}")
+
+        if bIsLast:
+            print('查询投资者持仓完成')
 
 
 

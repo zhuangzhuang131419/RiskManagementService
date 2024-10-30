@@ -171,3 +171,16 @@ class CFFExchange(Exchange, ABC):
             while ret != 0:
                 ret = self.market_data_user_api.mduserapi.SubscribeMarketData(instrument_ids)
                 print('正在订阅{}行情...'.format(str(instrument_ids)))
+
+
+    def query_investor_position(self):
+        query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionField()
+        query_file.ExchangeID = self.type.name
+        ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
+        print(ret)
+        if ret == 0:
+            pass
+        else:
+            print(f"发送查询投资者持仓请求失败")
+            judge_ret(ret)
+

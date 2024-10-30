@@ -3,8 +3,8 @@ import { GreeksResponse, WingModelData } from "../Model/OptionData";
 export interface IOptionDataProvider {
     fetchIndexOptionSymbols(): Promise<string[]>;
     fetchETFOptionSymbols(): Promise<string[]>;
-    fetchOptionGreeks(symbol: string): Promise<GreeksResponse>;
-    fetchWingModelPara(symbol: string): Promise<WingModelData>;
+    fetchOptionGreeks(symbol: string, exchange: string): Promise<GreeksResponse>;
+    fetchWingModelPara(symbol: string, exchange: string): Promise<WingModelData>;
 }
 
 class OptionDataProvider implements IOptionDataProvider {
@@ -26,8 +26,8 @@ class OptionDataProvider implements IOptionDataProvider {
       // return ["IO2410", "IO2411", "IO2412", "HO2410", "HO2411", "HO2412"];
   };
 
-    fetchOptionGreeks = async (symbol: string): Promise<GreeksResponse> => {
-        const response = await fetch(`/api/option/greeks?symbol=${symbol}`);
+    fetchOptionGreeks = async (symbol: string, exchange: string): Promise<GreeksResponse> => {
+        const response = await fetch(`/api/${exchange}/option/greeks?symbol=${symbol}`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
@@ -44,8 +44,8 @@ class OptionDataProvider implements IOptionDataProvider {
         // return mockGreeksResponse;
     };
 
-    fetchWingModelPara = async (symbol: string): Promise<WingModelData> => {
-      const response = await fetch(`/api/option/wing_model?symbol=${symbol}`);
+    fetchWingModelPara = async (symbol: string, exchange: string): Promise<WingModelData> => {
+      const response = await fetch(`/api/${exchange}/option/wing_model?symbol=${symbol}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }

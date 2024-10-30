@@ -7,16 +7,17 @@ import React, { useState, useEffect } from 'react';
 interface WingModelProps {
   symbol: string | null;
   style?: React.CSSProperties;
+  exchange: string;
 }
 
 
-const WingModelBar: React.FC<WingModelProps> = ({ symbol, style }) => {
+const WingModelBar: React.FC<WingModelProps> = ({ symbol, style, exchange }) => {
 
   const [items, setItems] = useState<WingModelData[]>([]);
 
   const { data: wingModel, error, isLoading } = useQuery(
     ['wingModel', symbol],
-    () => optionDataProvider.fetchWingModelPara(symbol as string),
+    () => optionDataProvider.fetchWingModelPara(symbol as string, exchange),
     {
         onSuccess(data) {
           const formattedItems: WingModelData[] = [data]

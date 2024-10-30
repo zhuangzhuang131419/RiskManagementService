@@ -45,3 +45,11 @@ class Exchange(ABC):
     @abstractmethod
     def subscribe_market_data(self, instrument_ids):
         pass
+
+    @abstractmethod
+    def query_investor_position(self):
+        pass
+
+    @abstractmethod
+    def query_investor_position_detail(self):
+        pass

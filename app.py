@@ -1,6 +1,7 @@
 import time
 import numpy as np
 
+from memory.option_manager import OptionManager
 from model.ctp_manager import CTPManager
 from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
@@ -56,6 +57,11 @@ def main():
         print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
         print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
         print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO20241115'].strike_price_options.keys()))
+
+    # ctp_manager.current_user.query_investor_position(ExchangeType.SSE.name)
+    ctp_manager.current_user.query_investor_position(ExchangeType.SZSE.name)
+    # ctp_manager.current_user.query_investor_position_detail(ExchangeType.SSE.name)
+    ctp_manager.current_user.query_investor_position_detail(ExchangeType.SZSE.name)
 
 
 
@@ -166,47 +172,27 @@ def get_all_future():
     else:
         return jsonify([])
 
-# @app.route('/api/option/market_data', methods=['GET'])
-# def get_option_forward_price():
-#
-#     symbol = request.args.get('symbol')
-#     option_manager = ctp_manager.current_user.memory.cffex_option_manager
-#     resp = OptionMarketResp(symbol)
-#
-#     try:
-#         # 获取 symbol 对应的 index
-#         symbol_index = option_manager.index_option_month_forward_id.index(symbol)
-#     except ValueError:
-#         return jsonify({"error": f"Symbol {symbol} not found"}), 404
-#
-#     strike_num = option_manager.index_option_month_strike_num[symbol_index]
-#
-#     for i in range(strike_num):
-#         bid = option_manager.index_option_market_data[symbol_index, 0, i, 2]
-#         bid_volume = option_manager.index_option_market_data[symbol_index, 0, i, 3]
-#         ask = option_manager.index_option_market_data[symbol_index, 0, i, 4]
-#         ask_volume = option_manager.index_option_market_data[symbol_index, 0, i, 5]
-#         call_option = OptionData(bid, bid_volume, ask, ask_volume)
-#
-#         bid = option_manager.index_option_market_data[symbol_index, 1, i, 2]
-#         bid_volume = option_manager.index_option_market_data[symbol_index, 1, i, 3]
-#         ask = option_manager.index_option_market_data[symbol_index, 1, i, 4]
-#         ask_volume = option_manager.index_option_market_data[symbol_index, 1, i, 5]
-#         put_option = OptionData(bid, bid_volume, ask, ask_volume)
-#         resp.strike_prices[option_manager.index_option_market_data[symbol_index, 0, i, 0]] = StrikePrices(call_option, put_option)
-#
-#     return jsonify(resp.to_dict())
-
-@app.route('/api/option/greeks', methods=['GET'])
-def get_option_greeks():
+@app.route('/api/se/option/greeks', methods=['GET'])
+def get_se_option_greeks():
     symbol = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
-    option_manager = ctp_manager.current_user.memory.cffex_option_manager
+
+    return get_option_greeks(symbol, ctp_manager.current_user.memory.se_option_manager)
+
+
+@app.route('/api/cffex/option/greeks', methods=['GET'])
+def get_cffex_option_greeks():
+    symbol = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
+
+    return get_option_greeks(symbol, ctp_manager.current_user.memory.cffex_option_manager)
+
+
+def get_option_greeks(symbol: str, option_manager: OptionManager):
     resp = OptionGreeksResp(symbol)
-
     with option_manager.greeks_lock:
-
         for strike_price, option_tuple in option_manager.option_series_dict[symbol].strike_price_options.items():
             call_delta = option_tuple.call.greeks.delta
             put_delta = option_tuple.put.greeks.delta
@@ -223,19 +209,29 @@ def get_option_greeks():
     print(resp.to_dict())
     return jsonify(resp.to_dict())
 
-@app.route('/api/option/wing_model', methods=['GET'])
-def get_wing_model():
+@app.route('/api/se/option/wing_model', methods=['GET'])
+def get_se_wing_model():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
-    # print(f"get wing model parameter for {symbol}")
 
+    return get_wing_model(symbol, ctp_manager.current_user.memory.se_option_manager)
+
+@app.route('/api/cffex/option/wing_model', methods=['GET'])
+def get_cffex_wing_model():
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
+
+    return get_wing_model(symbol, ctp_manager.current_user.memory.cffex_option_manager)
+
+
+def get_wing_model(symbol, option_manager: OptionManager):
     try:
-        option_series: OptionSeries = ctp_manager.current_user.memory.cffex_option_manager.option_series_dict[symbol]
+        option_series: OptionSeries = option_manager.option_series_dict[symbol]
         wing_model_para: WingModelPara = option_series.wing_model_para
         atm_volatility: ATMVolatility = option_series.atm_volatility
         resp: WingModelResp = WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)
-        # print(resp.to_dict())
         return jsonify(resp.to_dict())
     except ValueError:
         return jsonify({"error": f"Symbol {symbol} not found"}), 404

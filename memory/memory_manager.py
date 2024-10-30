@@ -5,7 +5,7 @@ from flask import Flask, jsonify, Blueprint
 from helper.helper import filter_index_future, filter_index_option, filter_etf
 from memory.future_manager import FutureManager
 from memory.option_manager import OptionManager
-from model.instrument.instrument import Future
+from model.instrument.instrument import Future, Instrument
 from model.instrument.option import Option
 
 
@@ -35,7 +35,7 @@ class MemoryManager:
         if len(index_options) > 0:
             self.cffex_option_manager = OptionManager(index_options)
 
-    def init_se_instrument(self, instruments: dict):
+    def init_se_instrument(self, instruments: Dict[str, Instrument]):
         etf_options = []
 
         for instrument in instruments.values():

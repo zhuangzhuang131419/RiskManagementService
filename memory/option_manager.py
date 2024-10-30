@@ -223,12 +223,15 @@ class OptionManager:
             volatility_dict: Dict[float, tuple] = {}
 
             for k_strike_price in strike_prices:
-                k_option_tuple = self.option_series_dict[symbol].strike_price_options[k_strike_price]
-                call_price = (k_option_tuple.call.market_data.ask_prices[0] + k_option_tuple.call.market_data.bid_prices[0]) / 2
-                put_price = (k_option_tuple.put.market_data.ask_prices[0] + k_option_tuple.put.market_data.bid_prices[0]) / 2
-                call_volatility = calculate_imply_volatility('c', underlying_price, k_strike_price, remain_time, INTEREST_RATE, call_price, DIVIDEND)
-                put_volatility = calculate_imply_volatility('p', underlying_price, k_strike_price, remain_time, INTEREST_RATE, put_price, DIVIDEND)
-                volatility_dict[k_strike_price] = (call_volatility, put_volatility)
+                if k_strike_price != -1:
+                    k_option_tuple = self.option_series_dict[symbol].strike_price_options[k_strike_price]
+                    call_price = (k_option_tuple.call.market_data.ask_prices[0] + k_option_tuple.call.market_data.bid_prices[0]) / 2
+                    put_price = (k_option_tuple.put.market_data.ask_prices[0] + k_option_tuple.put.market_data.bid_prices[0]) / 2
+                    call_volatility = calculate_imply_volatility('c', underlying_price, k_strike_price, remain_time, INTEREST_RATE, call_price, DIVIDEND)
+                    put_volatility = calculate_imply_volatility('p', underlying_price, k_strike_price, remain_time, INTEREST_RATE, put_price, DIVIDEND)
+                    volatility_dict[k_strike_price] = (call_volatility, put_volatility)
+                else:
+                    volatility_dict[k_strike_price] = (-1, -1)
 
             # 左右行权价计算的波动率无效
             if volatility_dict[k2_strike][0] != -1 and volatility_dict[k2_strike][1] != -1 and volatility_dict[k3_strike][0] != -1 and volatility_dict[k3_strike][1] != -1:

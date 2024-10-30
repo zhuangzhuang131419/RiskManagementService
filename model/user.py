@@ -9,7 +9,7 @@ from model.config.account_config import AccountConfig
 from model.exchange.cff_exchange import CFFExchange
 from model.exchange.exchange import Exchange
 from model.exchange.exchange_type import ExchangeType
-from model.exchange.se_exchange import SSSZExchange
+from model.exchange.se_exchange import SExchange
 from typing import Dict
 
 
@@ -84,9 +84,9 @@ class User:
         if account_id == ExchangeType.CFFEX.name:
             exchange = CFFExchange(self.accounts[account_id], "con_file/cff/")
         elif account_id == ExchangeType.SSE.name:
-            exchange = SSSZExchange(self.accounts[account_id], "con_file/ss/", exchange_type=ExchangeType.SSE)
+            exchange = SExchange(self.accounts[account_id], "con_file/ss/", exchange_type=ExchangeType.SSE)
         elif account_id == ExchangeType.SZSE.name:
-            exchange = SSSZExchange(self.accounts[account_id], "con_file/sz/", exchange_type=ExchangeType.SZSE)
+            exchange = SExchange(self.accounts[account_id], "con_file/sz/", exchange_type=ExchangeType.SZSE)
 
         self.exchanges[account_id] = exchange
         # print(f'共需要连接{len(self.exchanges)}个交易所')
@@ -114,6 +114,20 @@ class User:
         if account_id in self.exchanges:
             exchange = self.exchanges[account_id]
             exchange.subscribe_market_data(instrument_ids)
+
+    def query_investor_position(self, account_id: str):
+        print(f'查询投资者 {account_id} 持仓')
+        if account_id in self.exchanges:
+            exchange = self.exchanges[account_id]
+            exchange.query_investor_position()
+
+    def query_investor_position_detail(self, account_id: str):
+        print(f'查询投资者 {account_id} 持仓细节')
+        if account_id in self.exchanges:
+            exchange = self.exchanges[account_id]
+            exchange.query_investor_position_detail()
+
+
 
 
 
