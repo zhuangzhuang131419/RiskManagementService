@@ -1,6 +1,8 @@
 import time
 import numpy as np
+from typing import Dict
 
+from helper.helper import filter_index_option, filter_etf
 from memory.option_manager import OptionManager
 from model.ctp_manager import CTPManager
 from model.exchange.exchange import Exchange
@@ -89,10 +91,10 @@ def main():
     # ctp_manager.query_investor_position_detail()
 
     while True:
-        if cffex_option_manager is not None:
+        # if cffex_option_manager is not None:
             # print(f"{cffex_option_manager.option_series_dict['HO20241115'].imply_price}")
-            print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].call.market_data}")
-            print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].put.market_data}")
+            # print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].call.market_data}")
+            # print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].put.market_data}")
             # k1_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 1]
             # k2_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 2]
             # k3_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 3]
@@ -211,23 +213,23 @@ def get_option_greeks(symbol: str, option_manager: OptionManager):
     return jsonify(resp.to_dict())
 
 @app.route('/api/se/option/wing_model', methods=['GET'])
-def get_se_wing_model():
+def get_se_wing_model_by_symbol():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    return get_wing_model(symbol, ctp_manager.current_user.memory.se_option_manager)
+    return get_wing_model_by_symbol(symbol, ctp_manager.current_user.memory.se_option_manager)
 
 @app.route('/api/cffex/option/wing_model', methods=['GET'])
-def get_cffex_wing_model():
+def get_cffex_wing_model_by_symbol():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    return get_wing_model(symbol, ctp_manager.current_user.memory.cffex_option_manager)
+    return get_wing_model_by_symbol(symbol, ctp_manager.current_user.memory.cffex_option_manager)
 
 
-def get_wing_model(symbol, option_manager: OptionManager):
+def get_wing_model_by_symbol(symbol, option_manager: OptionManager):
     try:
         option_series: OptionSeries = option_manager.option_series_dict[symbol]
         wing_model_para: WingModelPara = option_series.wing_model_para
@@ -236,6 +238,45 @@ def get_wing_model(symbol, option_manager: OptionManager):
         return jsonify(resp.to_dict())
     except ValueError:
         return jsonify({"error": f"Symbol {symbol} not found"}), 404
+
+@app.route('/api/option/wing_model', methods=['GET'])
+def get_all_customized_wing_model_para():
+    resp: Dict[str, WingModelPara] = {}
+    if ctp_manager.current_user.memory.se_option_manager is not None:
+        resp = get_all_customized_wing_model_by_account(ctp_manager.current_user.memory.se_option_manager)
+
+    if ctp_manager.current_user.memory.cffex_option_manager is not None:
+        resp = {**get_all_customized_wing_model_by_account(ctp_manager.current_user.memory.cffex_option_manager), **resp}
+
+    print(resp)
+    return jsonify(resp)
+
+def get_all_customized_wing_model_by_account(option_manager: OptionManager):
+    resp: Dict[str, WingModelPara] = {}
+    for symbol, option_series in option_manager.option_series_dict.items():
+        wing_model_para: WingModelPara = option_series.customized_wing_model_para
+        resp[symbol] = wing_model_para
+    return resp
+
+@app.route('/api/option/wing_model', methods=['POST'])
+def set_customized_wing_model():
+    data = request.get_json()
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON data"}), 400
+    for symbol, wing_para in data.items():
+        para :WingModelPara = wing_para.get_json()
+        option_manager = None
+        if filter_index_option(symbol):
+            option_manager = ctp_manager.current_user.memory.cffex_option_manager
+        elif filter_etf(symbol):
+            option_manager = ctp_manager.current_user.memory.se_option_manager
+
+        if option_manager is not None:
+            option_manager.option_series_dict[symbol].customized_wing_model_para.v = para.v
+            option_manager.option_series_dict[symbol].customized_wing_model_para.k1 = para.k1
+            option_manager.option_series_dict[symbol].customized_wing_model_para.k2 = para.k2
+            option_manager.option_series_dict[symbol].customized_wing_model_para.b = para.b
+    return jsonify({"message": "Customized wing model received"}), 200
 
 
 

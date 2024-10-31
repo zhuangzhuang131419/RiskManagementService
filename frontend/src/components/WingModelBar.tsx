@@ -18,15 +18,15 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style, exchange }) => 
 
   const { data: wingModel, error, isLoading } = useQuery(
     ['wingModel', symbol],
-    () => optionDataProvider.fetchWingModelPara(symbol as string, exchange),
+    () => optionDataProvider.fetchWingModelParaBySymbol(symbol as string, exchange),
     {
-        onSuccess(data) {
-          const formattedItems: WingModelData[] = [data]
-          setItems(formattedItems); // 更新表格项
-          console.log(formattedItems)
-        },
-        refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
-        enabled: !!symbol,  // 只有当 symbol 存在时才启用查询
+      onSuccess(data) {
+        const formattedItems: WingModelData[] = [data]
+        setItems(formattedItems); // 更新表格项
+        console.log(formattedItems)
+      },
+      refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
+      enabled: !!symbol,  // 只有当 symbol 存在时才启用查询
     }
   );
 
@@ -38,11 +38,11 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style, exchange }) => 
     return <Text>Error wing model data</Text>;
   }
 
-  
+
   const scrollBoxStyles = {
     root: {
-        overflowX: 'hidden', // 禁用水平滚动
-        overflowY: 'hidden', // 禁用滚动
+      overflowX: 'hidden', // 禁用水平滚动
+      overflowY: 'hidden', // 禁用滚动
     },
   };
 
@@ -53,7 +53,7 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style, exchange }) => 
     { key: 'b', name: 'b', fieldName: 'b', minWidth: 100, maxWidth: 150, isResizable: true },
     { key: 'atmAvailable', name: 'ATM 可用性', fieldName: 'atm_available', minWidth: 100, maxWidth: 150, isResizable: true },
   ];
-  
+
   return (
     <div style={{ ...style }}>
       <DetailsList
@@ -63,7 +63,7 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style, exchange }) => 
         styles={scrollBoxStyles}
       />
     </div>
-    
+
   );
 };
 

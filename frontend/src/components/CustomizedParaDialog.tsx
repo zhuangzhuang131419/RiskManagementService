@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { TextField, Stack, Panel, DefaultButton, PrimaryButton, ScrollablePane, DetailsList, DetailsListLayoutMode, SelectionMode, IColumn, PanelType } from '@fluentui/react';
+import { optionDataProvider } from '../DataProvider/OptionDataProvider';
+import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 
 interface CustomizedParaDialogProps {
     style?: React.CSSProperties;
 }
 
-interface ICustomizedParaItem {
+export interface ICustomizedParaItem {
     symbol: string;
     v: number;
     k1: number;
@@ -18,11 +20,32 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
 
     const closePanel = () => setIsPanelOpen(false);
 
-    const [rows, setRows] = useState<ICustomizedParaItem[]>([
-        { symbol: 'IO2411', v: 0.20, k1: 0, k2: 0, b: 0 },
-        { symbol: 'IO2412', v: 0, k1: 0, k2: 0, b: 0 },
-        { symbol: '510300_2411', v: 0, k1: 0, k2: 0, b: 0 },
-    ]);
+    const [rows, setRows] = useState<ICustomizedParaItem[]>([])
+
+    const { data, isLoading, error } = useQuery(
+        'wingModelData',
+        optionDataProvider.fetchWingModelPara,
+        {
+            select(data) {
+                console.log('data:' + data)
+
+                // 转换数据为 rows 数组格式
+                return data
+                    ? Object.entries(data).map(([symbol, values]) => ({
+                        symbol,
+                        v: values.v,
+                        k1: values.k1,
+                        k2: values.k2,
+                        b: values.b
+                    }))
+                    : [];
+            },
+            onSuccess() {
+                console.log('data:' + data)
+                setRows(data as ICustomizedParaItem[])
+            }
+        }
+    );
 
     const columns: IColumn[] = [
         { key: 'symbol', name: '品种', fieldName: 'symbol', minWidth: 100 },
