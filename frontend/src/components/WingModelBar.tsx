@@ -3,7 +3,7 @@ import { WingModelData } from '../Model/OptionData';
 import { useQuery } from 'react-query';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 import React, { useState, useEffect } from 'react';
-import CustomizedModel from './CustomizedModel';
+import CustomizedModel from './CustomizedParaDialog';
 
 interface WingModelProps {
   symbol: string | null;
@@ -52,16 +52,6 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style, exchange }) => 
     { key: 'k2', name: 'K2', fieldName: 'k2', minWidth: 100, maxWidth: 150, isResizable: true },
     { key: 'b', name: 'b', fieldName: 'b', minWidth: 100, maxWidth: 150, isResizable: true },
     { key: 'atmAvailable', name: 'ATM 可用性', fieldName: 'atm_available', minWidth: 100, maxWidth: 150, isResizable: true },
-    {
-      key: 'toggle', 
-      name: '自定义', 
-      fieldName: 'toggle', 
-      minWidth: 100, 
-      maxWidth: 150, 
-      onRender: () => (
-        <CustomizedModel></CustomizedModel>
-      )
-    }
   ];
   
   return (
