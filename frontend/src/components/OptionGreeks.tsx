@@ -67,8 +67,8 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style, exchange }) 
         { key: 'vega', name: 'Vega', fieldName: 'callVega', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'callTheta', name: 'Call Theta', fieldName: 'callTheta', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'putTheta', name: 'Put Theta', fieldName: 'putTheta', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'vanana_vs', name: 'Vanana vs', fieldName: 'callVanana_vs', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'vanana_sv', name: 'Vanana sv', fieldName: 'callVanana_sv', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'vanna_vs', name: 'Vanna vs', fieldName: 'callVanna_vs', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'vanna_sv', name: 'Vanna sv', fieldName: 'callVanna_sv', minWidth: 10, maxWidth: 80, isResizable: true },
     ];
 
     const scrollBoxStyles = {

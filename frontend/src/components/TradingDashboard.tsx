@@ -12,6 +12,7 @@ import { futureDataProvider } from '../DataProvider/FutureDataProvider';
 import { userDataProvider } from '../DataProvider/UserDataProvider';
 import WingModelBar from './WingModelBar';
 import { WingModelData } from '../Model/OptionData';
+import BaselineSelector from './BaselineSelector';
 
 const stackStyles = {
     root: {
@@ -28,6 +29,7 @@ const TradingDashboard: React.FC = () => {
     const [selectedIndexOption, setSelectedIndexOption] = useState<string | null>(null);
     const [selectedFuture, setSelectedFuture] = useState<string | null>(null);
     const [selectedETFOption, setSelectedETF] = useState<string | null>(null);
+    const [selectedBaseline, setSelectedBaseline] = useState<string | null>();
 
     const [selectedKey, setSelectedKey] = React.useState<string>('B'); // 设置默认选中 'B'
 
@@ -49,10 +51,10 @@ const TradingDashboard: React.FC = () => {
         }
     );
 
-    const { data: futureItems, isFetching: isFutureFetching } = useQuery(
-        ['futures'],
-        futureDataProvider.fetchFutureSymbols,
-    );
+    // const { data: futureItems, isFetching: isFutureFetching } = useQuery(
+    //     ['futures'],
+    //     futureDataProvider.fetchFutureSymbols,
+    // );
 
     const { data: etfOptionItems, isFetching: isETFOptionFetching } = useQuery(
         ['etfOptions'],
@@ -78,7 +80,7 @@ const TradingDashboard: React.FC = () => {
     return (
 
         // 主布局
-        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '90vh', width: '100%' } }}>
+        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '90vh', width: '90%' } }}>
             {/* 顶部：账户选择器和数据展示 */}
             <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { alignItems: 'center' } }}>
                 <Stack.Item grow={1}>
@@ -92,11 +94,11 @@ const TradingDashboard: React.FC = () => {
             </Stack>
 
             {/* 中间部分：期权滚动框和期权希腊字母展示 */}
-            <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { height: '100%' } }}>
+            <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { height: '90%' } }}>
                 {/* 左侧：ScrollBox */}
                 <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
                     {!isIndexOptionFetching && (
-                        <Stack styles={{ root: { height: '30%' } }}>
+                        <Stack styles={{ root: { height: '40%' } }}>
                             <ScrollBox
                                 items={indexOptionItems as string[]}
                                 onClick={setSelectedIndexOption}
@@ -105,7 +107,7 @@ const TradingDashboard: React.FC = () => {
                             />
                         </Stack>
                     )}
-                    {!isFutureFetching && (
+                    {/* {!isFutureFetching && (
                         <Stack styles={{ root: { height: '30%' } }}>
                             <ScrollBox
                                 items={futureItems as string[]}
@@ -114,9 +116,9 @@ const TradingDashboard: React.FC = () => {
                                 title='期货'
                             />
                         </Stack> 
-                    )}
+                    )} */}
                     {!isETFOptionFetching && (
-                        <Stack styles={{ root: { height: '30%' } }}>
+                        <Stack styles={{ root: { height: '40%' } }}>
                             <ScrollBox
                                 items={etfOptionItems as string[]}
                                 onClick={setSelectedETF}
@@ -125,6 +127,11 @@ const TradingDashboard: React.FC = () => {
                             />
                         </Stack> 
                     )}
+                    <Stack styles={{ root: { height: '20%' } }}>
+                        <BaselineSelector
+                            onSelect={setSelectedBaseline}
+                        />        
+                    </Stack> 
                 </Stack>
 
                 {/* 右侧：OptionGreeks */}

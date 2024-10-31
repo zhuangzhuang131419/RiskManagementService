@@ -1,7 +1,9 @@
+from typing import Dict
+
 class OptionRespBase:
     def __init__(self, symbol):
         self.symbol = symbol
-        self.strike_prices = {}
+        self.strike_prices: Dict[float, StrikePrices] = {}
 
     def to_dict(self):
         return {

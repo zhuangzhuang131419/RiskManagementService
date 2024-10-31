@@ -59,9 +59,9 @@ def main():
         print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO20241115'].strike_price_options.keys()))
 
     # ctp_manager.current_user.query_investor_position(ExchangeType.SSE.name)
-    ctp_manager.current_user.query_investor_position(ExchangeType.SZSE.name)
+    # ctp_manager.current_user.query_investor_position(ExchangeType.SZSE.name)
     # ctp_manager.current_user.query_investor_position_detail(ExchangeType.SSE.name)
-    ctp_manager.current_user.query_investor_position_detail(ExchangeType.SZSE.name)
+    # ctp_manager.current_user.query_investor_position_detail(ExchangeType.SZSE.name)
 
 
 
@@ -184,6 +184,7 @@ def get_se_option_greeks():
 @app.route('/api/cffex/option/greeks', methods=['GET'])
 def get_cffex_option_greeks():
     symbol = request.args.get('symbol')
+    print(symbol)
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
