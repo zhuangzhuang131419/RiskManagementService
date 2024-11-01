@@ -6,9 +6,11 @@ export interface IOptionDataProvider {
   fetchOptionGreeks(symbol: string, exchange: string): Promise<GreeksResponse>;
   fetchWingModelParaBySymbol(symbol: string, exchange: string): Promise<WingModelData>;
   fetchWingModelPara(): Promise<{ [key: string]: WingModelData }>
+  postWingModelPara(para: { [key: string]: WingModelData }): Promise<void>
 }
 
 class OptionDataProvider implements IOptionDataProvider {
+
   fetchIndexOptionSymbols = async (): Promise<string[]> => {
     const response = await fetch('/api/cffex/options');
     if (!response.ok) {
@@ -66,8 +68,22 @@ class OptionDataProvider implements IOptionDataProvider {
 
     // 解析并打印 JSON 数据
     const data: { [key: string]: WingModelData } = await response.json();
-    console.log('fetchWingModelPara: ', data);
+    // console.log('fetchWingModelPara: ', data);
     return data;
+  }
+
+  postWingModelPara = async (para: { [key: string]: WingModelData; }): Promise<void> => {
+    const response = await fetch('/api/option/wing_model', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(para),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update data');
+    }
   }
 }
 

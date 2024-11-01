@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { TextField, Stack, Panel, DefaultButton, PrimaryButton, ScrollablePane, DetailsList, DetailsListLayoutMode, SelectionMode, IColumn, PanelType } from '@fluentui/react';
+import React, { useEffect, useState } from 'react';
+import { TextField, Stack, Panel, DefaultButton, PrimaryButton, ScrollablePane, DetailsList, DetailsListLayoutMode, SelectionMode, IColumn, PanelType, MessageBarType, MessageBar, values } from '@fluentui/react';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
-import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from 'react-query';
+import { WingModelData } from '../Model/OptionData';
 
 interface CustomizedParaDialogProps {
     style?: React.CSSProperties;
@@ -22,15 +23,19 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
 
     const [rows, setRows] = useState<ICustomizedParaItem[]>([])
 
+    let updatedRows: ICustomizedParaItem[] = []
+
+    const [notification, setNotification] = useState<{ message: string; type: MessageBarType } | null>(null);
+
+    const queryClient = useQueryClient();
+
     const { data, isLoading, error } = useQuery(
         'wingModelData',
         optionDataProvider.fetchWingModelPara,
         {
             select(data) {
-                console.log('data:' + data)
-
                 // 转换数据为 rows 数组格式
-                return data
+                const rows = data
                     ? Object.entries(data).map(([symbol, values]) => ({
                         symbol,
                         v: values.v,
@@ -39,13 +44,25 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
                         b: values.b
                     }))
                     : [];
+                return rows;
             },
-            onSuccess() {
-                console.log('data:' + data)
-                setRows(data as ICustomizedParaItem[])
-            }
+            onSuccess(data) {
+                console.log('onsuccess:' + JSON.stringify(data))
+                setRows(data)
+            },
         }
     );
+
+    // 自动关闭通知
+    useEffect(() => {
+        if (notification) {
+            const timer = setTimeout(() => {
+                setNotification(null);
+            }, 3000); // 3秒后自动消失
+
+            return () => clearTimeout(timer); // 清除定时器，防止内存泄漏
+        }
+    }, [notification]);
 
     const columns: IColumn[] = [
         { key: 'symbol', name: '品种', fieldName: 'symbol', minWidth: 100 },
@@ -55,15 +72,95 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
         { key: 'b', name: 'b', fieldName: 'b', minWidth: 50 }
     ];
 
+    const onhandleComfirm = async () => {
+
+        const para: { [key: string]: WingModelData } = updatedRows.reduce((acc, item) => {
+            acc[item.symbol] = {
+                v: item.v,
+                k1: item.k1,
+                k2: item.k2,
+                b: item.b,
+                atm_vol: 0, // 如果需要其他字段，例如 atm_vol，可以在这里添加
+                atm_available: 1 // 根据需求设置默认值
+            };
+            return acc;
+        }, {} as { [key: string]: WingModelData });
+
+        console.log('para:' + JSON.stringify(para))
+
+
+        try {
+            await optionDataProvider.postWingModelPara(para);
+            setNotification({ message: "Data successfully sent to the server", type: MessageBarType.success });
+            queryClient.invalidateQueries('wingModelData');
+
+        } catch (error) {
+            setNotification({ message: "Failed to send data", type: MessageBarType.error });
+        } finally {
+            updatedRows = []
+            closePanel();
+        }
+    }
+
+    const onhandleCancel = async () => {
+        const para: { [key: string]: WingModelData } = rows.reduce((acc, item) => {
+            acc[item.symbol] = {
+                v: 0,
+                k1: 0,
+                k2: 0,
+                b: 0,
+                atm_vol: 0, // 如果需要其他字段，例如 atm_vol，可以在这里添加
+                atm_available: 1 // 根据需求设置默认值
+            };
+            return acc;
+        }, {} as { [key: string]: WingModelData });
+
+        console.log('para:' + JSON.stringify(para))
+
+
+        try {
+            await optionDataProvider.postWingModelPara(para);
+            setNotification({ message: "Data successfully sent to the server", type: MessageBarType.success });
+        } catch (error) {
+            setNotification({ message: "Failed to send data", type: MessageBarType.error });
+        } finally {
+            updatedRows = []
+
+        }
+    }
+
+    const ondismiss = async () => {
+        closePanel();
+        queryClient.invalidateQueries('wingModelData');
+
+    }
+
     return (
         <Stack horizontalAlign="stretch">
             <DefaultButton onClick={() => setIsPanelOpen(true)} text="Open Panel" />
 
+            {notification && (
+                <MessageBar
+                    messageBarType={notification.type}
+                    isMultiline={false}
+                    onDismiss={() => setNotification(null)}
+                >
+                    {notification.message}
+                </MessageBar>
+            )}
+
+
             <Panel
                 isOpen={isPanelOpen}
-                onDismiss={closePanel}
+                onDismiss={ondismiss}
                 headerText="手动设置参数"
-                closeButtonAriaLabel="Close"
+                isFooterAtBottom={true}
+                onRenderFooterContent={() => (
+                    <Stack horizontal tokens={{ childrenGap: 10 }} horizontalAlign="end">
+                        <PrimaryButton onClick={onhandleComfirm} text="确定" />
+                        <DefaultButton onClick={onhandleCancel} text="清空" />
+                    </Stack>
+                )}
                 type={PanelType.medium} // 设置为大型面板，或者使用 PanelType.custom 来自定义大小
                 styles={{
                     main: {
@@ -71,34 +168,32 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
                     },
                 }}
             >
-                <ScrollablePane>
-                    <DetailsList
-                        items={rows}
-                        columns={columns}
-                        selectionMode={SelectionMode.none}
-                        layoutMode={DetailsListLayoutMode.justified}
-                        onRenderItemColumn={(item, index, column) => {
-                            if (!column || !column.fieldName) return null;
-                            const fieldName = column.fieldName as keyof ICustomizedParaItem;
-                            return (
-                                <TextField
-                                    value={String(item[fieldName])}
-                                    onChange={(e, newValue) => {
-                                        const updatedRows = [...rows];
-                                        updatedRows[index as number] = { ...updatedRows[index as number], [fieldName]: Number(newValue) || 0 };
-                                        setRows(updatedRows);
-                                    }}
-                                    disabled={column.fieldName === 'symbol'}
-                                />
-                            );
-                        }}
-                    />
-                </ScrollablePane>
+                {!isLoading && !error && (
+                    <Stack>
+                        <DetailsList
+                            items={rows}
+                            columns={columns}
+                            isHeaderVisible={true}
+                            selectionMode={SelectionMode.none}
+                            layoutMode={DetailsListLayoutMode.justified}
+                            onRenderItemColumn={(item, index, column) => {
+                                if (!column || !column.fieldName) return null;
+                                const fieldName = column.fieldName as keyof ICustomizedParaItem;
 
-                <Stack horizontal tokens={{ childrenGap: 10, padding: 10 }} horizontalAlign="end" style={{ position: 'absolute', bottom: 10, right: 10 }}>
-                    <PrimaryButton onClick={closePanel} text="确定" />
-                    <DefaultButton onClick={() => setRows(rows.map(row => ({ ...row, v: 0, k1: 0, k2: 0, b: 0 })))} text="清空" />
-                </Stack>
+                                return (
+                                    <TextField
+                                        defaultValue={String(item[fieldName])}
+                                        onChange={(e, newValue) => {
+                                            updatedRows[index as number] = { ...updatedRows[index as number], [fieldName]: newValue, symbol: rows[index as number].symbol };
+                                            rows[index as number] = { ...updatedRows[index as number], [fieldName]: newValue };
+                                        }}
+                                        disabled={fieldName === 'symbol'}
+                                    />
+                                );
+                            }}
+                        />
+                    </Stack>)
+                }
             </Panel>
         </Stack>
     );

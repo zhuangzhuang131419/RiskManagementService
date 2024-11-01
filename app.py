@@ -260,11 +260,10 @@ def get_all_customized_wing_model_by_account(option_manager: OptionManager):
 
 @app.route('/api/option/wing_model', methods=['POST'])
 def set_customized_wing_model():
-    data = request.get_json()
+    data: Dict[str, dict] = request.get_json()
     if data is None:
         return jsonify({"error": "Invalid or missing JSON data"}), 400
-    for symbol, wing_para in data.items():
-        para :WingModelPara = wing_para.get_json()
+    for symbol, value in data.items():
         option_manager = None
         if filter_index_option(symbol):
             option_manager = ctp_manager.current_user.memory.cffex_option_manager
@@ -272,10 +271,14 @@ def set_customized_wing_model():
             option_manager = ctp_manager.current_user.memory.se_option_manager
 
         if option_manager is not None:
-            option_manager.option_series_dict[symbol].customized_wing_model_para.v = para.v
-            option_manager.option_series_dict[symbol].customized_wing_model_para.k1 = para.k1
-            option_manager.option_series_dict[symbol].customized_wing_model_para.k2 = para.k2
-            option_manager.option_series_dict[symbol].customized_wing_model_para.b = para.b
+            if "v" in value:
+                option_manager.option_series_dict[symbol].customized_wing_model_para.v = value["v"]
+            if "k1" in value:
+                option_manager.option_series_dict[symbol].customized_wing_model_para.k1 = value["k1"]
+            if "k2" in value:
+                option_manager.option_series_dict[symbol].customized_wing_model_para.k2 = value["k2"]
+            if "b" in value:
+                option_manager.option_series_dict[symbol].customized_wing_model_para.b = value["b"]
     return jsonify({"message": "Customized wing model received"}), 200
 
 
