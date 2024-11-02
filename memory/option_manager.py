@@ -99,9 +99,10 @@ class OptionManager:
         underlying_price = (self.option_series_dict[symbol].imply_price.imply_s_ask + self.option_series_dict[symbol].imply_price.imply_s_bid) / 2
         remain_time = self.option_series_dict[symbol].remaining_year
         volatility = self.option_series_dict[symbol].atm_volatility.atm_volatility_protected
-        k1 = self.option_series_dict[symbol].wing_model_para.k1
-        k2 = self.option_series_dict[symbol].wing_model_para.k2
-        b = self.option_series_dict[symbol].wing_model_para.b
+
+        k1 = self.option_series_dict[symbol].wing_model_para.k1 if self.option_series_dict[symbol].customized_wing_model_para.v == 0 else self.option_series_dict[symbol].customized_wing_model_para.k1
+        k2 = self.option_series_dict[symbol].wing_model_para.k2 if self.option_series_dict[symbol].customized_wing_model_para.v == 0 else self.option_series_dict[symbol].customized_wing_model_para.k2
+        b = self.option_series_dict[symbol].wing_model_para.b if self.option_series_dict[symbol].customized_wing_model_para.v == 0 else self.option_series_dict[symbol].customized_wing_model_para.b
 
         # print(f"k1: {k1}, k2: {k2}, b: {b}")
 

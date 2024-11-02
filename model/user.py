@@ -1,23 +1,19 @@
 import configparser
+import logging
 import time
-import os
-
-from psutil import users
-
+from uuid import uuid4
+from helper.helper import TIMEOUT
 from memory.memory_manager import MemoryManager
-from model.config.account_config import AccountConfig
+from model.config.exchange_config import ExchangeConfig
 from model.exchange.cff_exchange import CFFExchange
-from model.exchange.exchange import Exchange
-from model.exchange.exchange_type import ExchangeType
+from model.exchange.exchange_base import Exchange
+from model.enum.exchange_type import ExchangeType
 from model.exchange.se_exchange import SExchange
 from typing import Dict
 
+logging.basicConfig(level=logging.INFO)
 
 class User:
-
-
-
-
     def __init__(self, config_path: str):
         self.config = configparser.ConfigParser()
 
@@ -30,29 +26,29 @@ class User:
         except Exception as e:
             print(f"Error reading configuration file {config_path}: {e}")
             raise
-        self.user_id = self.config.get('USER', 'UserID')
+        self.user_id = uuid4()
         self.user_name = self.config.get('USER', 'Name')
         print(f'切换{self.user_name}')
-        self.accounts: Dict[str, AccountConfig] = {}
-        # accounts = {
+        self.exchange_config: Dict[str, ExchangeConfig] = {}
+        # exchange_config = {
         #   "CFFEX": {
         #       "BrokerName": "",
         #       "BrokerID: "",
         #       ...
         #   },
-        #   "SSE": {
+        #   "SE": {
         #       ...
         #   }
         # }
         self.exchanges: Dict[str, Exchange] = {}
         # exchange = {
         #   "CFFEX": CFFEXExchange(),
-        #   "SSE": SSEExchange()
+        #   "SE": SSEExchange()
         # }
 
         for section in self.config.sections():
-            if section == ExchangeType.CFFEX.name or section == ExchangeType.SSE.name or section == ExchangeType.SZSE.name:
-                self.accounts[section] = AccountConfig(
+            if section in [e.name for e in ExchangeType]:
+                self.exchange_config[section] = ExchangeConfig(
                     broker_name=self.config.get(section, 'BrokerName'),
                     broker_id=self.config.get(section, 'BrokerID'),
                     user_id=self.config.get(section, 'UserID'),
@@ -67,53 +63,80 @@ class User:
         # 内存中心
         self.memory: MemoryManager = MemoryManager()
 
-    def query_instrument(self, account_id: str):
-        """
-        连接 account_id 对应的合约
-        """
-        exchange = self.exchanges[account_id]
-        exchange.query_instrument()
+    def query_instrument(self):
+        for exchange_id, exchange in self.exchanges.items():
+            if not exchange.is_login():
+                continue
+            exchange.query_instrument()
+            while not self.is_query_finish(exchange_id):
+                time.sleep(3)
+            logging.info(f"{self.user_name} 的 {exchange_id} 合约查询完成")
 
-    def connect_exchange(self, account_id: str):
-        """
-        连接 account_id 对应的交易所
-        """
+    def init_exchange(self, config_file_root: str):
+        for exchange_id, config in self.exchange_config.items():
+            try:
+                exchange = None
+                path = f"{config_file_root}/{self.user_name}/{exchange_id}/"
+                if exchange_id == ExchangeType.CFFEX.name:
+                    exchange = CFFExchange(config, path, self.memory)
+                elif exchange_id == ExchangeType.SE.name:
+                    exchange = SExchange(config, path, self.memory)
+                else:
+                    logging.warning(f"未知的交易所类型: {exchange_id}")
 
-        exchange = None
+                if exchange:
+                    self.exchanges[exchange_id] = exchange
+                    logging.info(f"用户 {self.user_name} 的 {exchange_id} 交易所初始化成功")
+            except Exception as e:
+                logging.error(f"初始化交易所 {exchange_id} 时出现错误: {e}")
 
-        if account_id == ExchangeType.CFFEX.name:
-            exchange = CFFExchange(self.accounts[account_id], "con_file/cff/")
-        elif account_id == ExchangeType.SSE.name:
-            exchange = SExchange(self.accounts[account_id], "con_file/ss/", exchange_type=ExchangeType.SSE)
-        elif account_id == ExchangeType.SZSE.name:
-            exchange = SExchange(self.accounts[account_id], "con_file/sz/", exchange_type=ExchangeType.SZSE)
 
-        self.exchanges[account_id] = exchange
-        # print(f'共需要连接{len(self.exchanges)}个交易所')
-        exchange.connect_market_data()
-        exchange.connect_trader()
+    def connect_exchange(self):
+        for exchange_id, exchange in self.exchanges.items():
+            logging.info(f"正在连接 {self.user_name} 的交易所：{exchange_id}")
+            start_time = time.time()
+            exchange.connect_market_data()
+            exchange.connect_trader()
+            while not self.is_login(exchange_id):
+                if time.time() - start_time > TIMEOUT:
+                    logging.error(f'{exchange_id} 登录超时')
+                    break
+                time.sleep(3)
+            else:
+                # 若登录成功，记录成功日志
+                logging.info(f'{self.user_name} 的 {exchange_id} 登录成功')
+                continue
 
-    def is_login(self, account_id: str) -> bool:
-        return self.exchanges[account_id].trader_user_spi.login_finish
+            logging.warning(f"跳过未成功连接的交易所：{self.user_name}的{ExchangeType[exchange_id].value}")
 
-    def is_query_finish(self, account_id: str) -> bool:
-        return self.exchanges[account_id].trader_user_spi.query_finish
+    def init_memory(self):
+        for exchange_id, exchange in self.exchanges.items():
+            exchange.init_memory()
+
+
+    def is_login(self, exchange_id: str) -> bool:
+        return self.exchanges[exchange_id].is_login()
+
+    def is_query_finish(self, exchange_id: str) -> bool:
+        return self.exchanges[exchange_id].trader_user_spi.query_finish
 
     # 批量订阅
-    def subscribe_batches_market_data(self, account_id, instrument_ids: [str]):
+    def subscribe_market_data(self):
         print('开始订阅行情')
 
-        page_size = 100
-        for i in range(0, len(instrument_ids), page_size):
-            page = instrument_ids[i:i + page_size]  # 获取当前分页
-            self.subscribe_market_data(account_id, page)  # 处理当前分页的订阅
+        for exchange_id, exchange in self.exchanges.items():
+            if not exchange.is_login():
+                continue
+            instrument_ids = list(exchange.trader_user_spi.subscribe_instrument.keys())
+            # 将 instrument_ids 分成每组 100 个
+            batch_size = 100
+            for i in range(0, len(instrument_ids), batch_size):
+                batch = instrument_ids[i:i + batch_size]  # 每组 100 个
+                exchange.subscribe_market_data(batch)  # 订阅每组的数据
+                # print(f"订阅 {exchange_id} 的合约批次: {batch}")
 
         print('已发送全部订阅请求')
 
-    def subscribe_market_data(self, account_id: str, instrument_ids):
-        if account_id in self.exchanges:
-            exchange = self.exchanges[account_id]
-            exchange.subscribe_market_data(instrument_ids)
 
     def query_investor_position(self, account_id: str):
         print(f'查询投资者 {account_id} 持仓')

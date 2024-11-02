@@ -2,12 +2,12 @@ import os
 from abc import ABC, abstractmethod
 from statistics import pstdev
 
-from model.config.account_config import AccountConfig
+from model.config.exchange_config import ExchangeConfig
 from model.direction import Direction
 
 
 class Exchange(ABC):
-    def __init__(self, account_config: AccountConfig, config_file_path: str):
+    def __init__(self, account_config: ExchangeConfig, config_file_path: str):
         # 参数
         self.config = account_config
         # 交易所类型
@@ -25,6 +25,9 @@ class Exchange(ABC):
         self.config_file_path = config_file_path
         if not os.path.exists(config_file_path):
             os.makedirs(config_file_path)
+
+    def is_login(self):
+        return True if self.trader_user_spi is not None and self.trader_user_spi.login_finish else False
 
     @abstractmethod
     def connect_market_data(self):
@@ -52,4 +55,8 @@ class Exchange(ABC):
 
     @abstractmethod
     def query_investor_position_detail(self):
+        pass
+
+    @abstractmethod
+    def init_memory(self):
         pass

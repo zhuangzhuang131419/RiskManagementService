@@ -1,31 +1,28 @@
 import time
-import os
 from abc import ABC
-
-from py_vollib.ref_python.black.greeks.analytical import theta
 
 from ctp.se.market_data_service import MarketDataService
 from ctp.se.trader_service import TraderService
-from model.exchange.exchange import Exchange
+from memory.memory_manager import MemoryManager
+from model.exchange.exchange_base import Exchange
 from api_se import ThostFtdcApiSOpt
 from helper.helper import judge_ret
 from model.direction import Direction
-from model.exchange.exchange_type import ExchangeType
 from model.order_info import OrderInfo
 
 
 class SExchange(Exchange, ABC):
-    def __init__(self, config, config_file_path, exchange_type: ExchangeType):
+    def __init__(self, config, config_file_path, memory_manager: MemoryManager):
         super().__init__(config, config_file_path)
-        self.type = exchange_type
         print(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
+        self.memory = memory_manager
 
     def connect_market_data(self):
-        print(f"连接{self.type.value}行情中心")
+        print(f"连接深交行情中心")
         # 创建API实例
         self.market_data_user_api = ThostFtdcApiSOpt.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
-        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config)
+        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config, self.memory)
         # 连接行情前置服务器
         self.market_data_user_api.RegisterFront(self.config.market_server_front)
         # 将spi注册给api
@@ -33,7 +30,7 @@ class SExchange(Exchange, ABC):
         self.market_data_user_api.Init()
 
     def connect_trader(self):
-        print(f"连接{self.type.value}交易中心")
+        print(f"连接深交交易中心")
         self.trader_user_api = ThostFtdcApiSOpt.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
         self.trader_user_spi = TraderService(self.trader_user_api, self.config)
 
@@ -50,7 +47,6 @@ class SExchange(Exchange, ABC):
 
     def query_instrument(self):
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInstrumentField()
-        query_file.ExchangeID = self.type.name
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
         if ret == 0:
             print('发送查询合约成功！')
@@ -68,7 +64,7 @@ class SExchange(Exchange, ABC):
         order_field = ThostFtdcApiSOpt.CThostFtdcInputOrderField()
         order_field.BrokerID = self.config.broker_id
 
-        order_field.ExchangeID = self.trader_user_spi.exchange_id[code]
+        # order_field.ExchangeID = self.trader_user_spi.exchange_id[code]
         order_field.InstrumentID = code
         order_field.UserID = self.config.user_id
         order_field.InvestorID = self.config.investor_id
@@ -151,17 +147,6 @@ class SExchange(Exchange, ABC):
                 time.sleep(5)
         time.sleep(1)
 
-    # 批量订阅
-    def subscribe_market_data_in_batches(self, instrument_ids: [str]):
-        print('开始订阅行情')
-
-        page_size = 100
-        for i in range(0, len(instrument_ids), page_size):
-            page = instrument_ids[i:i + page_size]  # 获取当前分页
-            self.subscribe_market_data(page)  # 处理当前分页的订阅
-
-        print('已发送全部订阅请求')
-
     def subscribe_market_data(self, instrument_ids):
         ret = self.market_data_user_api.SubscribeMarketData(instrument_ids)
         if ret == 0:
@@ -183,3 +168,5 @@ class SExchange(Exchange, ABC):
             print(f"发送查询投资者持仓请求失败")
             judge_ret(ret)
 
+    def init_memory(self):
+        self.memory.init_se_instrument(self.trader_user_spi.subscribe_instrument)

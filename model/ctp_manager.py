@@ -1,104 +1,77 @@
 import os.path
 import time
+import logging
 from queue import Queue
-from threading import Thread
+from threading import Thread, Lock
+from typing import Dict
 
-from numba.cpython.setobj import set_intersection
-
-from helper.calculator import is_close
-from memory.memory_manager import MemoryManager
-from model.exchange.exchange import Exchange
-from model.exchange.exchange_type import ExchangeType
-from model.instrument.instrument import Future
-from model.instrument.option import Option
-from model.memory.market_data import MarketData, DepthMarketData
+from model.config.exchange_config import ExchangeConfig
+from model.enum.baseline_type import BaselineType
+from model.exchange.cff_exchange import CFFExchange
+from model.enum.exchange_type import ExchangeType
+from model.exchange.se_exchange import SExchange
+from model.memory.market_data import DepthMarketData
 from model.user import User
 from helper.helper import *
+
+logging.basicConfig()
 
 
 class CTPManager:
 
-    CONFIG_FILE_PATH = '../con_file/'
+    CONFIG_FILE_PATH = 'con_file'
 
-    current_user = None
 
-    users = {}
+    current_user : User = None
+
+    users : Dict[str, User] = {}
+
+    baseline : BaselineType = BaselineType.INDIVIDUAL
 
     def __init__(self):
-        self.market_data: Queue = Queue()
-        self.init_user()
         if not os.path.exists(self.CONFIG_FILE_PATH):
             os.makedirs(self.CONFIG_FILE_PATH)
+        self._lock = Lock()
+        self.market_data: Queue = Queue()
+        self.init_user()
+        self.connect_users()
 
     def init_user(self):
-        for root, _, files in os.walk("config"):
-            for file_name in files:
-                if file_name.endswith('.ini'):
-                    user = User(os.path.join(root, file_name))
-                    self.users[user.user_id] = user
+        try:
+            for root, _, files in os.walk("config"):
+                for file_name in files:
+                    if file_name.endswith('.ini'):
+                        user = User(os.path.join(root, file_name))
+                        self.users[user.user_name] = user
+                        logging.info(f"用户 {user.user_name} 初始化完成")
+        except Exception as e:
+            logging.error(f"初始化用户时出现错误: {e}")
 
-
-
-    def init_exchange(self, exchange_type):
-        # 登录
-        self.current_user.connect_exchange(exchange_type.name)
-        start_time = time.time()
-        while not self.current_user.is_login(exchange_type.name):
-            if time.time() - start_time > TIMEOUT:
-                print(f'{exchange_type.value}登录超时')
-                return
-            time.sleep(3)
-
-        print(f'{exchange_type.value}登录成功')
-
-        # 查询合约
-        self.current_user.query_instrument(exchange_type.name)
-        while not self.current_user.is_query_finish(exchange_type.name):
-            time.sleep(3)
-
-        # 获取订阅的合约ID列表
-        instrument_ids = list(self.current_user.exchanges[exchange_type.name].trader_user_spi.subscribe_instrument.keys())
-        print(f'当前{exchange_type.value}订阅的合约数量为:{len(instrument_ids)}')
-
-
-
-
-    def switch_to_user(self, user_id: str):
-        self.current_user: User = self.users[user_id]
-
+    def connect_users(self):
         threads = []
-        for exchange_type in ExchangeType:
-            t = Thread(target=self.init_exchange, args=(exchange_type,))
-            threads.append(t)
+        for user in self.users.values():
+            t = Thread(target=self.connect_user, args=(user,))
             t.start()
-            time.sleep(1)
-
+            threads.append(t)
         for t in threads:
             t.join()
 
-        print("用户切换成功")
+    def connect_user(self, user: User):
+        user.init_exchange(self.CONFIG_FILE_PATH)
+        user.connect_exchange()
+        user.query_instrument()
+        user.subscribe_market_data()
+        user.init_memory()
 
-        # 初始化内存
-        self.current_user.memory.init_cffex_instrument(self.current_user.exchanges[ExchangeType.CFFEX.name].trader_user_spi.subscribe_instrument)
-
-        # 合并上交所 深交所的instrument
-        se_instruments = {**self.current_user.exchanges[ExchangeType.SSE.name].trader_user_spi.subscribe_instrument, **self.current_user.exchanges[ExchangeType.SZSE.name].trader_user_spi.subscribe_instrument}
-
-        print(f"上交所深交所共有{len(se_instruments)}个合约")
-
-        self.current_user.memory.init_se_instrument(se_instruments)
-
-        for exchange_type in ExchangeType:
-            if self.current_user.is_login(exchange_type.name):
-                # 把内存传给交易中心
-                self.current_user.exchanges[exchange_type.name].market_data_user_spi.set_memory_manager(self.current_user.memory)
-                self.current_user.exchanges[exchange_type.name].market_data_user_spi.set_memory_manager(self.current_user.memory)
-
-                # 批量订阅数据
-                instrument_ids = list(self.current_user.exchanges[exchange_type.name].trader_user_spi.subscribe_instrument.keys())
-                self.current_user.subscribe_batches_market_data(exchange_type.name, instrument_ids)
-
-
+    def switch_to_user(self, user_name: str) -> bool:
+        with self._lock:
+            self.current_user = self.users.get(user_name, None)
+            if self.current_user:
+                logging.info(f"当前用户切换为：{user_name}")
+                return True
+            else:
+                logging.warning(f"未找到用户：{user_name}")
+                return False
 
 
     def tick(self):

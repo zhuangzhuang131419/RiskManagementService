@@ -11,16 +11,12 @@ from model.memory.market_data import DepthMarketData
 
 
 class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
-    memory_manager: MemoryManager = None
 
-    def __init__(self, market_data_user_api, account_config):
+    def __init__(self, market_data_user_api, account_config, memory_manager):
         super().__init__()
         self.market_data_user_api = market_data_user_api
         self.config = account_config
         self.market_data = Queue()
-
-
-    def set_memory_manager(self, memory_manager):
         self.memory_manager = memory_manager
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用

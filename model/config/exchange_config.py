@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-class AccountConfig:
+class ExchangeConfig:
     broker_name: str
     broker_id: str
     user_id: str

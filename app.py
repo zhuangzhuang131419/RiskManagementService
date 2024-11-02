@@ -5,12 +5,10 @@ from typing import Dict
 from helper.helper import filter_index_option, filter_etf
 from memory.option_manager import OptionManager
 from model.ctp_manager import CTPManager
-from model.exchange.exchange import Exchange
-from model.exchange.exchange_type import ExchangeType
+from model.enum.baseline_type import BaselineType
 from model.instrument.option_series import OptionSeries
 from model.memory.atm_volatility import ATMVolatility
 from model.memory.wing_model_para import WingModelPara
-from model.response.option_market_resp import OptionMarketResp, OptionData
 from model.response.option_greeks import OptionGreeksData, OptionGreeksResp
 from model.response.option_resp_base import StrikePrices
 from model.response.user import UserResp
@@ -39,26 +37,40 @@ ctp_manager = CTPManager()
 def init_ctp():
     # 初始化
     global ctp_manager
-    ctp_manager.switch_to_user("test123")
+    ctp_manager.switch_to_user("TestUser")
 
-
-def main():
     future_manager = ctp_manager.current_user.memory.future_manager
     se_option_manager = ctp_manager.current_user.memory.se_option_manager
     cffex_option_manager = ctp_manager.current_user.memory.cffex_option_manager
 
     if se_option_manager is not None:
-        print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.se_option_manager.option_series_dict)))
-        print('当前订阅期权合约到期月为：{}'.format(ctp_manager.current_user.memory.se_option_manager.option_series_dict.keys()))
+        print('当前订阅期权合约数量为：{}'.format(
+            len(ctp_manager.current_user.memory.se_option_manager.option_series_dict)))
+        print('当前订阅期权合约到期月为：{}'.format(
+            ctp_manager.current_user.memory.se_option_manager.option_series_dict.keys()))
 
     if future_manager is not None:
-        print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures_dict)))
+        print(
+            '当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures_dict)))
         print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.memory.future_manager.index_future_month_id))
 
     if cffex_option_manager is not None:
-        print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
-        print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
-        print('当前订阅期权合约行权价为：{}'.format(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict['HO20241115'].strike_price_options.keys()))
+        print('当前订阅期权合约数量为：{}'.format(
+            len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
+        print('当前订阅期权合约月份为：{}'.format(
+            ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
+        print('当前订阅期权合约行权价为：{}'.format(
+            ctp_manager.current_user.memory.cffex_option_manager.option_series_dict[
+                'HO20241115'].strike_price_options.keys()))
+
+    Thread(target=ctp_manager.tick).start()
+    if cffex_option_manager is not None:
+        Thread(target=ctp_manager.current_user.memory.cffex_option_manager.index_volatility_calculator).start()
+    if se_option_manager is not None:
+        Thread(target=ctp_manager.current_user.memory.se_option_manager.index_volatility_calculator).start()
+
+def main():
+
 
     # ctp_manager.current_user.query_investor_position(ExchangeType.SSE.name)
     # ctp_manager.current_user.query_investor_position(ExchangeType.SZSE.name)
@@ -71,11 +83,7 @@ def main():
     # print('HO2410的看涨期权的第一个行权价的行权价：{}'.format(ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]))
     # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
     #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
-    Thread(target=ctp_manager.tick).start()
-    if cffex_option_manager is not None:
-        Thread(target=ctp_manager.current_user.memory.cffex_option_manager.index_volatility_calculator).start()
-    if se_option_manager is not None:
-        Thread(target=ctp_manager.current_user.memory.se_option_manager.index_volatility_calculator).start()
+
 
 
     # print('HO2410的看涨期权的第一个行权价相关信息：{}'.format(
@@ -140,13 +148,23 @@ def main():
 def index():
     return render_template('index.html')
 
-@app.route('/api/users')
+@app.route('/api/users', methods=['GET'])
 def get_users():
     result = []
     for user in ctp_manager.users.values():
         resp = UserResp(user.user_id, user.user_name)
         result.append(resp.to_dict())
     return jsonify(result)
+
+# body:{
+#     'user_name': '薛建华'
+# }
+@app.route('/api/users', methods=['POST'])
+def set_user():
+    data: Dict[str, str] = request.get_json()
+    user_name: str = data.get('user_name')
+    ctp_manager.switch_to_user(user_name)
+    return jsonify({"message": "Baseline type set successfully", "user_name": user_name}), 200
 
 @app.route('/api/get_all_market_data', methods=['GET'])
 def get_all_market_data():
@@ -186,7 +204,7 @@ def get_se_option_greeks():
 @app.route('/api/cffex/option/greeks', methods=['GET'])
 def get_cffex_option_greeks():
     symbol = request.args.get('symbol')
-    print(symbol)
+    print(f"get_cffex_option_greeks: symbol {symbol}")
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
@@ -209,7 +227,7 @@ def get_option_greeks(symbol: str, option_manager: OptionManager):
             put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
             resp.strike_prices[strike_price] = StrikePrices(call_option, put_option)
 
-    print(resp.to_dict())
+    # print(resp.to_dict())
     return jsonify(resp.to_dict())
 
 @app.route('/api/se/option/wing_model', methods=['GET'])
@@ -243,15 +261,15 @@ def get_wing_model_by_symbol(symbol, option_manager: OptionManager):
 def get_all_customized_wing_model_para():
     resp: Dict[str, WingModelPara] = {}
     if ctp_manager.current_user.memory.se_option_manager is not None:
-        resp = get_all_customized_wing_model_by_account(ctp_manager.current_user.memory.se_option_manager)
+        resp = get_all_customized_wing_model_by_exchange(ctp_manager.current_user.memory.se_option_manager)
 
     if ctp_manager.current_user.memory.cffex_option_manager is not None:
-        resp = {**get_all_customized_wing_model_by_account(ctp_manager.current_user.memory.cffex_option_manager), **resp}
+        resp = {**get_all_customized_wing_model_by_exchange(ctp_manager.current_user.memory.cffex_option_manager), **resp}
 
-    print(resp)
+    print(f"get_all_customized_wing_model_para: {resp}")
     return jsonify(resp)
 
-def get_all_customized_wing_model_by_account(option_manager: OptionManager):
+def get_all_customized_wing_model_by_exchange(option_manager: OptionManager):
     resp: Dict[str, WingModelPara] = {}
     for symbol, option_series in option_manager.option_series_dict.items():
         wing_model_para: WingModelPara = option_series.customized_wing_model_para
@@ -264,6 +282,7 @@ def set_customized_wing_model():
     if data is None:
         return jsonify({"error": "Invalid or missing JSON data"}), 400
     for symbol, value in data.items():
+        # print(f"symbol:{symbol}, value:{value}")
         option_manager = None
         if filter_index_option(symbol):
             option_manager = ctp_manager.current_user.memory.cffex_option_manager
@@ -279,11 +298,29 @@ def set_customized_wing_model():
                 option_manager.option_series_dict[symbol].customized_wing_model_para.k2 = value["k2"]
             if "b" in value:
                 option_manager.option_series_dict[symbol].customized_wing_model_para.b = value["b"]
+
     return jsonify({"message": "Customized wing model received"}), 200
 
+@app.route('/api/baseline', methods=['POST'])
+def set_baseline():
+    data = request.get_json()
+    baseline_type_str: str = data.get('baseline')
+    print(f"set_baseline: {baseline_type_str}")
+    if not baseline_type_str:
+        return jsonify({"error": "Baseline type not provided"}), 400
 
+    try:
+        # 转换字符串到 BaselineType 枚举
+        baseline_type = BaselineType[baseline_type_str.upper()]
+        ctp_manager.baseline = baseline_type  # 更新当前基准类型
+        return jsonify({"message": "Baseline type set successfully", "current_baseline": baseline_type.value}), 200
+    except KeyError:
+        return jsonify({"error": f"Invalid baseline type: {baseline_type_str}"}), 400
 
-
+# 获取当前基准类型的接口
+@app.route('/api/baseline', methods=['GET'])
+def get_baseline():
+    return jsonify({"current_baseline": ctp_manager.baseline.name.lower()}), 200
 
 
 if __name__ == "__main__":

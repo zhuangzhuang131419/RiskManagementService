@@ -1,5 +1,5 @@
 import { DetailsList, SelectionMode, Stack, Text } from '@fluentui/react';
-import { TopBarData } from '../Model/Account';
+import { TopBarData } from '../Model/User';
 
 interface TopDataBarProps {
   data: TopBarData[]

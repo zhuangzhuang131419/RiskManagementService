@@ -27,9 +27,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
 
     const [notification, setNotification] = useState<{ message: string; type: MessageBarType } | null>(null);
 
-    const queryClient = useQueryClient();
-
-    const { data, isLoading, error } = useQuery(
+    const { data, isLoading, error, refetch } = useQuery(
         'wingModelData',
         optionDataProvider.fetchWingModelPara,
         {
@@ -52,17 +50,6 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
             },
         }
     );
-
-    // 自动关闭通知
-    useEffect(() => {
-        if (notification) {
-            const timer = setTimeout(() => {
-                setNotification(null);
-            }, 3000); // 3秒后自动消失
-
-            return () => clearTimeout(timer); // 清除定时器，防止内存泄漏
-        }
-    }, [notification]);
 
     const columns: IColumn[] = [
         { key: 'symbol', name: '品种', fieldName: 'symbol', minWidth: 100 },
@@ -92,13 +79,12 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
         try {
             await optionDataProvider.postWingModelPara(para);
             setNotification({ message: "Data successfully sent to the server", type: MessageBarType.success });
-            queryClient.invalidateQueries('wingModelData');
-
         } catch (error) {
             setNotification({ message: "Failed to send data", type: MessageBarType.error });
         } finally {
             updatedRows = []
-            closePanel();
+            refresh();
+            setTimeout(() => setNotification(null), 3000); // 3秒后消失
         }
     }
 
@@ -125,14 +111,13 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
             setNotification({ message: "Failed to send data", type: MessageBarType.error });
         } finally {
             updatedRows = []
-
+            refresh()
         }
     }
 
-    const ondismiss = async () => {
+    const refresh = async () => {
         closePanel();
-        queryClient.invalidateQueries('wingModelData');
-
+        refetch();
     }
 
     return (
@@ -152,7 +137,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
 
             <Panel
                 isOpen={isPanelOpen}
-                onDismiss={ondismiss}
+                onDismiss={refresh}
                 headerText="手动设置参数"
                 isFooterAtBottom={true}
                 onRenderFooterContent={() => (

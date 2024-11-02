@@ -1,30 +1,34 @@
 import time
-import os
 from abc import ABC
 
 from ctp.cffex.market_data_service import MarketDataService
 from ctp.cffex.trader_service import TraderService
-from model.config.account_config import AccountConfig
-from model.exchange.exchange import Exchange
+from memory.memory_manager import MemoryManager
+from model.config.exchange_config import ExchangeConfig
+from model.exchange.exchange_base import Exchange
 from api_cffex import ThostFtdcApi
 from helper.helper import judge_ret
 from model.direction import Direction
-from model.exchange.exchange_type import ExchangeType
+from model.enum.exchange_type import ExchangeType
 from model.order_info import OrderInfo
 
 
 class CFFExchange(Exchange, ABC):
-    def __init__(self, config: AccountConfig, config_file_path: str):
+    def __init__(self, config: ExchangeConfig, config_file_path: str, memory_manager: MemoryManager):
         super().__init__(config, config_file_path)
         self.type = ExchangeType.CFFEX
         print(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
+        self.memory = memory_manager
+
+    def is_login(self):
+        return True if self.trader_user_spi is not None and self.trader_user_spi.login_finish else False
 
     def connect_market_data(self):
         print("连接中金行情中心")
         # 创建API实例
         self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
-        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config)
+        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config, self.memory)
         # 连接行情前置服务器
         self.market_data_user_api.RegisterFront(self.config.market_server_front)
         # 将spi注册给api
@@ -32,7 +36,7 @@ class CFFExchange(Exchange, ABC):
         self.market_data_user_api.Init()
 
     def connect_trader(self):
-        print(f"连接{self.type.value}交易中心")
+        print(f"连接中金交易中心")
         self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
         self.trader_user_spi = TraderService(self.trader_user_api, self.config)
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
@@ -150,17 +154,6 @@ class CFFExchange(Exchange, ABC):
                 time.sleep(5)
         time.sleep(1)
 
-    # 批量订阅
-    def subscribe_market_data_in_batches(self, instrument_ids: [str]):
-        print('开始订阅行情')
-
-        page_size = 100
-        for i in range(0, len(instrument_ids), page_size):
-            page = instrument_ids[i:i + page_size]  # 获取当前分页
-            self.subscribe_market_data(page)  # 处理当前分页的订阅
-
-        print('已发送全部订阅请求')
-
     def subscribe_market_data(self, instrument_ids):
         ret = self.market_data_user_api.SubscribeMarketData(instrument_ids)
         if ret == 0:
@@ -183,4 +176,7 @@ class CFFExchange(Exchange, ABC):
         else:
             print(f"发送查询投资者持仓请求失败")
             judge_ret(ret)
+
+    def init_memory(self):
+        self.memory.init_cffex_instrument(self.trader_user_spi.subscribe_instrument)
 
