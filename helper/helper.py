@@ -47,7 +47,7 @@ def filter_index_option(symbol: str) -> bool:
     """
     return any(symbol.startswith(option_prefix) for option_prefix in INDEX_OPTION_PREFIXES)
 
-def filter_etf(symbol: str) -> bool:
+def filter_etf_option(symbol: str) -> bool:
     """
     :param symbol: 合约id
     :return: 是否是关注的期权

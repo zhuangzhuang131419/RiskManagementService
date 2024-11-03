@@ -2,10 +2,15 @@ import time
 import numpy as np
 from typing import Dict
 
-from helper.helper import filter_index_option, filter_etf
+from select import select
+
+from helper.helper import filter_index_option, filter_etf_option
 from memory.option_manager import OptionManager
 from model.ctp_manager import CTPManager
+from model.direction import Direction
 from model.enum.baseline_type import BaselineType
+from model.enum.exchange_type import ExchangeType
+from model.instrument.option import Option
 from model.instrument.option_series import OptionSeries
 from model.memory.atm_volatility import ATMVolatility
 from model.memory.wing_model_para import WingModelPara
@@ -39,35 +44,30 @@ def init_ctp():
     global ctp_manager
     ctp_manager.switch_to_user("TestUser")
 
-    future_manager = ctp_manager.current_user.memory.future_manager
-    se_option_manager = ctp_manager.current_user.memory.se_option_manager
-    cffex_option_manager = ctp_manager.current_user.memory.cffex_option_manager
+    print(f"{ctp_manager.current_user.memory.option_manager.instrument_transform_full_symbol}")
 
-    if se_option_manager is not None:
-        print('当前订阅期权合约数量为：{}'.format(
-            len(ctp_manager.current_user.memory.se_option_manager.option_series_dict)))
-        print('当前订阅期权合约到期月为：{}'.format(
-            ctp_manager.current_user.memory.se_option_manager.option_series_dict.keys()))
+    # ctp_manager.current_user.query_investor_position_detail(ExchangeType.CFFEX.name)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 288, 1)
+    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+
+    future_manager = ctp_manager.current_user.memory.future_manager
+    option_manager = ctp_manager.current_user.memory.option_manager
 
     if future_manager is not None:
-        print(
-            '当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures_dict)))
-        print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.memory.future_manager.index_future_month_id))
+        print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures_dict)))
+        print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.memory.future_manager.index_future_symbol))
 
-    if cffex_option_manager is not None:
+    if option_manager is not None:
         print('当前订阅期权合约数量为：{}'.format(
-            len(ctp_manager.current_user.memory.cffex_option_manager.option_series_dict)))
-        print('当前订阅期权合约月份为：{}'.format(
-            ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id))
+            len(ctp_manager.current_user.memory.option_manager.option_series_dict)))
+        print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.option_manager.index_option_symbol))
         print('当前订阅期权合约行权价为：{}'.format(
-            ctp_manager.current_user.memory.cffex_option_manager.option_series_dict[
+            ctp_manager.current_user.memory.option_manager.option_series_dict[
                 'HO20241115'].strike_price_options.keys()))
 
     Thread(target=ctp_manager.tick).start()
-    if cffex_option_manager is not None:
-        Thread(target=ctp_manager.current_user.memory.cffex_option_manager.index_volatility_calculator).start()
-    if se_option_manager is not None:
-        Thread(target=ctp_manager.current_user.memory.se_option_manager.index_volatility_calculator).start()
+    if option_manager is not None:
+        Thread(target=ctp_manager.current_user.memory.option_manager.index_volatility_calculator).start()
 
 def main():
 
@@ -173,108 +173,125 @@ def get_all_market_data():
 
 @app.route('/api/cffex/options', methods=['GET'])
 def get_cffex_option():
-    if ctp_manager.current_user.memory.cffex_option_manager is not None:
-        return jsonify(ctp_manager.current_user.memory.cffex_option_manager.index_option_month_forward_id)
+    if ctp_manager.current_user.memory.option_manager is not None:
+        return jsonify(list(ctp_manager.current_user.memory.option_manager.index_future_symbol))
     else:
         return jsonify([])
 
 @app.route('/api/se/options', methods=['GET'])
 def get_se_option():
-    if ctp_manager.current_user.memory.se_option_manager is not None:
-        return jsonify(ctp_manager.current_user.memory.se_option_manager.index_option_month_forward_id)
+    if ctp_manager.current_user.memory.option_manager is not None:
+        return jsonify(list(ctp_manager.current_user.memory.option_manager.etf_option_symbol))
     else:
         return jsonify([])
 
 @app.route('/api/futures', methods=['GET'])
 def get_all_future():
-    if ctp_manager.current_user.memory.cffex_option_manager is not None:
-        return jsonify(ctp_manager.current_user.memory.future_manager.index_future_month_id)
+    if ctp_manager.current_user.memory.future_manager is not None:
+        return jsonify(ctp_manager.current_user.memory.future_manager.index_future_symbol)
     else:
         return jsonify([])
 
-@app.route('/api/se/option/greeks', methods=['GET'])
-def get_se_option_greeks():
-    symbol = request.args.get('symbol')
-    if symbol is None or symbol == "":
-        return jsonify({"error": f"Symbol invalid"}), 404
-
-    return get_option_greeks(symbol, ctp_manager.current_user.memory.se_option_manager)
-
-
-@app.route('/api/cffex/option/greeks', methods=['GET'])
-def get_cffex_option_greeks():
+@app.route('/api/option/greeks', methods=['GET'])
+def get_option_greeks():
     symbol = request.args.get('symbol')
     print(f"get_cffex_option_greeks: symbol {symbol}")
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    return get_option_greeks(symbol, ctp_manager.current_user.memory.cffex_option_manager)
-
-
-def get_option_greeks(symbol: str, option_manager: OptionManager):
     resp = OptionGreeksResp(symbol)
-    with option_manager.greeks_lock:
-        for strike_price, option_tuple in option_manager.option_series_dict[symbol].strike_price_options.items():
-            call_delta = option_tuple.call.greeks.delta
-            put_delta = option_tuple.put.greeks.delta
-            gamma = option_tuple.call.greeks.gamma
-            vega = option_tuple.call.greeks.vega
-            call_theta = option_tuple.call.greeks.theta
-            put_theta = option_tuple.put.greeks.theta
-            vanna_vs = option_tuple.call.greeks.vanna_vs
-            vanna_sv = option_tuple.call.greeks.vanna_sv
-            call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
-            put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
-            resp.strike_prices[strike_price] = StrikePrices(call_option, put_option)
+    for strike_price, option_tuple in ctp_manager.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options.items():
+        call_delta = option_tuple.call.greeks.delta
+        put_delta = option_tuple.put.greeks.delta
+        gamma = option_tuple.call.greeks.gamma
+        vega = option_tuple.call.greeks.vega
+        call_theta = option_tuple.call.greeks.theta
+        put_theta = option_tuple.put.greeks.theta
+        vanna_vs = option_tuple.call.greeks.vanna_vs
+        vanna_sv = option_tuple.call.greeks.vanna_sv
+        call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
+        put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
+        resp.strike_prices[strike_price] = StrikePrices(call_option, put_option)
+
 
     # print(resp.to_dict())
     return jsonify(resp.to_dict())
 
-@app.route('/api/se/option/wing_model', methods=['GET'])
-def get_se_wing_model_by_symbol():
+
+
+@app.route('/api/option/wing_model', methods=['GET'])
+def get_wing_model_by_symbol():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    return get_wing_model_by_symbol(symbol, ctp_manager.current_user.memory.se_option_manager)
+    result = [generate_wing_model_response(symbol).to_dict()]
 
-@app.route('/api/cffex/option/wing_model', methods=['GET'])
-def get_cffex_wing_model_by_symbol():
-    symbol: str = request.args.get('symbol')
-    if symbol is None or symbol == "":
-        return jsonify({"error": f"Symbol invalid"}), 404
+    expired_month = symbol[-8:][:6]
+    sh_symbol: str
+    cffex_symbol: str
+    if filter_etf_option(symbol):
+        sh_symbol = symbol
+        cffex_instrument = ctp_manager.current_user.memory.option_manager.grouped_instruments[expired_month][0]
+        if cffex_instrument is not None:
+            cffex_symbol = cffex_instrument.symbol
+        else:
+            # 处理 cffex_instrument 为 None 的情况
+            result.append(generate_wing_model_response(symbol).to_dict())
+            return
+    elif filter_index_option(symbol):
+        sh_instrument = ctp_manager.current_user.memory.option_manager.grouped_instruments[expired_month][1]
+        if sh_instrument is not None:
+            sh_symbol = sh_instrument.symbol
+        else:
+            result.append(generate_wing_model_response(symbol).to_dict())
+            return
+        cffex_symbol = symbol
+    else:
+        return jsonify({"error": "Unrecognized option type"}), 400
 
-    return get_wing_model_by_symbol(symbol, ctp_manager.current_user.memory.cffex_option_manager)
+    sh_response = generate_wing_model_response(sh_symbol)
+    cffex_response = generate_wing_model_response(cffex_symbol)
 
 
-def get_wing_model_by_symbol(symbol, option_manager: OptionManager):
-    try:
-        option_series: OptionSeries = option_manager.option_series_dict[symbol]
-        wing_model_para: WingModelPara = option_series.wing_model_para
-        atm_volatility: ATMVolatility = option_series.atm_volatility
-        resp: WingModelResp = WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)
-        return jsonify(resp.to_dict())
-    except ValueError:
-        return jsonify({"error": f"Symbol {symbol} not found"}), 404
+    if ctp_manager.baseline == BaselineType.INDIVIDUAL.value:
+        result.append(sh_response.to_dict() if filter_etf_option(symbol) else cffex_response.to_dict())
+    elif ctp_manager.baseline == BaselineType.AVERAGE.value:
+
+        if sh_response.atm_volatility.atm_valid and cffex_response.atm_volatility.atm_valid == 1:
+            baseline_resp: WingModelResp = WingModelResp((sh_response.atm_volatility + cffex_response.atm_volatility) / 2,
+                                                         (sh_response.k1 + cffex_response.k1) / 2,
+                                                         (sh_response.k2 + cffex_response.k2) / 2,
+                                                         (sh_response.b + cffex_response.b) / 2,
+                                                         1)
+            result.append(baseline_resp.to_dict())
+        else:
+            result.append(generate_wing_model_response(symbol).to_dict())
+    elif ctp_manager.baseline == BaselineType.SH.value:
+        result.append(sh_response.to_dict())
+    else:
+        return jsonify({"error": "Unrecognized baseline type"}), 400
+
+    print(result)
+
+    return jsonify(result)
+
+def generate_wing_model_response(symbol: str) -> WingModelResp:
+    option_series = ctp_manager.current_user.memory.option_manager.option_series_dict[symbol]
+    wing_model_para: WingModelPara = option_series.wing_model_para
+    atm_volatility: ATMVolatility = option_series.atm_volatility
+    return WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)
 
 @app.route('/api/option/wing_model', methods=['GET'])
 def get_all_customized_wing_model_para():
     resp: Dict[str, WingModelPara] = {}
-    if ctp_manager.current_user.memory.se_option_manager is not None:
-        resp = get_all_customized_wing_model_by_exchange(ctp_manager.current_user.memory.se_option_manager)
-
-    if ctp_manager.current_user.memory.cffex_option_manager is not None:
-        resp = {**get_all_customized_wing_model_by_exchange(ctp_manager.current_user.memory.cffex_option_manager), **resp}
+    if ctp_manager.current_user.memory.option_manager is not None:
+        for symbol, option_series in ctp_manager.current_user.memory.option_manager.option_series_dict.items():
+            wing_model_para: WingModelPara = option_series.customized_wing_model_para
+            resp[symbol] = wing_model_para
 
     print(f"get_all_customized_wing_model_para: {resp}")
     return jsonify(resp)
-
-def get_all_customized_wing_model_by_exchange(option_manager: OptionManager):
-    resp: Dict[str, WingModelPara] = {}
-    for symbol, option_series in option_manager.option_series_dict.items():
-        wing_model_para: WingModelPara = option_series.customized_wing_model_para
-        resp[symbol] = wing_model_para
-    return resp
 
 @app.route('/api/option/wing_model', methods=['POST'])
 def set_customized_wing_model():
@@ -283,11 +300,7 @@ def set_customized_wing_model():
         return jsonify({"error": "Invalid or missing JSON data"}), 400
     for symbol, value in data.items():
         # print(f"symbol:{symbol}, value:{value}")
-        option_manager = None
-        if filter_index_option(symbol):
-            option_manager = ctp_manager.current_user.memory.cffex_option_manager
-        elif filter_etf(symbol):
-            option_manager = ctp_manager.current_user.memory.se_option_manager
+        option_manager = ctp_manager.current_user.memory.option_manager
 
         if option_manager is not None:
             if "v" in value:

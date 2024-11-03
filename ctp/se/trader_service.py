@@ -116,7 +116,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
         if pInstrument is not None:
             # InstrumentID: 10008312, ExchangeID: SSE, ExpiredData: 20250625, underlyinfInstrID: 510500
-            if filter_etf(pInstrument.UnderlyingInstrID) and len(pInstrument.InstrumentID) == 8:
+            if filter_etf_option(pInstrument.UnderlyingInstrID) and len(pInstrument.InstrumentID) == 8:
 
                 # if pInstrument.UnderlyingInstrID == "510050" and pInstrument.ExpireDate == "20241225" and str(pInstrument.StrikePrice) == "2.25":
                 #     print(f'InstrumentID = {pInstrument.InstrumentID}, OptionsType = {pInstrument.OptionsType}, StrikePrice = {pInstrument.StrikePrice} ')

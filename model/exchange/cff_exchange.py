@@ -1,5 +1,6 @@
 import time
 from abc import ABC
+from uuid import uuid4
 
 from ctp.cffex.market_data_service import MarketDataService
 from ctp.cffex.trader_service import TraderService
@@ -50,15 +51,15 @@ class CFFExchange(Exchange, ABC):
         self.trader_user_api.SubscribePublicTopic(ThostFtdcApi.THOST_TERT_QUICK)
         self.trader_user_api.Init()
 
-    def insert_order(self, code: str, direction: Direction, price, volume, strategy_id=0):
+    def insert_order(self, instrument_id: str, direction: Direction, limit_price: float, volume: int):
         order_field = ThostFtdcApi.CThostFtdcInputOrderField()
         order_field.BrokerID = self.config.broker_id
+        order_field.ExchangeID = ExchangeType.CFFEX.name
+        order_field.InstrumentID = instrument_id
 
-        order_field.ExchangeID = self.trader_user_spi.exchange_id[code]
-        order_field.InstrumentID = code
         order_field.UserID = self.config.user_id
         order_field.InvestorID = self.config.investor_id
-        order_field.LimitPrice = price
+        order_field.LimitPrice = limit_price
         order_field.VolumeTotalOriginal = volume
 
         # 定义 direction 对应的方向和组合开平标志
@@ -78,10 +79,7 @@ class CFFExchange(Exchange, ABC):
             print('下单委托类型错误！停止下单！')
             return -9
 
-
-        order_ref = self.trader_user_spi.max_order_ref
-        self.trader_user_spi.max_order_ref += 1
-        order_field.OrderRef = str(order_ref)
+        order_field.OrderRef = str(uuid4())[:8]
 
         # 普通限价单默认参数
         # 报单价格条件
@@ -94,8 +92,6 @@ class CFFExchange(Exchange, ABC):
         order_field.VolumeCondition = ThostFtdcApi.THOST_FTDC_VC_AV
         # 组合投机套保标志
         order_field.CombHedgeFlag = "1"
-        # GTD日期
-        order_field.GTDDate = ""
 
         # 最小成交量
         order_field.MinVolume = 0
@@ -109,15 +105,15 @@ class CFFExchange(Exchange, ABC):
 
         if ret == 0:
             print('发送下单请求成功！')
-            self.trader_user_spi.order_map[str(order_ref)] = OrderInfo(order_ref, strategy_id, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
+            self.trader_user_spi.order_map[order_field.OrderRef] = OrderInfo(order_field.OrderRef, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
             # 报单回报里的报单价格和品种数据不对，所以自己记录数据
-            self.trader_user_spi.order_map[str(order_ref)].order_price = price
-            self.trader_user_spi.order_map[str(order_ref)].symbol = code
-            print(self.trader_user_spi.order_map[str(order_ref)])
+            self.trader_user_spi.order_map[order_field.OrderRef].order_price = limit_price
+            self.trader_user_spi.order_map[order_field.OrderRef].instrument_id = instrument_id
+            print(self.trader_user_spi.order_map[order_field.OrderRef])
         else:
             print('发送下单请求失败！')
             judge_ret(ret)
-        return ret, order_ref
+        return ret, order_field.OrderRef
 
     # 查询合约
     def query_instrument(self):
@@ -136,24 +132,6 @@ class CFFExchange(Exchange, ABC):
                 time.sleep(5)
         time.sleep(1)
 
-
-    # 查看持仓明细
-    def query_investor_position_detail(self):
-        query_file = self.trader_user_api.CThostFtdcQryInvestorPositionDetailField()
-        query_file.BrokerID = self.config.broker_id
-        ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
-        if ret == 0:
-            print('发送查询持仓明细成功！')
-        else:
-            print('发送查询持仓明细失败！')
-            judge_ret(ret)
-            while ret != 0:
-                query_file = self.trader_user_api.CThostFtdcQryInvestorPositionDetailField()
-                ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
-                print('正在查询持仓明细...')
-                time.sleep(5)
-        time.sleep(1)
-
     def subscribe_market_data(self, instrument_ids):
         ret = self.market_data_user_api.SubscribeMarketData(instrument_ids)
         if ret == 0:
@@ -168,14 +146,33 @@ class CFFExchange(Exchange, ABC):
 
     def query_investor_position(self):
         query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionField()
-        query_file.ExchangeID = self.type.name
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
-        print(ret)
         if ret == 0:
-            pass
+            print('发送查询持仓成功！')
         else:
-            print(f"发送查询投资者持仓请求失败")
+            print('发送查询持仓失败！')
             judge_ret(ret)
+            while ret != 0:
+                ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
+                print('正在查询持仓...')
+                time.sleep(5)
+
+    # 查看持仓明细
+    def query_investor_position_detail(self):
+        query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionDetailField()
+        # query_file.BrokerID = self.config.broker_id
+        ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
+        if ret == 0:
+            print('发送查询持仓明细成功！')
+        else:
+            print('发送查询持仓明细失败！')
+            judge_ret(ret)
+            while ret != 0:
+                query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionDetailField()
+                ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
+                print('正在查询持仓明细...')
+                time.sleep(5)
+        time.sleep(1)
 
     def init_memory(self):
         self.memory.init_cffex_instrument(self.trader_user_spi.subscribe_instrument)

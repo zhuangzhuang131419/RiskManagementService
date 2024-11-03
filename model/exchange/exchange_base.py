@@ -42,7 +42,7 @@ class Exchange(ABC):
         pass
 
     @abstractmethod
-    def insert_order(self, code: str, direction: Direction, price, volume, strategy_id = 0):
+    def insert_order(self, instrument_id: str, direction: Direction, price, volume):
         pass
 
     @abstractmethod

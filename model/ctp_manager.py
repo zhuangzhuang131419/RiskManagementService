@@ -4,12 +4,8 @@ import logging
 from queue import Queue
 from threading import Thread, Lock
 from typing import Dict
-
 from model.config.exchange_config import ExchangeConfig
 from model.enum.baseline_type import BaselineType
-from model.exchange.cff_exchange import CFFExchange
-from model.enum.exchange_type import ExchangeType
-from model.exchange.se_exchange import SExchange
 from model.memory.market_data import DepthMarketData
 from model.user import User
 from helper.helper import *
@@ -35,6 +31,7 @@ class CTPManager:
         self.market_data: Queue = Queue()
         self.init_user()
         self.connect_users()
+
 
     def init_user(self):
         try:
@@ -82,7 +79,7 @@ class CTPManager:
             full_symbol = depth_market_date.symbol
             # 清洗编码问题，数据分类：-1为编码错误
 
-            if filter_index_option(full_symbol):
+            if filter_index_option(full_symbol) or filter_etf_option(full_symbol):
                 # 导入期权行情
                 try:
                     symbols = full_symbol.split('-')
@@ -94,24 +91,13 @@ class CTPManager:
                     raise IndexError
 
                 if option_type == 'C':
-                    self.current_user.memory.cffex_option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
+                    self.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
                 elif option_type == 'P':
-                    self.current_user.memory.cffex_option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
+                    self.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
             elif filter_index_future(full_symbol):
                 # 导入期货行情
                 symbol = full_symbol.split('-')[0]
                 self.current_user.memory.future_manager.index_futures_dict[symbol].market_data = depth_market_date
-
-            elif filter_etf(full_symbol):
-                    symbols = full_symbol.split('-')
-                    symbol = symbols[0]
-                    option_type = symbols[1]
-                    strike_price = float(symbols[-1])
-
-                    if option_type == 'C':
-                        self.current_user.memory.se_option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.market_data = depth_market_date
-                    elif option_type == 'P':
-                        self.current_user.memory.se_option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_date
             else:
                 print(f"exception: {depth_market_date}")
 

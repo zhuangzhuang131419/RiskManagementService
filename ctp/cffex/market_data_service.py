@@ -17,7 +17,7 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
         self.market_data_user_api = market_data_user_api
         self.config = account_config
         self.market_data = Queue()
-        self.memory_manager = memory_manager
+        self.memory_manager: MemoryManager = memory_manager
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
     def OnFrontConnected(self):
@@ -54,8 +54,11 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
-        if self.memory_manager is not None and self.memory_manager.cffex_option_manager is not None and self.memory_manager.future_manager is not None:
-            if pDepthMarketData.InstrumentID in self.memory_manager.cffex_option_manager.instrument_transform_full_symbol or pDepthMarketData.InstrumentID in self.memory_manager.future_manager.instrument_transform_full_symbol:
+        if self.memory_manager.option_manager is not None and self.memory_manager.future_manager is not None:
+            if pDepthMarketData.InstrumentID in self.memory_manager.option_manager.instrument_transform_full_symbol or pDepthMarketData.InstrumentID in self.memory_manager.future_manager.instrument_transform_full_symbol:
+
+                if pDepthMarketData.InstrumentID == "HO2412-C-2400":
+                    print(pDepthMarketData.AskPrice1)
 
                 depth_market_data = DepthMarketData()
                 depth_market_data.time = round(time.time())
@@ -64,8 +67,8 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
                 depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
                 depth_market_data.bid_prices[0] = round(pDepthMarketData.BidPrice1, 2)
 
-                if pDepthMarketData.InstrumentID in self.memory_manager.cffex_option_manager.instrument_transform_full_symbol:
-                    depth_market_data.symbol = self.memory_manager.cffex_option_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
+                if pDepthMarketData.InstrumentID in self.memory_manager.option_manager.instrument_transform_full_symbol:
+                    depth_market_data.symbol = self.memory_manager.option_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
                 elif pDepthMarketData.InstrumentID in self.memory_manager.future_manager.instrument_transform_full_symbol:
                     depth_market_data.symbol = self.memory_manager.future_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 

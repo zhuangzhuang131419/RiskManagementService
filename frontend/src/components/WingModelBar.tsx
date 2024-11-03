@@ -21,9 +21,7 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style, exchange }) => 
     () => optionDataProvider.fetchWingModelParaBySymbol(symbol as string, exchange),
     {
       onSuccess(data) {
-        const formattedItems: WingModelData[] = [data]
-        setItems(formattedItems); // 更新表格项
-        console.log(formattedItems)
+        setItems(data); // 更新表格项
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
       enabled: !!symbol,  // 只有当 symbol 存在时才启用查询

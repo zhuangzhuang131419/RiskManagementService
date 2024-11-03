@@ -1,4 +1,5 @@
 import copy
+from typing import Dict
 
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
@@ -12,11 +13,10 @@ from model.order_info import OrderInfo
 
 class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
     # key: order_ref, value: order_info
-    order_map = {}
+    order_map: Dict[str, OrderInfo] = {}
 
     front_id = None
     session_id = None
-    max_order_ref = 0
 
     trading_day = None
 
@@ -125,11 +125,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             print('查询合约完成')
 
 
-    # 请求查询投资者持仓明细响应，当执行ReqQryInvestorPositionDetail后，该方法被调用。
-    # https://documentation.help/CTP-API-cn/ONRSPQRYINVESTORPOSITIONDETAIL.html
-    def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: "CThostFtdcInvestorPositionDetailField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
-        if pInvestorPositionDetail.Volume == 0:
-            return
+
 
     def OnRspOrderInsert(self, pInputOrder: "CThostFtdcInputOrderField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
@@ -142,7 +138,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             # 报单已提交
             if pOrder.OrderStatus == 'a':
                 print('报单已提交')
-                self.order_map[pOrder.OrderRef] = OrderInfo(pOrder.OrderRef, None, self.front_id, self.session_id)
+                self.order_map[pOrder.OrderRef] = OrderInfo(pOrder.OrderRef, self.front_id, self.session_id)
                 self.order_map[pOrder.OrderRef].pOrder = copy.copy(pOrder)
             # 未成交
             elif pOrder.OrderStatus == '3':
@@ -175,6 +171,8 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             red_print(e)
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
+        print(pTrade.OrderRef)
+        print(pTrade.Price)
         del self.order_map[pTrade.OrderRef]
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
@@ -187,6 +185,20 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         if bIsLast:
             print('查询投资者持仓完成')
+
+    # 请求查询投资者持仓明细响应，当执行ReqQryInvestorPositionDetail后，该方法被调用。
+    # https://documentation.help/CTP-API-cn/ONRSPQRYINVESTORPOSITIONDETAIL.html
+    def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: "CThostFtdcInvestorPositionDetailField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('查询投资者持仓明细失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+        else:
+            print('查询投资者持仓明细成功,')
+
+        print(
+            f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice}")
+
+        if bIsLast:
+            print('查询投资者持仓明细完成')
 
 
 

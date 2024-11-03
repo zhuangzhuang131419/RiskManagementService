@@ -3,11 +3,15 @@ import math
 import threading
 import time
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List, Optional
+
+from select import select
 
 from helper.calculator import *
 from helper.wing_model import *
-from helper.helper import INTEREST_RATE, DIVIDEND
+from helper.helper import INTEREST_RATE, DIVIDEND, filter_index_option, filter_etf_option
+from model.enum.baseline_type import BaselineType
+from model.instrument.instrument import Instrument
 from model.instrument.option import Option, OptionTuple
 from model.instrument.option_series import OptionSeries
 from model.memory.atm_volatility import ATMVolatility
@@ -24,20 +28,27 @@ class OptionManager:
     # 把来自交易所的instrument_id 映射到我们自己的id
     instrument_transform_full_symbol: Dict[str, str] = {}
 
-    # 期权品种月份列表
-    index_option_month_forward_id = []
+    baseline:BaselineType = BaselineType.INDIVIDUAL
 
-    def __init__(self, index_options):
-        self.init_option_series(index_options)
-        self.init_index_option_month_id()
+
+
+    def __init__(self):
+        # self.init_option_series(index_options)
+        # self.init_index_option_month_id()
+        self.grouped_instruments: Dict[str, List[Optional[Option]]] = {}
         self.greeks_lock = threading.Lock()
+        self.index_option_symbol: List = []
+        self.etf_option_symbol: List = []
 
-    def init_option_series(self, options: [Option]):
+    def add_options(self, options: [Option]):
         """
         根据期权名称分组期权并初始化 OptionSeries。
         :param options: List[Option] - Option 对象的列表
         """
         option_series_dict = {}
+
+        index_set = set()
+        etf_set = set()
 
         # 按名称分组期权
         for option in options:
@@ -46,39 +57,28 @@ class OptionManager:
             option_series_dict[option.symbol].append(option)
             self.instrument_transform_full_symbol[option.id] = option.full_symbol
 
+            if option.expired_month not in self.grouped_instruments:
+                self.grouped_instruments[option.expired_month] = [None, None]  # 初始化集合
+            if filter_index_option(option.id):
+                index_set.add(option.symbol)
+                self.grouped_instruments[option.expired_month][0] = option
+            if filter_etf_option(option.id):
+                etf_set.add(option.symbol)
+                self.grouped_instruments[option.expired_month][1] = option
+
+        self.index_option_symbol = sorted(list(index_set))
+        print(self.index_option_symbol)
+        self.etf_option_symbol = sorted(list(etf_set))
+
         # 初始化 OptionSeries
         for symbol, options_list in option_series_dict.items():
             self.option_series_dict[symbol] = OptionSeries(symbol, options_list)
-
-        print(f"instrument_transform_symbol: {self.instrument_transform_full_symbol}")
-
-
-
-    def init_index_option_month_id(self):
-        """
-        生成唯一的期权月份列表，格式如：["HO2410","HO2411","HO2412","HO2501","HO2503","HO2506",…,…]
-        """
-
-        for name in self.option_series_dict.keys():
-            self.index_option_month_forward_id.append(name)
-
-        self.index_option_month_forward_id = sorted(self.index_option_month_forward_id)
-
-
-    # def get_option(self, instrument_id):
-    #     symbol = instrument_id.split('-')[0]
-    #     strike_price = instrument_id.split('-')[-1]
-    #     if instrument_id[7] == "C":
-    #         return self.option_series_dict[symbol].strike_price_options[strike_price].call
-    #     elif instrument_id[7] == "P":
-    #         return self.option_series_dict[symbol].strike_price_options[strike_price].put
-
 
 
     def index_volatility_calculator(self):
         while True:
             timestamp = time.time()
-            for i, symbol in enumerate(self.index_option_month_forward_id):
+            for symbol in self.option_series_dict:
                 # 计算forward价格，获取两侧行权价，标记FW价格无效，loc_index_month_available,标记IS无法取得,loc_index_IS_available
                 self.index_option_imply_forward_price(symbol)
                 if self.option_series_dict[symbol].imply_price.future_valid == -1:
@@ -89,20 +89,42 @@ class OptionManager:
                     self.calculate_atm_para(symbol)
                     self.calculate_index_option_month_t_iv(symbol)
                     self.calculate_wing_model_para(symbol)
-
-                    with self.greeks_lock:
-                        self.calculate_greeks(symbol)
+                    self.calculate_greeks(symbol)
 
             time.sleep(2)
+
+    def get_para_by_baseline(self, fitting_para: WingModelPara, se_para: WingModelPara):
+        if self.baseline == BaselineType.INDIVIDUAL.value:
+            return fitting_para.k1, fitting_para.k2, fitting_para.b
+        elif self.baseline == BaselineType.AVERAGE.value:
+            return (fitting_para.k1 + se_para.k1) / 2, (fitting_para.k2 + se_para.k2) / 2, (fitting_para.b + se_para.b) / 2
+        elif self.baseline == BaselineType.SH:
+            return se_para.k1, se_para.k2, se_para.b
+        return fitting_para.k1, fitting_para.k2, fitting_para.b
+
 
     def calculate_greeks(self, symbol):
         underlying_price = (self.option_series_dict[symbol].imply_price.imply_s_ask + self.option_series_dict[symbol].imply_price.imply_s_bid) / 2
         remain_time = self.option_series_dict[symbol].remaining_year
         volatility = self.option_series_dict[symbol].atm_volatility.atm_volatility_protected
 
-        k1 = self.option_series_dict[symbol].wing_model_para.k1 if self.option_series_dict[symbol].customized_wing_model_para.v == 0 else self.option_series_dict[symbol].customized_wing_model_para.k1
-        k2 = self.option_series_dict[symbol].wing_model_para.k2 if self.option_series_dict[symbol].customized_wing_model_para.v == 0 else self.option_series_dict[symbol].customized_wing_model_para.k2
-        b = self.option_series_dict[symbol].wing_model_para.b if self.option_series_dict[symbol].customized_wing_model_para.v == 0 else self.option_series_dict[symbol].customized_wing_model_para.b
+
+        if self.option_series_dict[symbol].customized_wing_model_para.v == 0:
+            if filter_etf_option(symbol):
+                k1, k2, b = self.get_para_by_baseline(self.option_series_dict[symbol].wing_model_para, self.option_series_dict[symbol].wing_model_para)
+            elif filter_index_option(symbol):
+                expired_month = symbol[-8:][:6]
+                se_instrument = self.grouped_instruments[expired_month][1]
+                if se_instrument is not None:
+                    k1, k2, b = self.get_para_by_baseline(self.option_series_dict[symbol].wing_model_para, self.option_series_dict[se_instrument.symbol].wing_model_para)
+                else:
+                    k1, k2, b = self.get_para_by_baseline(self.option_series_dict[symbol].wing_model_para, self.option_series_dict[symbol].wing_model_para)
+            else:
+                print(f"calculate_greeks exception: {symbol}")
+        else:
+            k1 = self.option_series_dict[symbol].customized_wing_model_para.k1
+            k2 = self.option_series_dict[symbol].customized_wing_model_para.k2
+            b = self.option_series_dict[symbol].customized_wing_model_para.b
 
         # print(f"k1: {k1}, k2: {k2}, b: {b}")
 

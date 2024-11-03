@@ -5,6 +5,7 @@ from uuid import uuid4
 from helper.helper import TIMEOUT
 from memory.memory_manager import MemoryManager
 from model.config.exchange_config import ExchangeConfig
+from model.direction import Direction
 from model.exchange.cff_exchange import CFFExchange
 from model.exchange.exchange_base import Exchange
 from model.enum.exchange_type import ExchangeType
@@ -138,19 +139,22 @@ class User:
         print('已发送全部订阅请求')
 
 
-    def query_investor_position(self, account_id: str):
-        print(f'查询投资者 {account_id} 持仓')
-        if account_id in self.exchanges:
-            exchange = self.exchanges[account_id]
+    def query_investor_position(self, exchange_id: str):
+        print(f'查询投资者{ExchangeType[exchange_id].value}持仓')
+        if exchange_id in self.exchanges:
+            exchange = self.exchanges[exchange_id]
             exchange.query_investor_position()
 
-    def query_investor_position_detail(self, account_id: str):
-        print(f'查询投资者 {account_id} 持仓细节')
-        if account_id in self.exchanges:
-            exchange = self.exchanges[account_id]
+    def query_investor_position_detail(self, exchange_id: str):
+        print(f'查询投资者{ExchangeType[exchange_id].value}持仓细节')
+        if exchange_id in self.exchanges:
+            exchange = self.exchanges[exchange_id]
             exchange.query_investor_position_detail()
 
-
+    def insert_order(self, exchange_id: str, instrument_id: str, direction: Direction, limit_price: float, volume: int):
+        print(f'报单{ExchangeType[exchange_id].value}')
+        if exchange_id in self.exchanges:
+            self.exchanges[exchange_id].insert_order(instrument_id, direction, limit_price, volume)
 
 
 
