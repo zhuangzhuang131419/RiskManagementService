@@ -1,5 +1,6 @@
 import time
 from abc import ABC
+from uuid import uuid4
 
 from ctp.se.market_data_service import MarketDataService
 from ctp.se.trader_service import TraderService
@@ -15,7 +16,7 @@ class SExchange(Exchange, ABC):
     def __init__(self, config, config_file_path, memory_manager: MemoryManager):
         super().__init__(config, config_file_path)
         print(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
-        self.memory = memory_manager
+        self.memory: MemoryManager = memory_manager
 
     def connect_market_data(self):
         print(f"连接深交行情中心")
@@ -60,15 +61,16 @@ class SExchange(Exchange, ABC):
                 time.sleep(5)
         time.sleep(1)
 
-    def insert_order(self, code: str, direction: Direction, price, volume, strategy_id=0):
+    def insert_order(self, instrument_id: str, direction: Direction, limit_price: float, volume: int):
         order_field = ThostFtdcApiSOpt.CThostFtdcInputOrderField()
+        order_field.OrderRef = self.memory.get_order_ref()
         order_field.BrokerID = self.config.broker_id
 
         # order_field.ExchangeID = self.trader_user_spi.exchange_id[code]
-        order_field.InstrumentID = code
+        order_field.InstrumentID = instrument_id
         order_field.UserID = self.config.user_id
         order_field.InvestorID = self.config.investor_id
-        order_field.LimitPrice = price
+        order_field.LimitPrice = limit_price
         order_field.VolumeTotalOriginal = volume
 
         # 定义 direction 对应的方向和组合开平标志
@@ -89,11 +91,6 @@ class SExchange(Exchange, ABC):
         else:
             print('下单委托类型错误！停止下单！')
             return -9
-
-
-        order_ref = self.trader_user_spi.max_order_ref
-        self.trader_user_spi.max_order_ref += 1
-        order_field.OrderRef = str(order_ref)
 
         # 普通限价单默认参数
         # 报单价格条件
@@ -121,15 +118,15 @@ class SExchange(Exchange, ABC):
 
         if ret == 0:
             print('发送下单请求成功！')
-            self.trader_user_api.order_map[str(order_ref)] = OrderInfo(order_ref, strategy_id, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
+            self.trader_user_spi.order_map[order_field.OrderRef] = OrderInfo(order_field.OrderRef, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
             # 报单回报里的报单价格和品种数据不对，所以自己记录数据
-            self.trader_user_api.order_map[str(order_ref)].order_price = price
-            self.trader_user_api.order_map[str(order_ref)].symbol = code
-            print(self.trader_user_api.order_map[str(order_ref)])
+            self.trader_user_spi.order_map[order_field.OrderRef].order_price = limit_price
+            self.trader_user_spi.order_map[order_field.OrderRef].instrument_id = instrument_id
+            print(self.trader_user_spi.order_map[order_field.OrderRef])
         else:
             print('发送下单请求失败！')
             judge_ret(ret)
-        return ret, order_ref
+        return ret, order_field.OrderRef
 
 
     # 查看持仓明细
@@ -162,7 +159,6 @@ class SExchange(Exchange, ABC):
 
     def query_investor_position(self):
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
-        query_file.ExchangeID = self.type.name
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
             pass

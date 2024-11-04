@@ -1,18 +1,19 @@
 import copy
 
 from click import option
-
+from typing import Dict
 from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
     CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField
 from helper.helper import *
 from memory.memory_manager import MemoryManager
 from model.instrument.option import Option, ETFOption
+from model.order_info import OrderInfo
 
 
 class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
     # key: order_ref, value: order_info
-    order_map = {}
+    order_map: Dict[str, OrderInfo] = {}
 
     front_id = None
     session_id = None
@@ -137,7 +138,9 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         else:
             print('查询投资者持仓明细成功,')
 
-        print(f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice}")
+        # print(f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice} ")
+        print_struct_fields(pInvestorPositionDetail)
+
 
         if bIsLast:
             print('查询投资者持仓明细完成')
@@ -190,11 +193,9 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
-        else:
-            print('查询投资者持仓成功,')
 
-        if pInvestorPosition is not None:
-            print(f"今日持仓：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID}")
+        print(f"position：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID} open_volume: {pInvestorPosition.OpenVolume} posi_direction: {pInvestorPosition.PosiDirection} open_cost: {pInvestorPosition.OpenCost}")
+        # print_swing_fields(pInvestorPosition)
 
         if bIsLast:
             print('查询投资者持仓完成')

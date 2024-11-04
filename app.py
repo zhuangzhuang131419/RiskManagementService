@@ -46,10 +46,36 @@ def init_ctp():
 
     print(f"{ctp_manager.current_user.memory.option_manager.instrument_transform_full_symbol}")
 
-    # ctp_manager.current_user.query_investor_position_detail(ExchangeType.CFFEX.name)
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 288, 1)
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 280, 1)
     ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+    time.sleep(10)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 295, 1)
+    time.sleep(10)
+    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+    time.sleep(10)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 285, 1)
+    time.sleep(10)
+    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+    time.sleep(10)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_OPEN, 285, 1)
+    time.sleep(10)
+    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+    time.sleep(10)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_CLOSE, 295, 1)
+    time.sleep(10)
+    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+
+    # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.SELL_CLOSE, 0.10, 3)
+    # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.SELL_OPEN, 0.10, 4)
+
+    # ctp_manager.current_user.query_investor_position_detail(ExchangeType.SE.name)
+    # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.BUY_OPEN, 0.12, 2)
+    # time.sleep(10)
+
+
+    # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.BUY_CLOSE, 0.12, 4)
+    # time.sleep(10)
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 280, 1)
+    # ctp_manager.current_user.query_investor_position(ExchangeType.SE.name)
 
     future_manager = ctp_manager.current_user.memory.future_manager
     option_manager = ctp_manager.current_user.memory.option_manager
@@ -61,10 +87,11 @@ def init_ctp():
     if option_manager is not None:
         print('当前订阅期权合约数量为：{}'.format(
             len(ctp_manager.current_user.memory.option_manager.option_series_dict)))
-        print('当前订阅期权合约月份为：{}'.format(ctp_manager.current_user.memory.option_manager.index_option_symbol))
-        print('当前订阅期权合约行权价为：{}'.format(
-            ctp_manager.current_user.memory.option_manager.option_series_dict[
-                'HO20241115'].strike_price_options.keys()))
+        print('当前订阅指数期权合约月份为：{}'.format(ctp_manager.current_user.memory.option_manager.index_option_symbol))
+        print('当前订阅ETF期权合约月份为：{}'.format(ctp_manager.current_user.memory.option_manager.etf_option_symbol))
+        # print('当前订阅期权合约行权价为：{}'.format(
+        #     ctp_manager.current_user.memory.option_manager.option_series_dict[
+        #         'HO20241115'].strike_price_options.keys()))
 
     Thread(target=ctp_manager.tick).start()
     if option_manager is not None:

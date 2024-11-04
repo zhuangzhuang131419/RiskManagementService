@@ -1,14 +1,14 @@
 from model.direction import Direction
 from typing import Dict
 
+from model.position import Position
+
 
 class PositionManager:
     def __init__(self):
-        #
-        self.position_details = {}
-        self.position: Dict[str, int] = {}
+        self.position: Dict[str, Position] = {}
 
-    def update_position(self, exchange_id: str, instrument_id: str, direction: int, volume: int, open_price: float, open_date: str):
+    def update_position(self, instrument_id: str, direction: int, volume: int, ):
         if instrument_id not in self.position:
             self.position[instrument_id] = 0
 

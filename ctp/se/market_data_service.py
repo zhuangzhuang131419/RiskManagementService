@@ -57,6 +57,10 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
         if self.memory_manager is not None and self.memory_manager.option_manager is not None:
             if pDepthMarketData.InstrumentID in self.memory_manager.option_manager.instrument_transform_full_symbol:
+
+                if pDepthMarketData.InstrumentID == "10007328":
+                    print(pDepthMarketData.AskPrice1)
+
                 depth_market_data = DepthMarketData()
                 depth_market_data.symbol = self.memory_manager.option_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 

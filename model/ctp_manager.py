@@ -18,6 +18,7 @@ class CTPManager:
     CONFIG_FILE_PATH = 'con_file'
 
 
+
     current_user : User = None
 
     users : Dict[str, User] = {}
@@ -63,7 +64,7 @@ class CTPManager:
     def switch_to_user(self, user_name: str) -> bool:
         with self._lock:
             self.current_user = self.users.get(user_name, None)
-            if self.current_user:
+            if self.current_user is not None:
                 logging.info(f"当前用户切换为：{user_name}")
                 return True
             else:

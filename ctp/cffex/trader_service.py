@@ -180,7 +180,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
-        print(f"今日持仓：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID} open_volume: {pInvestorPosition.OpenVolume}")
+        print(f"position：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID} open_volume: {pInvestorPosition.OpenVolume} posi_direction: {pInvestorPosition.PosiDirection} open_cost: {pInvestorPosition.OpenCost}")
 
         if bIsLast:
             print('查询投资者持仓完成')

@@ -15,6 +15,7 @@ class MemoryManager:
         self.market_data = Queue()
         self.option_manager = OptionManager()
         self.future_manager = FutureManager()
+        self.order_ref: int = 0
 
 
     def init_cffex_instrument(self, instruments: Dict[str, Instrument]):
@@ -34,14 +35,16 @@ class MemoryManager:
         etf_options = []
 
         for instrument in instruments.values():
-            expiration_month = instrument.expired_month
             etf_options.append(instrument)
 
         if len(etf_options) > 0:
             self.option_manager.add_options(etf_options)
 
 
-
+    def get_order_ref(self):
+        order_ref = str(self.order_ref).zfill(12)
+        self.order_ref += 1
+        return order_ref
 
 
 

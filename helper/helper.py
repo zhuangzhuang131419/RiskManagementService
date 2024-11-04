@@ -93,6 +93,34 @@ def count_sundays(start_date, end_date):
         current_date += datetime.timedelta(days=1)
     return sundays
 
+def print_struct_fields(obj, indent=0):
+    spacing = '  ' * indent
+    if hasattr(obj, '__dict__'):  # 检查是否为类实例
+        for key, value in obj.__dict__.items():
+            print(f"{spacing}{key}: ", end="")
+            print_struct_fields(value, indent + 1)  # 递归打印嵌套字段
+    elif isinstance(obj, list):  # 如果是列表
+        for i, item in enumerate(obj):
+            print(f"{spacing}[{i}]: ")
+            print_struct_fields(item, indent + 1)
+    else:
+        print(f"{spacing}{obj}")
+
+def print_swing_fields(obj):
+    attributes = dir(obj)
+
+    # 打印所有非私有字段
+    for attr in attributes:
+        if not attr.startswith('_'):  # 跳过内部属性
+            try:
+                value = getattr(obj, attr)
+                print(f"{attr}: {value}")
+            except AttributeError:
+                print(f"{attr}: Cannot access this attribute")
+
+
+
+
 if __name__ == '__main__':
     print(f'2503-P-4400:{filter_index_option("2503-P-4400")}')
     print(f'2503-P-4400:{filter_index_future("2503-P-4400")}')

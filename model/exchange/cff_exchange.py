@@ -53,6 +53,7 @@ class CFFExchange(Exchange, ABC):
 
     def insert_order(self, instrument_id: str, direction: Direction, limit_price: float, volume: int):
         order_field = ThostFtdcApi.CThostFtdcInputOrderField()
+        order_field.OrderRef = self.memory.get_order_ref()
         order_field.BrokerID = self.config.broker_id
         order_field.ExchangeID = ExchangeType.CFFEX.name
         order_field.InstrumentID = instrument_id
@@ -78,8 +79,6 @@ class CFFExchange(Exchange, ABC):
         else:
             print('下单委托类型错误！停止下单！')
             return -9
-
-        order_field.OrderRef = str(uuid4())[:8]
 
         # 普通限价单默认参数
         # 报单价格条件

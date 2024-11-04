@@ -59,16 +59,17 @@ class OptionManager:
 
             if option.expired_month not in self.grouped_instruments:
                 self.grouped_instruments[option.expired_month] = [None, None]  # 初始化集合
-            if filter_index_option(option.id):
+            if filter_index_option(option.symbol):
                 index_set.add(option.symbol)
                 self.grouped_instruments[option.expired_month][0] = option
-            if filter_etf_option(option.id):
+            if filter_etf_option(option.symbol):
                 etf_set.add(option.symbol)
                 self.grouped_instruments[option.expired_month][1] = option
 
         self.index_option_symbol = sorted(list(index_set))
         print(self.index_option_symbol)
         self.etf_option_symbol = sorted(list(etf_set))
+        print(self.etf_option_symbol)
 
         # 初始化 OptionSeries
         for symbol, options_list in option_series_dict.items():
