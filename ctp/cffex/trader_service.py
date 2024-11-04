@@ -3,7 +3,8 @@ from typing import Dict
 
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
-    CThostFtdcInstrumentField, CThostFtdcTradeField, CThostFtdcInvestorPositionField
+    CThostFtdcInstrumentField, CThostFtdcTradeField, CThostFtdcInvestorPositionField, \
+    CThostFtdcInvestorPositionDetailField
 from helper.helper import *
 from memory.memory_manager import MemoryManager
 from model.instrument.instrument import Future
@@ -178,24 +179,20 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
-        else:
-            print('查询投资者持仓成功,')
 
-        print(f"今日持仓：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID}")
+        print(f"今日持仓：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID} open_volume: {pInvestorPosition.OpenVolume}")
 
         if bIsLast:
             print('查询投资者持仓完成')
 
     # 请求查询投资者持仓明细响应，当执行ReqQryInvestorPositionDetail后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINVESTORPOSITIONDETAIL.html
-    def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: "CThostFtdcInvestorPositionDetailField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: CThostFtdcInvestorPositionDetailField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓明细失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
-        else:
-            print('查询投资者持仓明细成功,')
 
         print(
-            f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice}")
+            f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice}, open date: {pInvestorPositionDetail.OpenDate}, volume: {pInvestorPositionDetail.Volume}, direction: {pInvestorPositionDetail.Direction}")
 
         if bIsLast:
             print('查询投资者持仓明细完成')

@@ -81,6 +81,8 @@ class SExchange(Exchange, ABC):
             Direction.SELL_CLOSE_TODAY: (ThostFtdcApiSOpt.THOST_FTDC_D_Sell, ThostFtdcApiSOpt.THOST_FTDC_OF_CloseToday),
         }
 
+
+
         # 获取方向和组合开平标志
         if direction in direction_mapping:
             order_field.Direction, order_field.CombOffsetFlag = direction_mapping[direction]

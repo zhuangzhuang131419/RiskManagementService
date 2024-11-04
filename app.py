@@ -47,7 +47,8 @@ def init_ctp():
     print(f"{ctp_manager.current_user.memory.option_manager.instrument_transform_full_symbol}")
 
     # ctp_manager.current_user.query_investor_position_detail(ExchangeType.CFFEX.name)
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 288, 1)
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 288, 1)
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 280, 1)
     ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
 
     future_manager = ctp_manager.current_user.memory.future_manager
