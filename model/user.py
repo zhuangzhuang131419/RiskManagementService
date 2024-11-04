@@ -10,7 +10,7 @@ from model.exchange.cff_exchange import CFFExchange
 from model.exchange.exchange_base import Exchange
 from model.enum.exchange_type import ExchangeType
 from model.exchange.se_exchange import SExchange
-from typing import Dict
+from typing import Dict, Optional
 
 logging.basicConfig(level=logging.INFO)
 
@@ -69,7 +69,7 @@ class User:
             if not exchange.is_login():
                 continue
             exchange.query_instrument()
-            while not self.is_query_finish(exchange_id):
+            while not self.is_query_finish(exchange_id, 'ReqQryInstrument'):
                 time.sleep(3)
             logging.info(f"{self.user_name} 的 {exchange_id} 合约查询完成")
 
@@ -118,8 +118,8 @@ class User:
     def is_login(self, exchange_id: str) -> bool:
         return self.exchanges[exchange_id].is_login()
 
-    def is_query_finish(self, exchange_id: str) -> bool:
-        return self.exchanges[exchange_id].trader_user_spi.query_finish
+    def is_query_finish(self, exchange_id: str, query_name: str) -> bool:
+        return self.exchanges[exchange_id].trader_user_spi.query_finish[query_name]
 
     # 批量订阅
     def subscribe_market_data(self):
@@ -139,11 +139,18 @@ class User:
         print('已发送全部订阅请求')
 
 
-    def query_investor_position(self, exchange_id: str):
+    def query_investor_position(self, exchange_id: str, instrument_id: Optional[str]) -> bool:
         print(f'查询投资者{ExchangeType[exchange_id].value}持仓')
         if exchange_id in self.exchanges:
             exchange = self.exchanges[exchange_id]
-            exchange.query_investor_position()
+            start_time = time.time()
+            exchange.query_investor_position(instrument_id)
+            while not self.is_query_finish(exchange_id, 'ReqQryInvestorPosition'):
+                if time.time() - start_time > TIMEOUT:
+                    logging.error(f'{exchange_id} 查询超时')
+                    return False
+                time.sleep(3)
+        return True
 
     def query_investor_position_detail(self, exchange_id: str):
         print(f'查询投资者{ExchangeType[exchange_id].value}持仓细节')

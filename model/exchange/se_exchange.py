@@ -23,7 +23,7 @@ class SExchange(Exchange, ABC):
         # 创建API实例
         self.market_data_user_api = ThostFtdcApiSOpt.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
-        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config, self.memory)
+        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config)
         # 连接行情前置服务器
         self.market_data_user_api.RegisterFront(self.config.market_server_front)
         # 将spi注册给api
@@ -47,6 +47,7 @@ class SExchange(Exchange, ABC):
         self.trader_user_api.Init()
 
     def query_instrument(self):
+        self.trader_user_spi.query_finish['ReqQryInstrument'] = False
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInstrumentField()
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
         if ret == 0:
@@ -157,8 +158,10 @@ class SExchange(Exchange, ABC):
                 ret = self.market_data_user_api.mduserapi.SubscribeMarketData(instrument_ids)
                 print('正在订阅{}行情...'.format(str(instrument_ids)))
 
-    def query_investor_position(self):
+    def query_investor_position(self, instrument_id):
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
+        if instrument_id is not None:
+            query_file.InstrumentID = instrument_id
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
             pass
@@ -168,3 +171,5 @@ class SExchange(Exchange, ABC):
 
     def init_memory(self):
         self.memory.init_se_instrument(self.trader_user_spi.subscribe_instrument)
+        self.trader_user_spi.set_memory_manager(self.memory)
+        self.market_data_user_spi.set_memory_manager(self.memory)

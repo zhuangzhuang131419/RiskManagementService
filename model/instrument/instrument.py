@@ -10,6 +10,8 @@ def validate_future_id(instrument_id):
 
 class Instrument:
     full_symbol: str
+    long_position: int
+    short_position: int
     def __init__(self, instrument_id, expired_date, exchange_id):
         self.id = instrument_id
         self.expired_date = expired_date

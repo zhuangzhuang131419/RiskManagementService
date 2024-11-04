@@ -29,7 +29,7 @@ class CFFExchange(Exchange, ABC):
         # 创建API实例
         self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
-        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config, self.memory)
+        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config)
         # 连接行情前置服务器
         self.market_data_user_api.RegisterFront(self.config.market_server_front)
         # 将spi注册给api
@@ -116,6 +116,7 @@ class CFFExchange(Exchange, ABC):
 
     # 查询合约
     def query_instrument(self):
+        self.trader_user_spi.query_finish['ReqQryInstrument'] = False
         query_file = ThostFtdcApi.CThostFtdcQryInstrumentField()
         query_file.ExchangeID = self.type.name
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
@@ -143,8 +144,11 @@ class CFFExchange(Exchange, ABC):
                 print('正在订阅{}行情...'.format(str(instrument_ids)))
 
 
-    def query_investor_position(self):
+    def query_investor_position(self, instrument_id):
+        self.trader_user_spi.query_finish['ReqQryInvestorPosition'] = False
         query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionField()
+        if instrument_id is not None:
+            query_file.InstrumentID = instrument_id
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
             print('发送查询持仓成功！')
@@ -175,4 +179,6 @@ class CFFExchange(Exchange, ABC):
 
     def init_memory(self):
         self.memory.init_cffex_instrument(self.trader_user_spi.subscribe_instrument)
+        self.trader_user_spi.set_memory_manager(self.memory)
+        self.market_data_user_spi.set_memory_manager(self.memory)
 

@@ -2,6 +2,8 @@ import os
 from abc import ABC, abstractmethod
 from statistics import pstdev
 
+from typing import Optional
+
 from model.config.exchange_config import ExchangeConfig
 from model.direction import Direction
 
@@ -50,7 +52,7 @@ class Exchange(ABC):
         pass
 
     @abstractmethod
-    def query_investor_position(self):
+    def query_investor_position(self, instrument_id: Optional[str]):
         pass
 
     @abstractmethod

@@ -22,23 +22,24 @@ from model.memory.wing_model_para import WingModelPara
 
 
 class OptionManager:
-    # 期权链
-    option_series_dict: Dict[str, OptionSeries] = {}
-
-    # 把来自交易所的instrument_id 映射到我们自己的id
-    instrument_transform_full_symbol: Dict[str, str] = {}
-
-    baseline:BaselineType = BaselineType.INDIVIDUAL
-
-
-
     def __init__(self):
-        # self.init_option_series(index_options)
-        # self.init_index_option_month_id()
+        # 期权链
+        self.option_series_dict: Dict[str, OptionSeries] = {}
         self.grouped_instruments: Dict[str, List[Optional[Option]]] = {}
         self.greeks_lock = threading.Lock()
         self.index_option_symbol: List = []
         self.etf_option_symbol: List = []
+        # 把来自交易所的instrument_id 映射到我们自己的id
+        self.instrument_transform_full_symbol: Dict[str, str] = {}
+        self.baseline: BaselineType = BaselineType.INDIVIDUAL
+
+    def transform_instrument_id(self, instrument_id: str):
+        try:
+            result = self.instrument_transform_full_symbol[instrument_id].split('-')
+            return result[0], result[1], float(result[2])
+        except ValueError:
+            print(f"instrument_id:{instrument_id}")
+            raise ValueError
 
     def add_options(self, options: [Option]):
         """

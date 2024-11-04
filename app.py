@@ -1,10 +1,9 @@
 import time
+
 import numpy as np
 from typing import Dict
 
-from select import select
-
-from helper.helper import filter_index_option, filter_etf_option
+from helper.helper import filter_index_option, filter_etf_option, filter_index_future
 from memory.option_manager import OptionManager
 from model.ctp_manager import CTPManager
 from model.direction import Direction
@@ -46,23 +45,23 @@ def init_ctp():
 
     print(f"{ctp_manager.current_user.memory.option_manager.instrument_transform_full_symbol}")
 
-    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
-    time.sleep(10)
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 295, 1)
-    time.sleep(10)
-    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
-    time.sleep(10)
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 285, 1)
-    time.sleep(10)
-    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
-    time.sleep(10)
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_OPEN, 285, 1)
-    time.sleep(10)
-    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
-    time.sleep(10)
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_CLOSE, 295, 1)
-    time.sleep(10)
-    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name, None)
+    # time.sleep(10)
+    # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 295, 1)
+    # time.sleep(10)
+    # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+    # time.sleep(10)
+    # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 285, 1)
+    # time.sleep(10)
+    # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+    # time.sleep(10)
+    # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_OPEN, 285, 1)
+    # time.sleep(10)
+    # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
+    # time.sleep(10)
+    # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_CLOSE, 295, 1)
+    # time.sleep(10)
+    # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
 
     # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.SELL_CLOSE, 0.10, 3)
     # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.SELL_OPEN, 0.10, 4)
@@ -362,6 +361,27 @@ def set_baseline():
 @app.route('/api/baseline', methods=['GET'])
 def get_baseline():
     return jsonify({"current_baseline": ctp_manager.baseline.name.lower()}), 200
+
+@app.route('/api/position/', methods=['GET'])
+def get_position():
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
+    if filter_etf_option(symbol):
+        if ctp_manager.current_user.query_investor_position(ExchangeType.SE.name, None):
+            return ctp_manager.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options
+        else:
+            return jsonify({"error": f"Timeout"}), 404
+    elif filter_index_option(symbol) or filter_index_future(symbol):
+        if ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name, None):
+            if filter_index_option(symbol):
+                return ctp_manager.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options
+            else:
+                return ctp_manager.current_user.memory.future_manager.index_futures_dict[symbol]
+        else:
+            return jsonify({"error": f"Timeout"}), 404
+    else:
+        return jsonify({"error": f"Symbol invalid"}), 404
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ class Option(Instrument):
     option_type: str
     strike_price: float
     symbol: str
+
     def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
         super().__init__(instrument_id, expired_date, exchange_id)
         self.greeks = Greeks()

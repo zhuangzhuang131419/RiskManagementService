@@ -4,12 +4,13 @@ from typing import Dict
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField, CThostFtdcTradeField, CThostFtdcInvestorPositionField, \
-    CThostFtdcInvestorPositionDetailField
+    CThostFtdcInvestorPositionDetailField, CThostFtdcOrderField
 from helper.helper import *
 from memory.memory_manager import MemoryManager
 from model.instrument.instrument import Future
 from model.instrument.option import IndexOption
 from model.order_info import OrderInfo
+from model.position import Position
 
 
 class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
@@ -21,10 +22,6 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
     trading_day = None
 
-    # flag
-    login_finish = False
-    query_finish = False
-
     memory_manager: MemoryManager = None
 
 
@@ -33,6 +30,8 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         self.trader_user_api = trader_user_api
         self.config = config
         self.subscribe_instrument = {}
+        self.login_finish = False
+        self.query_finish: Dict[str, bool] = {}
 
     def set_memory_manager(self, memory_manager):
         self.memory_manager = memory_manager
@@ -84,7 +83,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             # 保存数据用于下单
             self.front_id = pRspUserLogin.FrontID
             self.session_id = pRspUserLogin.SessionID
-            self.max_order_ref = int(pRspUserLogin.MaxOrderRef)
+            # self.max_order_ref = int(pRspUserLogin.MaxOrderRef)
 
             # 保存交易日
             self.trading_day = pRspUserLogin.TradingDay
@@ -122,7 +121,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
                 future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
                 self.subscribe_instrument[future.id] = future
         if bIsLast:
-            self.query_finish = True
+            self.query_finish['ReqQryInstrument'] = True
             print('查询合约完成')
 
 
@@ -134,7 +133,10 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         else:
             print('下单成功, 风控通过')
 
-    def OnRtnOrder(self, pOrder: "CThostFtdcOrderField") -> "void":
+        if bIsLast:
+            self.query_finish['RspOrderInsert'] = True
+
+    def OnRtnOrder(self, pOrder: CThostFtdcOrderField) -> "void":
         try:
             # 报单已提交
             if pOrder.OrderStatus == 'a':
@@ -180,9 +182,32 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
-        print(f"position：{pInvestorPosition.Position} instrument: {pInvestorPosition.InstrumentID} exchange_id: {pInvestorPosition.ExchangeID} open_volume: {pInvestorPosition.OpenVolume} posi_direction: {pInvestorPosition.PosiDirection} open_cost: {pInvestorPosition.OpenCost}")
+        instrument_id: str = pInvestorPosition.InstrumentID
+
+        if filter_index_option(instrument_id):
+            if self.memory_manager.option_manager is not None:
+                symbol, option_type, strike_price = self.memory_manager.option_manager.transform_instrument_id(instrument_id)
+                if option_type == 'C':
+                    if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
+                        self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.long_position = pInvestorPosition.Position
+                    elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
+                        self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.short_position = pInvestorPosition.Position
+                elif option_type == 'P':
+                    if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
+                        self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.long_position = pInvestorPosition.Position
+                    elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
+                        self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.short_position = pInvestorPosition.Position
+        elif filter_index_future(instrument_id):
+            if self.memory_manager.future_manager is not None:
+                symbol = self.memory_manager.future_manager.transform_instrument_id(instrument_id)
+                if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
+                    self.memory_manager.future_manager.index_futures_dict[symbol].long_position = pInvestorPosition.Position
+                elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
+                    self.memory_manager.future_manager.index_futures_dict[symbol].short_position = pInvestorPosition.Position
+
 
         if bIsLast:
+            self.query_finish['RspQryInvestorPosition'] = True
             print('查询投资者持仓完成')
 
     # 请求查询投资者持仓明细响应，当执行ReqQryInvestorPositionDetail后，该方法被调用。
@@ -195,6 +220,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice}, open date: {pInvestorPositionDetail.OpenDate}, volume: {pInvestorPositionDetail.Volume}, direction: {pInvestorPositionDetail.Direction}")
 
         if bIsLast:
+            self.query_finish['RspQryInvestorPositionDetail'] = True
             print('查询投资者持仓明细完成')
 
 
