@@ -195,21 +195,23 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
         instrument_id: str = pInvestorPosition.InstrumentID
+        print(f"OnRspQryInvestorPosition: {instrument_id}")
 
         if self.memory_manager.option_manager is not None:
             symbol, option_type, strike_price = self.memory_manager.option_manager.transform_instrument_id(instrument_id)
             if option_type == 'C':
                 if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.long_position = pInvestorPosition.Position
+                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.position.long = pInvestorPosition.Position
                 elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.short_position = pInvestorPosition.Position
+                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.position.short = pInvestorPosition.Position
             elif option_type == 'P':
                 if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.long_position = pInvestorPosition.Position
+                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.position.long = pInvestorPosition.Position
                 elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.short_position = pInvestorPosition.Position
+                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.position.short = pInvestorPosition.Position
 
         if bIsLast:
+            self.query_finish['RspQryInvestorPositionDetail'] = True
             print('查询投资者持仓完成')
 
 

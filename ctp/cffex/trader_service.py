@@ -187,16 +187,10 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         if filter_index_option(instrument_id):
             if self.memory_manager.option_manager is not None:
                 symbol, option_type, strike_price = self.memory_manager.option_manager.transform_instrument_id(instrument_id)
-                if option_type == 'C':
-                    if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
-                        self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.long_position = pInvestorPosition.Position
-                    elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
-                        self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.short_position = pInvestorPosition.Position
-                elif option_type == 'P':
-                    if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
-                        self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.long_position = pInvestorPosition.Position
-                    elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
-                        self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.short_position = pInvestorPosition.Position
+                if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
+                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, True)
+                elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
+                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, False)
         elif filter_index_future(instrument_id):
             if self.memory_manager.future_manager is not None:
                 symbol = self.memory_manager.future_manager.transform_instrument_id(instrument_id)

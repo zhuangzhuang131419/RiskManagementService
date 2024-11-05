@@ -159,6 +159,7 @@ class SExchange(Exchange, ABC):
                 print('正在订阅{}行情...'.format(str(instrument_ids)))
 
     def query_investor_position(self, instrument_id):
+        self.trader_user_spi.query_finish['ReqQryInvestorPosition'] = False
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
         if instrument_id is not None:
             query_file.InstrumentID = instrument_id

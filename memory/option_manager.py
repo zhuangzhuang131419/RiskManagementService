@@ -11,6 +11,7 @@ from helper.calculator import *
 from helper.wing_model import *
 from helper.helper import INTEREST_RATE, DIVIDEND, filter_index_option, filter_etf_option
 from model.enum.baseline_type import BaselineType
+from model.enum.option_type import OptionType
 from model.instrument.instrument import Instrument
 from model.instrument.option import Option, OptionTuple
 from model.instrument.option_series import OptionSeries
@@ -36,7 +37,7 @@ class OptionManager:
     def transform_instrument_id(self, instrument_id: str):
         try:
             result = self.instrument_transform_full_symbol[instrument_id].split('-')
-            return result[0], result[1], float(result[2])
+            return result[0], OptionType(result[1]), float(result[2])
         except ValueError:
             print(f"instrument_id:{instrument_id}")
             raise ValueError

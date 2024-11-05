@@ -43,9 +43,9 @@ def init_ctp():
     global ctp_manager
     ctp_manager.switch_to_user("TestUser")
 
-    print(f"{ctp_manager.current_user.memory.option_manager.instrument_transform_full_symbol}")
 
-    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None)
+
+    ctp_manager.current_user.query_investor_position(ExchangeType.SE, None)
     # time.sleep(10)
     # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 295, 1)
     # time.sleep(10)
@@ -80,10 +80,12 @@ def init_ctp():
     option_manager = ctp_manager.current_user.memory.option_manager
 
     if future_manager is not None:
+        print(f"{ctp_manager.current_user.memory.future_manager.instrument_transform_full_symbol}")
         print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.current_user.memory.future_manager.index_futures_dict)))
         print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.memory.future_manager.index_future_symbol))
 
     if option_manager is not None:
+        print(f"{ctp_manager.current_user.memory.option_manager.instrument_transform_full_symbol}")
         print('当前订阅期权合约数量为：{}'.format(
             len(ctp_manager.current_user.memory.option_manager.option_series_dict)))
         print('当前订阅指数期权合约月份为：{}'.format(ctp_manager.current_user.memory.option_manager.index_option_symbol))
@@ -369,15 +371,13 @@ def get_position():
         return jsonify({"error": f"Symbol invalid"}), 404
     if filter_etf_option(symbol):
         if ctp_manager.current_user.query_investor_position(ExchangeType.SE, None):
-            return ctp_manager.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options
+            pass
         else:
             return jsonify({"error": f"Timeout"}), 404
-    elif filter_index_option(symbol) or filter_index_future(symbol):
+    elif filter_index_option(symbol):
         if ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None):
-            if filter_index_option(symbol):
-                return ctp_manager.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options
-            else:
-                return ctp_manager.current_user.memory.future_manager.index_futures_dict[symbol]
+            # return
+            pass
         else:
             return jsonify({"error": f"Timeout"}), 404
     else:

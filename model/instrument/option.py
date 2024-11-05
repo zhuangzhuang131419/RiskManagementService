@@ -1,10 +1,14 @@
 import re
 from abc import abstractmethod
 
+from typing import Dict
+
+from model.enum.option_type import OptionType
 from model.instrument.instrument import Instrument
 from model.memory.greeks import Greeks
 from model.memory.imply_price import ImplyPrice
 from model.memory.t_imply_volatility import TImplyVolatility
+from model.position import Position
 
 
 def validate_option_id(instrument_id):
@@ -81,8 +85,47 @@ class OptionTuple:
     def set_put(self, put: Option):
         self.put: Option = put
 
+    def set_option(self, option: Option, option_type: OptionType):
+        if option_type == OptionType.C:
+            self.call = option
+
+        if option_type == OptionType.P:
+            self.put = option
+
+        print(f"Invalid {option_type}")
+        raise ValueError
 
 
-if __name__ == '__main__':
-    o = Option("IO2410-C-4100", "")
-    o1 = Option("io2410-C-4100", "")
+    def get_option(self, option_type: OptionType):
+        if option_type == OptionType.C:
+            return self.call
+
+        if option_type == OptionType.P:
+            return self.put
+
+        print(f"Invalid {option_type}")
+        raise ValueError
+
+    def set_position(self, option_type: OptionType, position, long: bool):
+        if option_type == OptionType.C:
+            if long:
+                self.call.position.long = position
+            else:
+                self.call.position.short = position
+
+        if option_type == OptionType.P:
+            if long:
+                self.put.position.long = position
+            else:
+                self.put.position.short = position
+
+
+    def get_position(self, option_type: OptionType):
+        if option_type == OptionType.C:
+            return self.call.position
+
+        if option_type == OptionType.P:
+            return self.put.position
+
+        print(f"Invalid {option_type}")
+        raise ValueError

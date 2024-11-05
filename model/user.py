@@ -2,7 +2,7 @@ import configparser
 import logging
 import time
 from uuid import uuid4
-from helper.helper import TIMEOUT
+from helper.helper import TIMEOUT, filter_index_future, filter_etf_option
 from memory.memory_manager import MemoryManager
 from model.config.exchange_config import ExchangeConfig
 from model.direction import Direction
@@ -11,6 +11,8 @@ from model.exchange.exchange_base import Exchange
 from model.enum.exchange_type import ExchangeType
 from model.exchange.se_exchange import SExchange
 from typing import Dict, Optional
+
+from model.position import Position
 
 logging.basicConfig(level=logging.INFO)
 

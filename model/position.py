@@ -3,6 +3,6 @@ class Position:
 
     def __init__(self, instrument_id: str):
         self.instrument_id = instrument_id
-        self.long_quantity = 0  # 多头仓位数量
-        self.short_quantity = 0  # 空头仓位数量
+        self.long = 0  # 多头仓位数量
+        self.short = 0  # 空头仓位数量
 

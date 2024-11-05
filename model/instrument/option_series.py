@@ -9,8 +9,6 @@ from model.memory.wing_model_para import WingModelPara
 
 
 class OptionSeries:
-    CALL = 0  # 看涨期权在列表中的位置
-    PUT = 1  # 看跌期权在列表中的位置
 
     def __init__(self, symbol: str, options: [Option]):
         """
