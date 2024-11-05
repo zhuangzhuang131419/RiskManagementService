@@ -30,7 +30,7 @@ class User:
         self.user_id = uuid4()
         self.user_name = self.config.get('USER', 'Name')
         print(f'切换{self.user_name}')
-        self.exchange_config: Dict[str, ExchangeConfig] = {}
+        self.exchange_config: Dict[ExchangeType, ExchangeConfig] = {}
         # exchange_config = {
         #   "CFFEX": {
         #       "BrokerName": "",
@@ -41,15 +41,18 @@ class User:
         #       ...
         #   }
         # }
-        self.exchanges: Dict[str, Exchange] = {}
+        self.exchanges: Dict[ExchangeType, Exchange] = {}
         # exchange = {
         #   "CFFEX": CFFEXExchange(),
         #   "SE": SSEExchange()
         # }
 
-        for section in self.config.sections():
-            if section in [e.name for e in ExchangeType]:
-                self.exchange_config[section] = ExchangeConfig(
+        sections = self.config.sections()
+
+        for exchange_type in ExchangeType:
+            section = exchange_type.name
+            if section in sections:
+                self.exchange_config[exchange_type] = ExchangeConfig(
                     broker_name=self.config.get(section, 'BrokerName'),
                     broker_id=self.config.get(section, 'BrokerID'),
                     user_id=self.config.get(section, 'UserID'),
@@ -60,66 +63,65 @@ class User:
                     market_server_front=self.config.get(section, 'MarketServerFront'),
                     trade_server_front=self.config.get(section, 'TradeServerFront')
                 )
-
         # 内存中心
         self.memory: MemoryManager = MemoryManager()
 
     def query_instrument(self):
-        for exchange_id, exchange in self.exchanges.items():
+        for exchange_type, exchange in self.exchanges.items():
             if not exchange.is_login():
                 continue
             exchange.query_instrument()
-            while not self.is_query_finish(exchange_id, 'ReqQryInstrument'):
+            while not self.is_query_finish(exchange_type, 'ReqQryInstrument'):
                 time.sleep(3)
-            logging.info(f"{self.user_name} 的 {exchange_id} 合约查询完成")
+            logging.info(f"{self.user_name} 的 {exchange_type.value} 合约查询完成")
 
     def init_exchange(self, config_file_root: str):
-        for exchange_id, config in self.exchange_config.items():
+        for exchange_type, config in self.exchange_config.items():
             try:
                 exchange = None
-                path = f"{config_file_root}/{self.user_name}/{exchange_id}/"
-                if exchange_id == ExchangeType.CFFEX.name:
+                path = f"{config_file_root}/{self.user_name}/{exchange_type.name}/"
+                if exchange_type == ExchangeType.CFFEX:
                     exchange = CFFExchange(config, path, self.memory)
-                elif exchange_id == ExchangeType.SE.name:
+                elif exchange_type == ExchangeType.SE:
                     exchange = SExchange(config, path, self.memory)
                 else:
-                    logging.warning(f"未知的交易所类型: {exchange_id}")
+                    logging.warning(f"未知的交易所类型: {exchange_type.value}")
 
                 if exchange:
-                    self.exchanges[exchange_id] = exchange
-                    logging.info(f"用户 {self.user_name} 的 {exchange_id} 交易所初始化成功")
+                    self.exchanges[exchange_type] = exchange
+                    logging.info(f"用户 {self.user_name} 的 {exchange_type.value} 交易所初始化成功")
             except Exception as e:
-                logging.error(f"初始化交易所 {exchange_id} 时出现错误: {e}")
+                logging.error(f"初始化交易所 {exchange_type.value} 时出现错误: {e}")
 
 
     def connect_exchange(self):
-        for exchange_id, exchange in self.exchanges.items():
-            logging.info(f"正在连接 {self.user_name} 的交易所：{exchange_id}")
+        for exchange_type, exchange in self.exchanges.items():
+            logging.info(f"正在连接 {self.user_name} 的交易所：{exchange_type.value}")
             start_time = time.time()
             exchange.connect_market_data()
             exchange.connect_trader()
-            while not self.is_login(exchange_id):
+            while not self.is_login(exchange_type):
                 if time.time() - start_time > TIMEOUT:
-                    logging.error(f'{exchange_id} 登录超时')
+                    logging.error(f'{exchange_type.value} 登录超时')
                     break
                 time.sleep(3)
             else:
                 # 若登录成功，记录成功日志
-                logging.info(f'{self.user_name} 的 {exchange_id} 登录成功')
+                logging.info(f'{self.user_name} 的 {exchange_type.value} 登录成功')
                 continue
 
-            logging.warning(f"跳过未成功连接的交易所：{self.user_name}的{ExchangeType[exchange_id].value}")
+            logging.warning(f"跳过未成功连接的交易所：{self.user_name}的{exchange_type.value}")
 
     def init_memory(self):
         for exchange_id, exchange in self.exchanges.items():
             exchange.init_memory()
 
 
-    def is_login(self, exchange_id: str) -> bool:
-        return self.exchanges[exchange_id].is_login()
+    def is_login(self, exchange_type: ExchangeType) -> bool:
+        return self.exchanges[exchange_type].is_login()
 
-    def is_query_finish(self, exchange_id: str, query_name: str) -> bool:
-        return self.exchanges[exchange_id].trader_user_spi.query_finish[query_name]
+    def is_query_finish(self, exchange_type: ExchangeType, query_name: str) -> bool:
+        return self.exchanges[exchange_type].trader_user_spi.query_finish[query_name]
 
     # 批量订阅
     def subscribe_market_data(self):
@@ -139,29 +141,29 @@ class User:
         print('已发送全部订阅请求')
 
 
-    def query_investor_position(self, exchange_id: str, instrument_id: Optional[str]) -> bool:
-        print(f'查询投资者{ExchangeType[exchange_id].value}持仓')
-        if exchange_id in self.exchanges:
-            exchange = self.exchanges[exchange_id]
+    def query_investor_position(self, exchange_type: ExchangeType, instrument_id: Optional[str]) -> bool:
+        print(f'查询投资者{exchange_type.value}持仓')
+        if exchange_type in self.exchanges:
+            exchange = self.exchanges[exchange_type]
             start_time = time.time()
             exchange.query_investor_position(instrument_id)
-            while not self.is_query_finish(exchange_id, 'ReqQryInvestorPosition'):
+            while not self.is_query_finish(exchange_type, 'ReqQryInvestorPosition'):
                 if time.time() - start_time > TIMEOUT:
-                    logging.error(f'{exchange_id} 查询超时')
+                    logging.error(f'{exchange_type.value} 查询超时')
                     return False
                 time.sleep(3)
         return True
 
-    def query_investor_position_detail(self, exchange_id: str):
-        print(f'查询投资者{ExchangeType[exchange_id].value}持仓细节')
-        if exchange_id in self.exchanges:
-            exchange = self.exchanges[exchange_id]
+    def query_investor_position_detail(self, exchange_type: ExchangeType):
+        print(f'查询投资者{exchange_type.value}持仓细节')
+        if exchange_type in self.exchanges:
+            exchange = self.exchanges[exchange_type]
             exchange.query_investor_position_detail()
 
-    def insert_order(self, exchange_id: str, instrument_id: str, direction: Direction, limit_price: float, volume: int):
-        print(f'报单{ExchangeType[exchange_id].value}')
-        if exchange_id in self.exchanges:
-            self.exchanges[exchange_id].insert_order(instrument_id, direction, limit_price, volume)
+    def insert_order(self, exchange_type: ExchangeType, instrument_id: str, direction: Direction, limit_price: float, volume: int):
+        print(f'报单{exchange_type.value}')
+        if exchange_type in self.exchanges:
+            self.exchanges[exchange_type].insert_order(instrument_id, direction, limit_price, volume)
 
 
 

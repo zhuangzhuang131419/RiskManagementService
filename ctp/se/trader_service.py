@@ -125,7 +125,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 self.subscribe_instrument[o.id] = o
 
         if bIsLast:
-            self.query_finish['RspQryInstrument'] = True
+            self.query_finish['ReqQryInstrument'] = True
             print('查询合约完成')
 
 

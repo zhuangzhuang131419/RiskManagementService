@@ -45,7 +45,7 @@ def init_ctp():
 
     print(f"{ctp_manager.current_user.memory.option_manager.instrument_transform_full_symbol}")
 
-    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name, None)
+    ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None)
     # time.sleep(10)
     # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 295, 1)
     # time.sleep(10)
@@ -368,12 +368,12 @@ def get_position():
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
     if filter_etf_option(symbol):
-        if ctp_manager.current_user.query_investor_position(ExchangeType.SE.name, None):
+        if ctp_manager.current_user.query_investor_position(ExchangeType.SE, None):
             return ctp_manager.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options
         else:
             return jsonify({"error": f"Timeout"}), 404
     elif filter_index_option(symbol) or filter_index_future(symbol):
-        if ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name, None):
+        if ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None):
             if filter_index_option(symbol):
                 return ctp_manager.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options
             else:
