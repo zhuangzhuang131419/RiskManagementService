@@ -10,3 +10,6 @@ def to_option_type(value: int) -> OptionType:
         return OptionType(value)
     except ValueError:
         raise ValueError(f"Invalid integer for OptionType: {value}")
+
+if __name__ == '__main__':
+    print(OptionType("C"))

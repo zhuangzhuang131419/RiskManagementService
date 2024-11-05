@@ -7,7 +7,8 @@ from memory.future_manager import FutureManager
 from memory.option_manager import OptionManager
 from memory.position_manager import PositionManager
 from model.instrument.instrument import Future, Instrument
-from model.instrument.option import Option
+from model.instrument.option import Option, OptionTuple
+
 
 class MemoryManager:
     def __init__(self):
@@ -18,6 +19,8 @@ class MemoryManager:
         self.future_manager = FutureManager()
         self.position_manager = PositionManager()
         self.order_ref: int = 0
+
+        self.grouped_instruments: Dict[str, (Future, OptionTuple, OptionTuple)] = {}
 
 
     def init_cffex_instrument(self, instruments: Dict[str, Instrument]):

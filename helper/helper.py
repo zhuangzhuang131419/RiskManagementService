@@ -17,6 +17,11 @@ def judge_ret(ret):
 def red_print(content):
     print(f'\033[0;0;31m{content}\033[0m')
 
+INDEX_MAPPING = {
+    'IH': 'HO',
+    'IF': 'IO',
+    'IM': 'MO'
+}
 
 # 指数期货的品种列表
 INDEX_FUTURE_PREFIXES = ['IH', 'IF', 'IM']

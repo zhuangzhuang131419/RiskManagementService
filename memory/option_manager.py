@@ -34,10 +34,10 @@ class OptionManager:
         self.instrument_transform_full_symbol: Dict[str, str] = {}
         self.baseline: BaselineType = BaselineType.INDIVIDUAL
 
-    def transform_instrument_id(self, instrument_id: str):
+    def transform_instrument_id(self, instrument_id: str) -> (str, OptionType, float):
         try:
             result = self.instrument_transform_full_symbol[instrument_id].split('-')
-            return result[0], OptionType(result[1]), float(result[2])
+            return result[0], OptionType[result[1]], float(result[2])
         except ValueError:
             print(f"instrument_id:{instrument_id}")
             raise ValueError

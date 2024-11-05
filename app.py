@@ -383,6 +383,18 @@ def get_position():
     else:
         return jsonify({"error": f"Symbol invalid"}), 404
 
+def get_greeks(symbol: str):
+    delta = 0
+    for strike_price, option_tuple in ctp_manager.current_user.memory.option_manager.option_series_dict[symbol].strike_price_options.items():
+        call = option_tuple.call
+        put = option_tuple.put
+        # delta
+        delta += call.greeks.delta * (call.position.long - call.position.short)
+        delta += put.greeks.delta * (put.position.long - put.position.short)
+        # delta_cash
+
+
+
 
 if __name__ == "__main__":
     init_ctp()
