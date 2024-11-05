@@ -4,7 +4,6 @@ import numpy as np
 from typing import Dict
 
 from helper.helper import filter_index_option, filter_etf_option, filter_index_future
-from memory.option_manager import OptionManager
 from model.ctp_manager import CTPManager
 from model.direction import Direction
 from model.enum.baseline_type import BaselineType

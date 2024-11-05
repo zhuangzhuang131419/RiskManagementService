@@ -7,7 +7,7 @@ from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLogi
     CThostFtdcInvestorPositionDetailField, CThostFtdcOrderField
 from helper.helper import *
 from memory.memory_manager import MemoryManager
-from model.instrument.instrument import Future
+from model.instrument.future import Future
 from model.instrument.option import IndexOption
 from model.order_info import OrderInfo
 from model.position import Position

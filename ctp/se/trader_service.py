@@ -7,6 +7,7 @@ from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthentic
     CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField
 from helper.helper import *
 from memory.memory_manager import MemoryManager
+from model.instrument.instrument import Instrument
 from model.instrument.option import Option, ETFOption
 from model.order_info import OrderInfo
 from model.position import Position
@@ -29,7 +30,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
-        self.subscribe_instrument = {}
+        self.subscribe_instrument: Dict[str, Instrument] = {}
         self.login_finish = False
         self.query_finish: Dict[str, bool] = {}
 
@@ -197,18 +198,18 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         instrument_id: str = pInvestorPosition.InstrumentID
         print(f"OnRspQryInvestorPosition: {instrument_id}")
 
-        if self.memory_manager.option_manager is not None:
-            symbol, option_type, strike_price = self.memory_manager.option_manager.transform_instrument_id(instrument_id)
+        if self.memory_manager is not None:
+            symbol, option_type, strike_price = self.memory_manager.transform_instrument_id(instrument_id)
             if option_type == 'C':
                 if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.position.long = pInvestorPosition.Position
+                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].call.position.long = pInvestorPosition.Position
                 elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].call.position.short = pInvestorPosition.Position
+                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].call.position.short = pInvestorPosition.Position
             elif option_type == 'P':
                 if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.position.long = pInvestorPosition.Position
+                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].put.position.long = pInvestorPosition.Position
                 elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].put.position.short = pInvestorPosition.Position
+                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].put.position.short = pInvestorPosition.Position
 
         if bIsLast:
             self.query_finish['RspQryInvestorPositionDetail'] = True

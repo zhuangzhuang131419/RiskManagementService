@@ -57,7 +57,7 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
-        if self.memory_manager.option_manager is not None and self.memory_manager.future_manager is not None:
+        if self.memory_manager is not None:
             if pDepthMarketData.InstrumentID in self.memory_manager.option_manager.instrument_transform_full_symbol or pDepthMarketData.InstrumentID in self.memory_manager.future_manager.instrument_transform_full_symbol:
 
                 if pDepthMarketData.InstrumentID == "HO2412-C-2400":

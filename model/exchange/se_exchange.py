@@ -171,6 +171,7 @@ class SExchange(Exchange, ABC):
             judge_ret(ret)
 
     def init_memory(self):
-        self.memory.init_se_instrument(self.trader_user_spi.subscribe_instrument)
+        subscribe_option = list(self.trader_user_spi.subscribe_instrument.values())
+        self.memory.add_options(subscribe_option)
         self.trader_user_spi.set_memory_manager(self.memory)
         self.market_data_user_spi.set_memory_manager(self.memory)

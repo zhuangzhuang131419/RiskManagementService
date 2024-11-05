@@ -8,7 +8,7 @@ from memory.memory_manager import MemoryManager
 from model.config.exchange_config import ExchangeConfig
 from model.exchange.exchange_base import Exchange
 from api_cffex import ThostFtdcApi
-from helper.helper import judge_ret
+from helper.helper import judge_ret, filter_index_future
 from model.direction import Direction
 from model.enum.exchange_type import ExchangeType
 from model.order_info import OrderInfo
@@ -178,7 +178,17 @@ class CFFExchange(Exchange, ABC):
         time.sleep(1)
 
     def init_memory(self):
-        self.memory.init_cffex_instrument(self.trader_user_spi.subscribe_instrument)
+        subscribe_future = []
+        subscribe_option = []
+        for instrument_id, instrument in self.trader_user_spi.subscribe_instrument:
+            if filter_index_future(instrument_id):
+                subscribe_future.append(instrument)
+            else:
+                subscribe_option.append(instrument)
+
+        self.memory.add_index_future(subscribe_future)
+        self.memory.add_options(subscribe_option)
+
         self.trader_user_spi.set_memory_manager(self.memory)
         self.market_data_user_spi.set_memory_manager(self.memory)
 

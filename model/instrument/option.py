@@ -85,15 +85,12 @@ class OptionTuple:
     def set_put(self, put: Option):
         self.put: Option = put
 
-    def set_option(self, option: Option, option_type: OptionType):
-        if option_type == OptionType.C:
+    def set_option(self, option: Option):
+        if option.is_call_option():
             self.call = option
 
-        if option_type == OptionType.P:
+        if option.is_put_option():
             self.put = option
-
-        print(f"Invalid {option_type}")
-        raise ValueError
 
 
     def get_option(self, option_type: OptionType):
