@@ -185,19 +185,19 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         instrument_id: str = pInvestorPosition.InstrumentID
 
         if filter_index_option(instrument_id):
-            if self.memory_manager.option_manager is not None:
-                symbol, option_type, strike_price = self.memory_manager.option_manager.transform_instrument_id(instrument_id)
+            if self.memory_manager is not None:
+                symbol, option_type, strike_price = self.memory_manager.transform_instrument_id(instrument_id)
                 if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, True)
+                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, True)
                 elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
-                    self.memory_manager.option_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, False)
+                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, False)
         elif filter_index_future(instrument_id):
-            if self.memory_manager.future_manager is not None:
-                symbol = self.memory_manager.future_manager.transform_instrument_id(instrument_id)
+            if self.memory_manager is not None:
+                symbol = self.memory_manager.transform_instrument_id(instrument_id)
                 if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
-                    self.memory_manager.future_manager.index_futures_dict[symbol].long_position = pInvestorPosition.Position
+                    self.memory_manager.index_futures_dict[symbol].position.long = pInvestorPosition.Position
                 elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
-                    self.memory_manager.future_manager.index_futures_dict[symbol].short_position = pInvestorPosition.Position
+                    self.memory_manager.index_futures_dict[symbol].position.short = pInvestorPosition.Position
 
 
         if bIsLast:

@@ -58,7 +58,7 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
         if self.memory_manager is not None:
-            if pDepthMarketData.InstrumentID in self.memory_manager.option_manager.instrument_transform_full_symbol or pDepthMarketData.InstrumentID in self.memory_manager.future_manager.instrument_transform_full_symbol:
+            if pDepthMarketData.InstrumentID in self.memory_manager.instrument_transform_full_symbol:
 
                 if pDepthMarketData.InstrumentID == "HO2412-C-2400":
                     print(pDepthMarketData.AskPrice1)
@@ -70,10 +70,8 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
                 depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
                 depth_market_data.bid_prices[0] = round(pDepthMarketData.BidPrice1, 2)
 
-                if pDepthMarketData.InstrumentID in self.memory_manager.option_manager.instrument_transform_full_symbol:
-                    depth_market_data.symbol = self.memory_manager.option_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
-                elif pDepthMarketData.InstrumentID in self.memory_manager.future_manager.instrument_transform_full_symbol:
-                    depth_market_data.symbol = self.memory_manager.future_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
+                if pDepthMarketData.InstrumentID in self.memory_manager.instrument_transform_full_symbol:
+                    depth_market_data.symbol = self.memory_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 
                 depth_market_data.clean_data()
                 depth_market_data.set_available()

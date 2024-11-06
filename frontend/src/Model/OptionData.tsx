@@ -32,3 +32,13 @@ export type GreeksResponse = {
     strike_prices: { [key: string]: StrikePrices };
 }
 
+export type CashGreeksResponse = {
+    delta: number,
+    delta_cash: number,
+    gamma_p_cash: number,
+    vega_cash: number,
+    db_cash: number,
+    vanna_vs_cash: number,
+    vanna_sv_cash: number,
+    charm_cash: number
+}

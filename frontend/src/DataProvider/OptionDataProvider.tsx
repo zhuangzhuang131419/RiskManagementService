@@ -1,12 +1,13 @@
-import { GreeksResponse, WingModelData } from "../Model/OptionData";
+import { CashGreeksResponse, GreeksResponse, WingModelData } from "../Model/OptionData";
 
 export interface IOptionDataProvider {
   fetchIndexOptionSymbols(): Promise<string[]>;
   fetchETFOptionSymbols(): Promise<string[]>;
-  fetchOptionGreeks(symbol: string, exchange: string): Promise<GreeksResponse>;
-  fetchWingModelParaBySymbol(symbol: string, exchange: string): Promise<WingModelData[]>;
+  fetchOptionGreeks(symbol: string): Promise<GreeksResponse>;
+  fetchWingModelParaBySymbol(symbol: string): Promise<WingModelData[]>;
   fetchWingModelPara(): Promise<{ [key: string]: WingModelData }>
   postWingModelPara(para: { [key: string]: WingModelData }): Promise<void>
+  fetchCashGreeks(symbol: string): Promise<CashGreeksResponse[]>
 }
 
 class OptionDataProvider implements IOptionDataProvider {
@@ -29,8 +30,8 @@ class OptionDataProvider implements IOptionDataProvider {
     // return ["IO2410", "IO2411", "IO2412", "HO2410", "HO2411", "HO2412"];
   };
 
-  fetchOptionGreeks = async (symbol: string, exchange: string): Promise<GreeksResponse> => {
-    const response = await fetch(`/api/${exchange}/option/greeks?symbol=${symbol}`);
+  fetchOptionGreeks = async (symbol: string): Promise<GreeksResponse> => {
+    const response = await fetch(`/api/option/greeks?symbol=${symbol}`);
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
@@ -47,8 +48,8 @@ class OptionDataProvider implements IOptionDataProvider {
     // return mockGreeksResponse;
   };
 
-  fetchWingModelParaBySymbol = async (symbol: string, exchange: string): Promise<WingModelData[]> => {
-    const response = await fetch(`/api/${exchange}/option/wing_model?symbol=${symbol}`);
+  fetchWingModelParaBySymbol = async (symbol: string): Promise<WingModelData[]> => {
+    const response = await fetch(`/api/option/wing_model?symbol=${symbol}`);
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
@@ -84,6 +85,19 @@ class OptionDataProvider implements IOptionDataProvider {
     if (!response.ok) {
       throw new Error('Failed to update data');
     }
+  }
+
+  fetchCashGreeks = async (symbol: string): Promise<CashGreeksResponse[]> => {
+    const response = await fetch(`/api/cash/greeks?symbol=${symbol}`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    // 解析并打印 JSON 数据
+    const data = await response.json();
+    // console.log('fetchWingModelParaBySymbol: ', data);
+
+    return data;
   }
 }
 

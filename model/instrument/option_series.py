@@ -47,13 +47,6 @@ class OptionSeries:
         else:
             return self.strike_price_options[strike_price].call
 
-    def get_all_options(self):
-        """
-        获取所有非空的期权（看涨期权和看跌期权）。
-        :return: 所有期权的列表。
-        """
-        return [option for pair in self.strike_price_options.values() for option in pair if option is not None]
-
     def get_all_strike_price(self):
         return list(self.strike_price_options.keys())
 

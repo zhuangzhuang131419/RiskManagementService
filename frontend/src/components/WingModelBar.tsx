@@ -8,17 +8,16 @@ import CustomizedModel from './CustomizedParaDialog';
 interface WingModelProps {
   symbol: string | null;
   style?: React.CSSProperties;
-  exchange: string;
 }
 
 
-const WingModelBar: React.FC<WingModelProps> = ({ symbol, style, exchange }) => {
+const WingModelBar: React.FC<WingModelProps> = ({ symbol, style }) => {
 
   const [items, setItems] = useState<WingModelData[]>([]);
 
   const { data: wingModel, error, isLoading } = useQuery(
     ['wingModel', symbol],
-    () => optionDataProvider.fetchWingModelParaBySymbol(symbol as string, exchange),
+    () => optionDataProvider.fetchWingModelParaBySymbol(symbol as string),
     {
       onSuccess(data) {
         setItems(data); // 更新表格项

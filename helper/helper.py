@@ -17,11 +17,7 @@ def judge_ret(ret):
 def red_print(content):
     print(f'\033[0;0;31m{content}\033[0m')
 
-INDEX_MAPPING = {
-    'IH': 'HO',
-    'IF': 'IO',
-    'IM': 'MO'
-}
+
 
 # 指数期货的品种列表
 INDEX_FUTURE_PREFIXES = ['IH', 'IF', 'IM']
@@ -30,8 +26,6 @@ INDEX_OPTION_PREFIXES = ['HO', 'IO', 'MO']
 # ETF的品种列表
 ETF_PREFIXES = ['510050', '510300', '510500', '159919', '159901']
 
-
-OPTION_PUT_CALL_DICT = {'C': 0, 'P': 1}
 
 INTEREST_RATE = 0.025
 DIVIDEND = 0

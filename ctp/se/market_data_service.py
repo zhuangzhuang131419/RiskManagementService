@@ -58,14 +58,14 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
-        if self.memory_manager is not None and self.memory_manager.option_manager is not None:
-            if pDepthMarketData.InstrumentID in self.memory_manager.option_manager.instrument_transform_full_symbol:
+        if self.memory_manager is not None:
+            if pDepthMarketData.InstrumentID in self.memory_manager.instrument_transform_full_symbol:
 
                 if pDepthMarketData.InstrumentID == "10007328":
                     print(pDepthMarketData.AskPrice1)
 
                 depth_market_data = DepthMarketData()
-                depth_market_data.symbol = self.memory_manager.option_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
+                depth_market_data.symbol = self.memory_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 
                 depth_market_data.time = round(time.time())
                 depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)

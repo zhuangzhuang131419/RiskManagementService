@@ -180,7 +180,7 @@ class CFFExchange(Exchange, ABC):
     def init_memory(self):
         subscribe_future = []
         subscribe_option = []
-        for instrument_id, instrument in self.trader_user_spi.subscribe_instrument:
+        for instrument_id, instrument in self.trader_user_spi.subscribe_instrument.items():
             if filter_index_future(instrument_id):
                 subscribe_future.append(instrument)
             else:

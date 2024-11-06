@@ -1665,6 +1665,10 @@ class CThostFtdcTransferQryDetailRspField(object):
 _ThostFtdcApi.CThostFtdcTransferQryDetailRspField_swigregister(CThostFtdcTransferQryDetailRspField)
 
 class CThostFtdcRspInfoField(object):
+    @property
+    def ErrorMsg(self):
+        return self._ErrorMsg
+
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
     ErrorID = property(_ThostFtdcApi.CThostFtdcRspInfoField_ErrorID_get, _ThostFtdcApi.CThostFtdcRspInfoField_ErrorID_set)

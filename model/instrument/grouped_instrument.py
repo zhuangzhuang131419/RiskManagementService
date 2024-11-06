@@ -8,5 +8,5 @@ from model.instrument.option import OptionTuple
 @dataclass
 class GroupedInstrument:
     future: Union[Future, None]
-    index_option: Union[OptionTuple, None]
-    etf_option: Union[OptionTuple, None]
+    index_option_tuple: Union[OptionTuple, None]
+    etf_option_tuple: Union[OptionTuple, None]

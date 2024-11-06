@@ -66,7 +66,7 @@ class MemoryManager:
             self.instrument_transform_full_symbol[future.id] = future.full_symbol
             self.index_future_symbol.append(future.symbol)
             if future.expired_month not in self.grouped_instruments:
-                self.grouped_instruments[future.expired_month] = GroupedInstrument(None, None, None)
+                self.grouped_instruments[future.expired_month] = GroupedInstrument(None, OptionTuple(), OptionTuple())
             self.grouped_instruments[future.expired_month].future = future
 
     def add_options(self, options: [Option]):
@@ -90,16 +90,19 @@ class MemoryManager:
                 self.grouped_instruments[option.expired_month] = GroupedInstrument(None, OptionTuple(), OptionTuple())  # 初始化集合
             if filter_index_option(option.symbol):
                 index_set.add(option.symbol)
-                self.grouped_instruments[option.expired_month].index_option.set_option(option)
+                self.grouped_instruments[option.expired_month].index_option_tuple.set_option(option)
 
             if filter_etf_option(option.symbol):
                 etf_set.add(option.symbol)
-                self.grouped_instruments[option.expired_month].etf_option.set_option(option)
+                self.grouped_instruments[option.expired_month].etf_option_tuple.set_option(option)
 
-        self.index_option_symbol = sorted(list(index_set))
-        print(self.index_option_symbol)
-        self.etf_option_symbol = sorted(list(etf_set))
-        print(self.etf_option_symbol)
+        if len(index_set) > 0:
+            self.index_option_symbol = sorted(list(index_set))
+            print(f"添加指数期权：{self.index_option_symbol}")
+
+        if len(etf_set) > 0:
+            self.etf_option_symbol = sorted(list(etf_set))
+            print(f"添加ETF期权{self.etf_option_symbol}")
 
         # 初始化 OptionSeries
         for symbol, options_list in option_series_dict.items():
@@ -153,7 +156,7 @@ class MemoryManager:
                 k1, k2, b = self.get_para_by_baseline(self.option_series_dict[symbol].wing_model_para, self.option_series_dict[symbol].wing_model_para)
             elif filter_index_option(symbol):
                 expired_month = symbol[-8:][:6]
-                se_instrument = self.grouped_instruments[expired_month].etf_option.call
+                se_instrument = self.grouped_instruments[expired_month].etf_option_tuple.call
                 if se_instrument is not None:
                     k1, k2, b = self.get_para_by_baseline(self.option_series_dict[symbol].wing_model_para, self.option_series_dict[se_instrument.symbol].wing_model_para)
                 else:
