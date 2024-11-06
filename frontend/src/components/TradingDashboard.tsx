@@ -89,7 +89,7 @@ const TradingDashboard: React.FC = () => {
                     )}
                 </Stack.Item>
                 <Stack.Item grow={2}>
-                    <TopDataBar symbol={selectedIndexOption as string}} />
+                    <TopDataBar symbol={selectedIndexOption as string} />
                 </Stack.Item>
             </Stack>
 
