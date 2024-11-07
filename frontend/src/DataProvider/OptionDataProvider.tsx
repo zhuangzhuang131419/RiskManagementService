@@ -7,7 +7,7 @@ export interface IOptionDataProvider {
   fetchWingModelParaBySymbol(symbol: string): Promise<WingModelData[]>;
   fetchWingModelPara(): Promise<{ [key: string]: WingModelData }>
   postWingModelPara(para: { [key: string]: WingModelData }): Promise<void>
-  fetchCashGreeks(symbol: string): Promise<CashGreeksResponse[]>
+  fetchCashGreeks(symbol: string): Promise<CashGreeksResponse>
 }
 
 class OptionDataProvider implements IOptionDataProvider {
@@ -87,7 +87,7 @@ class OptionDataProvider implements IOptionDataProvider {
     }
   }
 
-  fetchCashGreeks = async (symbol: string): Promise<CashGreeksResponse[]> => {
+  fetchCashGreeks = async (symbol: string): Promise<CashGreeksResponse> => {
     const response = await fetch(`/api/cash/greeks?symbol=${symbol}`);
     if (!response.ok) {
       throw new Error('Network response was not ok');

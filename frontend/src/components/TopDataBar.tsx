@@ -4,44 +4,69 @@ import { isVisible } from '@testing-library/user-event/dist/utils';
 import { useQuery } from 'react-query';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 import { CashGreeksResponse } from '../Model/OptionData';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface TopDataBarProps {
-  symbol: string
+  indexSymbol: string
+  etfSymbol: string
 }
 
 
 
 
-const TopDataBar: React.FC<TopDataBarProps> = ({ symbol }) => {
+const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
 
-  const [items, setItems] = useState<CashGreeksResponse[]>([]);
+  const [items, setItems] = useState<any[]>([]);
 
 
-  const { data, isLoading, isError } = useQuery(
-    ['cashGreeks', symbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
-    () => optionDataProvider.fetchCashGreeks(symbol as string),
+  const { data: indexData } = useQuery(
+    ['cashGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
+    () => optionDataProvider.fetchCashGreeks(indexSymbol as string),
     {
       onSuccess(data) {
-        const processedData = [
-          { type: "指数期权", ...data[0] },
-          { type: "ETF期权", ...data[1] },
-          { type: "期货", ...data[2] }
-        ];
-        setItems(processedData)
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
-      enabled: !!symbol,  // 只有当 symbol 存在时才启用查询
+      enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
       refetchOnWindowFocus: false, // 禁用在窗口获得焦点时重新获取数据
     }
   );
 
-  // Handle loading state
-  if (isLoading) return <div>Loading...</div>;
+  const { data: etfData } = useQuery(
+    ['cashGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
+    () => optionDataProvider.fetchCashGreeks(etfSymbol as string),
+    {
+      onSuccess(data) {
+      },
+      refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
+      enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
+      refetchOnWindowFocus: false, // 禁用在窗口获得焦点时重新获取数据
+    }
+  );
 
-  // Handle error state
-  if (isError) return <div>Error: fetchCashGreeks</div>;
+  useEffect(() => {
+    const defaultCashGreeks: CashGreeksResponse = {
+      delta: null,
+      delta_cash: null,
+      gamma_p_cash: null,
+      vega_cash: null,
+      db_cash: null,
+      vanna_vs_cash: null,
+      vanna_sv_cash: null,
+      charm_cash: null,
+    };
 
+    const combinedData = [
+      indexData
+        ? { type: "指数期权", ...indexData }
+        : { type: "指数期权", defaultCashGreeks },
+      etfData
+        ? { type: "ETF期权", ...etfData }
+        : { type: "ETF期权", defaultCashGreeks },
+      { type: "期货", defaultCashGreeks },
+      { type: "综合", defaultCashGreeks }
+    ];
+    setItems(combinedData);
+  }, [indexData, etfData]);
 
 
   const columns = [

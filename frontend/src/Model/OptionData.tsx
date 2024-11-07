@@ -33,12 +33,12 @@ export type GreeksResponse = {
 }
 
 export type CashGreeksResponse = {
-    delta: number,
-    delta_cash: number,
-    gamma_p_cash: number,
-    vega_cash: number,
-    db_cash: number,
-    vanna_vs_cash: number,
-    vanna_sv_cash: number,
-    charm_cash: number
+    delta: number | null,
+    delta_cash: number | null,
+    gamma_p_cash: number | null,
+    vega_cash: number | null,
+    db_cash: number | null,
+    vanna_vs_cash: number | null,
+    vanna_sv_cash: number | null,
+    charm_cash: number | null
 }
