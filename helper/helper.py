@@ -17,7 +17,11 @@ def judge_ret(ret):
 def red_print(content):
     print(f'\033[0;0;31m{content}\033[0m')
 
-
+CASH_MULTIPLIER = {
+    'HO': 100,
+    'MO': 100,
+    'IO': 100,
+}
 
 # 指数期货的品种列表
 INDEX_FUTURE_PREFIXES = ['IH', 'IF', 'IM']
@@ -30,6 +34,19 @@ ETF_PREFIXES = ['510050', '510300', '510500', '159919', '159901']
 INTEREST_RATE = 0.025
 DIVIDEND = 0
 TIMEOUT = 10
+
+def get_cash_multiplier(symbol: str) -> int:
+    if filter_index_future(symbol):
+        return 100
+    if filter_etf_option(symbol):
+        return 1
+    if any(symbol.startswith(prefix) for prefix in ['IF', 'IH']):
+        return 300
+
+    if any(symbol.startswith(prefix) for prefix in ['IC', 'IM']):
+        return 200
+
+    raise ValueError(f"Invalid symbol:{symbol}")
 
 def filter_index_future(instrument_id: str) -> bool:
     """

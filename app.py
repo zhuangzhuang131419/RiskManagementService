@@ -4,7 +4,7 @@ from dataclasses import asdict
 import numpy as np
 from typing import Dict
 
-from helper.helper import filter_index_option, filter_etf_option, filter_index_future
+from helper.helper import filter_index_option, filter_etf_option, filter_index_future, get_cash_multiplier
 from model.ctp_manager import CTPManager
 from model.direction import Direction
 from model.enum.baseline_type import BaselineType
@@ -375,22 +375,12 @@ def get_greek_summary():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
-    # Sample data to return
-    data = [
-        GreeksCashResp(delta=1.0, delta_cash=400100, gamma_p_cash=-3000, vega_cash=0,
-                       db_cash=0, vanna_vs_cash=0, vanna_sv_cash=0, charm_cash=0),
-        GreeksCashResp(delta=-1.0, delta_cash=-40020, gamma_p_cash=2000, vega_cash=0,
-                       db_cash=0, vanna_vs_cash=0, vanna_sv_cash=0, charm_cash=0),
-        GreeksCashResp(delta=2.0, delta_cash=2400000, gamma_p_cash=0, vega_cash=0,
-                       db_cash=0, vanna_vs_cash=0, vanna_sv_cash=0, charm_cash=0)
-    ]
-
     # Convert each data instance to a dictionary and return as JSON
-    return jsonify([item.to_dict() for item in data])
+    return jsonify(get_position_greeks(symbol).to_dict())
 
 
 def get_position_greeks(symbol: str):
-    delta = 0
+
     expired_month = symbol[-8:][:6]
     if filter_index_future(symbol):
         return jsonify({"error": f"Symbol invalid"}), 404
@@ -399,15 +389,66 @@ def get_position_greeks(symbol: str):
     if filter_etf_option(symbol) and grouped_instrument.index_option_tuple is None:
         return
 
+    option_series: OptionSeries = ctp_manager.current_user.memory.option_series_dict[symbol]
 
-    for strike_price, option_tuple in ctp_manager.current_user.memory.option_series_dict[symbol].strike_price_options.items():
+    delta = 0
+    gamma = 0
+    vega = 0
+    db = 0
+    charm = 0
+    vanna_vs = 0
+    vanna_sv = 0
+    dkurt = 0
+    cash_multiplier = get_cash_multiplier(symbol)
+
+    for strike_price, option_tuple in option_series.strike_price_options.items():
         call = option_tuple.call
         put = option_tuple.put
         # delta
         delta += call.greeks.delta * (call.position.long - call.position.short)
         delta += put.greeks.delta * (put.position.long - put.position.short)
-        # delta_cash
 
+        # gamma
+        gamma += call.greeks.gamma * (call.position.long - call.position.short)
+        gamma += put.greeks.gamma * (put.position.long - put.position.short)
+
+        # vega
+        vega += call.greeks.vega * (call.position.long - call.position.short)
+        vega += put.greeks.vega * (put.position.long - put.position.short)
+
+        # db
+        db += call.greeks.db * (call.position.long - call.position.short)
+        db += put.greeks.db * (put.position.long - put.position.short)
+
+        # charm
+        charm += call.greeks.charm * (call.position.long - call.position.short)
+        charm += put.greeks.charm * (put.position.long - put.position.short)
+
+        # vanna_vs
+        vanna_vs += call.greeks.vanna_vs * (call.position.long - call.position.short)
+        vanna_vs += put.greeks.vanna_vs * (put.position.long - put.position.short)
+
+        # vanna_sv
+        vanna_sv += call.greeks.vanna_sv * (call.position.long - call.position.short)
+        vanna_sv += put.greeks.vanna_sv * (put.position.long - put.position.short)
+
+        # dkurt
+        dkurt += (call.greeks.dk1 + call.greeks.dk2) / 2 * (call.position.long - call.position.short)
+        dkurt += (put.greeks.dk1 + put.greeks.dk2) / 2 * (put.position.long - put.position.short)
+
+    delta_cash = delta * option_series.wing_model_para.S * cash_multiplier
+    gamma_cash = gamma * option_series.wing_model_para.S * cash_multiplier
+    vega_cash = vega * cash_multiplier
+    db_cash = db * cash_multiplier
+    charm_cash = charm * cash_multiplier
+    vanna_vs_cash = vanna_vs * cash_multiplier
+    vanna_sv_cash = vanna_sv * cash_multiplier
+    dkurt_cash = dkurt * cash_multiplier
+
+
+    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash)
+
+    return resp
 
 
 
