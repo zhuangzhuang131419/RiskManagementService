@@ -1,5 +1,6 @@
 import datetime
 
+from model.enum.option_type import OptionType
 from model.instrument.option import validate_option_id
 
 
@@ -36,7 +37,7 @@ DIVIDEND = 0
 TIMEOUT = 10
 
 def get_cash_multiplier(symbol: str) -> int:
-    if filter_index_future(symbol):
+    if filter_index_option(symbol):
         return 100
     if filter_etf_option(symbol):
         return 1
@@ -69,6 +70,34 @@ def filter_etf_option(symbol: str) -> bool:
     :return: 是否是关注的期权
     """
     return any(symbol.startswith(etf_prefix) for etf_prefix in ETF_PREFIXES)
+
+def parse_option_full_symbol(full_symbol: str) -> (str, OptionType, float):
+    result = full_symbol.split('-')
+    # Check if the split result has exactly 3 parts
+    if len(result) != 3:
+        raise ValueError(f"Invalid format for full_symbol: {full_symbol}. Expected format: 'SYMBOL-TYPE-STRIKE'.")
+
+    # Extract and validate each component
+    symbol = result[0]
+    option_type_str = result[1]
+    strike_price_str = result[2]
+
+    # Validate option type
+    if option_type_str not in OptionType.__members__:
+        raise ValueError(f"Invalid option type '{option_type_str}' in full_symbol: {full_symbol}. Expected 'C' or 'P'.")
+
+    # Convert the option type to an OptionType Enum
+    option_type = OptionType[option_type_str]
+
+    # Convert the strike price to a float
+    try:
+        strike_price = float(strike_price_str)
+    except ValueError:
+        raise ValueError(
+            f"Invalid strike price '{strike_price_str}' in full_symbol: {full_symbol}. Expected a numeric value.")
+
+    return symbol, option_type, strike_price
+
 
 
 YEAR_TRADING_DAY=244
@@ -144,3 +173,4 @@ if __name__ == '__main__':
     print(f'2412-C-3800:{filter_index_option("2412-C-3800")}')
     print(validate_option_id("HO2412-C-3800"))
     print(f'HO2412-C-3800:{filter_index_option("HO2412-C-3800")}')
+    print(get_cash_multiplier('HO20250919'))

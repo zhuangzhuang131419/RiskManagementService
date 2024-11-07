@@ -44,12 +44,16 @@ def init_ctp():
     global ctp_manager
     ctp_manager.switch_to_user("TestUser")
 
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 335, 1)
+    # time.sleep(10)
+
 
     if ctp_manager.current_user is not None:
-        ctp_manager.current_user.query_investor_position(ExchangeType.SE, None)
+        ctp_manager.current_user.query_investor_position(ExchangeType.SE, None, 20)
+    if ctp_manager.current_user is not None:
+        ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None, 20)
     # time.sleep(10)
-    # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_OPEN, 295, 1)
-    # time.sleep(10)
+
     # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
     # time.sleep(10)
     # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 285, 1)

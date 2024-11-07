@@ -13,6 +13,7 @@ import WingModelBar from './WingModelBar';
 import { WingModelData } from '../Model/OptionData';
 import BaselineSelector from './BaselineSelector';
 import CustomizedParaDialog from './CustomizedParaDialog';
+import UserInfoTable from './UserInfoTable';
 
 const stackStyles = {
     root: {
@@ -83,12 +84,15 @@ const TradingDashboard: React.FC = () => {
         <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100%' } }}>
             {/* 顶部：账户选择器和数据展示 */}
             <Stack horizontal tokens={{ childrenGap: 20 }}>
-                <Stack.Item grow={1}>
+                <Stack.Item>
                     {!isUserFetching && (
                         <UserSelector accounts={userItems as User[]} onSelect={setSelectedAccount} />
                     )}
                 </Stack.Item>
-                <Stack.Item grow={2}>
+                <Stack.Item>
+                    <UserInfoTable></UserInfoTable>
+                </Stack.Item>
+                <Stack.Item>
                     <TopDataBar indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} />
                 </Stack.Item>
             </Stack>

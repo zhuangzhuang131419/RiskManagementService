@@ -2,6 +2,8 @@ import configparser
 import logging
 import time
 from uuid import uuid4
+
+from helper.api import ReqQryInvestorPosition
 from helper.helper import TIMEOUT, filter_index_future, filter_etf_option
 from memory.memory_manager import MemoryManager
 from model.config.exchange_config import ExchangeConfig
@@ -143,15 +145,18 @@ class User:
         print('已发送全部订阅请求')
 
 
-    def query_investor_position(self, exchange_type: ExchangeType, instrument_id: Optional[str]) -> bool:
+    def query_investor_position(self, exchange_type: ExchangeType, instrument_id: Optional[str], timeout=TIMEOUT) -> bool:
         print(f'查询投资者{exchange_type.value}持仓')
         if exchange_type in self.exchanges:
+            if not self.is_login(exchange_type):
+                print(f"{exchange_type.value}未登录")
+                return False
             exchange = self.exchanges[exchange_type]
             start_time = time.time()
             exchange.query_investor_position(instrument_id)
-            while not self.is_query_finish(exchange_type, 'ReqQryInvestorPosition'):
-                if time.time() - start_time > TIMEOUT:
-                    logging.error(f'{exchange_type.value} 查询超时')
+            while not self.is_query_finish(exchange_type, ReqQryInvestorPosition):
+                if time.time() - start_time > timeout:
+                    logging.error(f'{exchange_type.value} {ReqQryInvestorPosition} 查询超时')
                     return False
                 time.sleep(3)
         return True

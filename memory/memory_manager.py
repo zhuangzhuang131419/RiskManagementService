@@ -16,7 +16,8 @@ from select import select
 
 from helper.calculator import *
 from helper.wing_model import *
-from helper.helper import INTEREST_RATE, DIVIDEND, filter_index_option, filter_etf_option
+from helper.helper import INTEREST_RATE, DIVIDEND, filter_index_option, filter_etf_option, filter_index_future, \
+    parse_option_full_symbol
 from model.enum.baseline_type import BaselineType
 from model.enum.option_type import OptionType
 from model.instrument.instrument import Instrument
@@ -108,14 +109,19 @@ class MemoryManager:
         for symbol, options_list in option_series_dict.items():
             self.option_series_dict[symbol] = OptionSeries(symbol, options_list)
 
+    def get_instrument(self, instrument_id: str) -> Instrument:
 
-    def transform_instrument_id(self, instrument_id: str) -> (str, OptionType, float):
-        try:
-            result = self.instrument_transform_full_symbol[instrument_id].split('-')
-            return result[0], OptionType[result[1]], float(result[2])
-        except ValueError:
-            print(f"instrument_id:{instrument_id}")
-            raise ValueError
+        if instrument_id not in self.instrument_transform_full_symbol:
+            print(f"invalid instrument_id:{instrument_id}")
+        else:
+            full_symbol = self.instrument_transform_full_symbol[instrument_id]
+            if filter_index_future(instrument_id):
+                return self.index_futures_dict[full_symbol]
+            elif filter_index_option(instrument_id) or filter_etf_option(instrument_id):
+                symbol, option_type, strike_price = parse_option_full_symbol(instrument_id)
+                return self.option_series_dict[symbol].strike_price_options[strike_price].get_option(option_type)
+
+        raise KeyError(f"invalid instrument type: {instrument_id}")
 
     def index_volatility_calculator(self):
         while True:

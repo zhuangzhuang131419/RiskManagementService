@@ -184,16 +184,20 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         instrument_id: str = pInvestorPosition.InstrumentID
 
+        print(f"instrument: {instrument_id}, long: {pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}")
+
         if filter_index_option(instrument_id):
             if self.memory_manager is not None:
-                symbol, option_type, strike_price = self.memory_manager.transform_instrument_id(instrument_id)
+                symbol, option_type, strike_price = parse_option_full_symbol(self.memory_manager.instrument_transform_full_symbol[instrument_id])
                 if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
-                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, True)
+                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(
+                        option_type, pInvestorPosition.Position, True)
                 elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
-                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, False)
+                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(
+                        option_type, pInvestorPosition.Position, False)
         elif filter_index_future(instrument_id):
             if self.memory_manager is not None:
-                symbol = self.memory_manager.transform_instrument_id(instrument_id)
+                symbol = self.memory_manager.instrument_transform_full_symbol[instrument_id]
                 if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
                     self.memory_manager.index_futures_dict[symbol].position.long = pInvestorPosition.Position
                 elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
@@ -201,7 +205,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
 
         if bIsLast:
-            self.query_finish['RspQryInvestorPosition'] = True
+            self.query_finish['ReqQryInvestorPosition'] = True
             print('查询投资者持仓完成')
 
     # 请求查询投资者持仓明细响应，当执行ReqQryInvestorPositionDetail后，该方法被调用。
