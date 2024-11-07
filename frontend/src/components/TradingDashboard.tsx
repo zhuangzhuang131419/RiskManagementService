@@ -80,7 +80,7 @@ const TradingDashboard: React.FC = () => {
     return (
 
         // 主布局
-        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '90vh', width: '100%' } }}>
+        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100%' } }}>
             {/* 顶部：账户选择器和数据展示 */}
             <Stack horizontal tokens={{ childrenGap: 20 }}>
                 <Stack.Item grow={1}>
