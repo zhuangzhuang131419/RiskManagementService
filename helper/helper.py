@@ -34,7 +34,7 @@ ETF_PREFIXES = ['510050', '510300', '510500', '159919', '159901']
 
 INTEREST_RATE = 0.025
 DIVIDEND = 0
-TIMEOUT = 10
+TIMEOUT = 15
 
 def get_cash_multiplier(symbol: str) -> int:
     if filter_index_option(symbol):
