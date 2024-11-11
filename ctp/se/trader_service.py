@@ -26,18 +26,14 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
     memory_manager: MemoryManager = None
 
 
-    def __init__(self, trader_user_api, config):
+    def __init__(self, trader_user_api, config, market_data_manager: MemoryManager):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
         self.subscribe_instrument: Dict[str, Instrument] = {}
         self.login_finish = False
         self.query_finish: Dict[str, bool] = {}
-
-
-    def set_memory_manager(self, memory_manager):
-        self.memory_manager = memory_manager
-
+        self.memory_manager = market_data_manager
 
     def OnFrontConnected(self):
         print("开始建立交易连接")

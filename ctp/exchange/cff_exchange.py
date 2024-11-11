@@ -1,12 +1,13 @@
 import time
 from abc import ABC
-from uuid import uuid4
 
 from ctp.cffex.market_data_service import MarketDataService
 from ctp.cffex.trader_service import TraderService
+from memory.market_data_manager import MarketDataManager
 from memory.memory_manager import MemoryManager
+from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
-from model.exchange.exchange_base import Exchange
+from ctp.exchange.exchange_base import Exchange
 from api_cffex import ThostFtdcApi
 from helper.helper import judge_ret, filter_index_future
 from model.direction import Direction
@@ -15,11 +16,12 @@ from model.order_info import OrderInfo
 
 
 class CFFExchange(Exchange, ABC):
-    def __init__(self, config: ExchangeConfig, config_file_path: str, memory_manager: MemoryManager):
+    def __init__(self, config: ExchangeConfig, config_file_path: str, user_memory_manager: UserMemoryManager, market_data_manager: MemoryManager):
         super().__init__(config, config_file_path)
         self.type = ExchangeType.CFFEX
         print(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
-        self.memory = memory_manager
+        self.user_memory_manager = user_memory_manager
+        self.market_data_manager = market_data_manager
 
     def is_login(self):
         return True if self.trader_user_spi is not None and self.trader_user_spi.login_finish else False
@@ -29,7 +31,7 @@ class CFFExchange(Exchange, ABC):
         # 创建API实例
         self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
-        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config)
+        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config, self.market_data_manager)
         # 连接行情前置服务器
         self.market_data_user_api.RegisterFront(self.config.market_server_front)
         # 将spi注册给api
@@ -39,7 +41,7 @@ class CFFExchange(Exchange, ABC):
     def connect_trader(self):
         print(f"连接中金交易中心")
         self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
-        self.trader_user_spi = TraderService(self.trader_user_api, self.config)
+        self.trader_user_spi = TraderService(self.trader_user_api, self.config, self.market_data_manager)
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
         self.trader_user_api.RegisterFront(self.config.trade_server_front)
 
@@ -53,7 +55,7 @@ class CFFExchange(Exchange, ABC):
 
     def insert_order(self, instrument_id: str, direction: Direction, limit_price: float, volume: int):
         order_field = ThostFtdcApi.CThostFtdcInputOrderField()
-        order_field.OrderRef = self.memory.get_order_ref()
+        order_field.OrderRef = self.user_memory_manager.get_order_ref()
         order_field.BrokerID = self.config.broker_id
         order_field.ExchangeID = ExchangeType.CFFEX.name
         order_field.InstrumentID = instrument_id
@@ -177,7 +179,7 @@ class CFFExchange(Exchange, ABC):
                 time.sleep(5)
         time.sleep(1)
 
-    def init_memory(self):
+    def init_market_data(self, market_data_manager: MemoryManager):
         subscribe_future = []
         subscribe_option = []
         for instrument_id, instrument in self.trader_user_spi.subscribe_instrument.items():
@@ -186,9 +188,6 @@ class CFFExchange(Exchange, ABC):
             else:
                 subscribe_option.append(instrument)
 
-        self.memory.add_index_future(subscribe_future)
-        self.memory.add_options(subscribe_option)
-
-        self.trader_user_spi.set_memory_manager(self.memory)
-        self.market_data_user_spi.set_memory_manager(self.memory)
+        market_data_manager.add_index_future(subscribe_future)
+        market_data_manager.add_options(subscribe_option)
 

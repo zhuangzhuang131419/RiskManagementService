@@ -4,22 +4,21 @@ import time
 from uuid import uuid4
 
 from helper.api import ReqQryInvestorPosition
-from helper.helper import TIMEOUT, filter_index_future, filter_etf_option
+from helper.helper import TIMEOUT
 from memory.memory_manager import MemoryManager
+from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
 from model.direction import Direction
-from model.exchange.cff_exchange import CFFExchange
-from model.exchange.exchange_base import Exchange
+from ctp.exchange.cff_exchange import CFFExchange
+from ctp.exchange.exchange_base import Exchange
 from model.enum.exchange_type import ExchangeType
-from model.exchange.se_exchange import SExchange
+from ctp.exchange.se_exchange import SExchange
 from typing import Dict, Optional
-
-from model.position import Position
 
 logging.basicConfig(level=logging.INFO)
 
 class User:
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str, market_data_manager: MemoryManager):
         self.config = configparser.ConfigParser()
 
         try:
@@ -33,23 +32,11 @@ class User:
             raise
         self.user_id = uuid4()
         self.user_name = self.config.get('USER', 'Name')
-        print(f'切换{self.user_name}')
+        self.is_master = self.config.get('USER', 'Master')
+
         self.exchange_config: Dict[ExchangeType, ExchangeConfig] = {}
-        # exchange_config = {
-        #   "CFFEX": {
-        #       "BrokerName": "",
-        #       "BrokerID: "",
-        #       ...
-        #   },
-        #   "SE": {
-        #       ...
-        #   }
-        # }
+
         self.exchanges: Dict[ExchangeType, Exchange] = {}
-        # exchange = {
-        #   "CFFEX": CFFEXExchange(),
-        #   "SE": SSEExchange()
-        # }
 
         sections = self.config.sections()
 
@@ -68,7 +55,26 @@ class User:
                     trade_server_front=self.config.get(section, 'TradeServerFront')
                 )
         # 内存中心
-        self.memory: MemoryManager = MemoryManager()
+        self.user_memory = UserMemoryManager()
+        self.market_data_memory = market_data_manager
+
+    def connect_master_data(self):
+        for exchange_type, exchange in self.exchanges.items():
+            print(f"正在连接 {self.user_name} 的交易所：{exchange_type.value}")
+            start_time = time.time()
+            exchange.connect_market_data()
+            exchange.connect_trader()
+            while not self.is_login(exchange_type):
+                if time.time() - start_time > TIMEOUT:
+                    logging.error(f'{exchange_type.value} 登录超时')
+                    break
+                time.sleep(3)
+            else:
+                # 若登录成功，记录成功日志
+                print(f'{exchange_type.value} 登录成功')
+                continue
+
+            print(f"跳过未成功连接的交易所：{exchange_type.value}")
 
     def query_instrument(self):
         for exchange_type, exchange in self.exchanges.items():
@@ -85,9 +91,9 @@ class User:
                 exchange = None
                 path = f"{config_file_root}/{self.user_name}/{exchange_type.name}/"
                 if exchange_type == ExchangeType.CFFEX:
-                    exchange = CFFExchange(config, path, self.memory)
+                    exchange = CFFExchange(config, path, self.user_memory, self.market_data_memory)
                 elif exchange_type == ExchangeType.SE:
-                    exchange = SExchange(config, path, self.memory)
+                    exchange = SExchange(config, path, self.user_memory, self.market_data_memory)
                 else:
                     logging.warning(f"未知的交易所类型: {exchange_type.value}")
 
@@ -98,11 +104,10 @@ class User:
                 logging.error(f"初始化交易所 {exchange_type.value} 时出现错误: {e}")
 
 
-    def connect_exchange(self):
+    def connect_trade(self):
         for exchange_type, exchange in self.exchanges.items():
             logging.info(f"正在连接 {self.user_name} 的交易所：{exchange_type.value}")
             start_time = time.time()
-            exchange.connect_market_data()
             exchange.connect_trader()
             while not self.is_login(exchange_type):
                 if time.time() - start_time > TIMEOUT:
@@ -116,9 +121,9 @@ class User:
 
             logging.warning(f"跳过未成功连接的交易所：{self.user_name}的{exchange_type.value}")
 
-    def init_memory(self):
+    def init_user_memory(self):
         for exchange_id, exchange in self.exchanges.items():
-            exchange.init_memory()
+            exchange.init_market_data(self.market_data_memory)
 
 
     def is_login(self, exchange_type: ExchangeType) -> bool:

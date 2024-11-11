@@ -12,14 +12,12 @@ from model.memory.market_data import DepthMarketData
 
 class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
     memory_manager: MemoryManager = None
-    def __init__(self, market_data_user_api, account_config):
+    def __init__(self, market_data_user_api, account_config, market_data_manager: MemoryManager):
         super().__init__()
         self.market_data_user_api = market_data_user_api
         self.config = account_config
         self.market_data = Queue()
-
-    def set_memory_manager(self, memory_manager):
-        self.memory_manager = memory_manager
+        self.memory_manager = market_data_manager
 
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
@@ -70,12 +68,26 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
                 depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
                 depth_market_data.bid_prices[0] = round(pDepthMarketData.BidPrice1, 2)
 
-                if pDepthMarketData.InstrumentID in self.memory_manager.instrument_transform_full_symbol:
+                if pDepthMarketData.InstrumentID not in self.memory_manager.instrument_transform_full_symbol:
+                    raise ValueError(f"收到异常行情数据{pDepthMarketData.InstrumentID}")
+                    return
+                else:
                     depth_market_data.symbol = self.memory_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 
                 depth_market_data.clean_data()
                 depth_market_data.set_available()
-                self.memory_manager.market_data.put(depth_market_data)
+
+                if filter_index_option(depth_market_data.symbol):
+                    symbol, option_type, strike_price = parse_option_full_symbol(depth_market_data.symbol)
+                    if option_type == OptionType.C:
+                        self.memory_manager.option_series_dict[symbol].strike_price_options[
+                            strike_price].call.market_data = depth_market_data
+                    elif option_type == OptionType.P:
+                        self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].put.market_data = depth_market_data
+                elif filter_index_future(depth_market_data.symbol):
+                    symbol = depth_market_data.symbol.split('-')[0]
+                    if symbol in self.memory_manager.index_futures_dict:
+                        self.memory_manager.index_futures_dict[symbol].market_data = depth_market_data
 
 
 

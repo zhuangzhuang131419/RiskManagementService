@@ -4,118 +4,98 @@ import logging
 from queue import Queue
 from threading import Thread, Lock
 from typing import Dict
+
+from memory.market_data_manager import MarketDataManager
+from memory.memory_manager import MemoryManager
 from model.config.exchange_config import ExchangeConfig
 from model.enum.baseline_type import BaselineType
 from model.memory.market_data import DepthMarketData
 from model.user import User
 from helper.helper import *
 
-logging.basicConfig()
-
 
 class CTPManager:
 
     CONFIG_FILE_PATH = 'con_file'
 
-
-
     current_user : User = None
 
+    # 用作获取行情数据
+    market_data_user : User = None
+
+    # 行情内存
+    market_data_manager: MemoryManager = MemoryManager()
+
+    # 普通的users
     users : Dict[str, User] = {}
 
     baseline : BaselineType = BaselineType.INDIVIDUAL
+
+
 
     def __init__(self):
         if not os.path.exists(self.CONFIG_FILE_PATH):
             os.makedirs(self.CONFIG_FILE_PATH)
         self._lock = Lock()
         self.market_data: Queue = Queue()
-        self.init_user()
-        self.connect_users()
 
+        user_config_path = []
 
-    def init_user(self):
         try:
             for root, _, files in os.walk("config"):
                 for file_name in files:
-                    if file_name.endswith('.ini'):
-                        user = User(os.path.join(root, file_name))
-                        self.users[user.user_name] = user
-                        logging.info(f"用户 {user.user_name} 初始化完成")
+                    if not file_name.endswith('.ini'):
+                        continue
+                    user_config_path.append(os.path.join(root, file_name))
         except Exception as e:
-            logging.error(f"初始化用户时出现错误: {e}")
+            print(f"初始化用户时出现错误: {e}")
 
-    def connect_users(self):
-        threads = []
+        # 随机挑选一个连接行情
+        self.market_data_user = User(user_config_path[0], self.market_data_manager)
+
+        # 先获取行情
+        self.connect_market_data()
+
+        # 初始化market_data_memory
+        for exchange_id, exchange in self.market_data_user.exchanges.items():
+            exchange.init_market_data(self.market_data_manager)
+
+        self.init_user(user_config_path)
+        self.connect_trader()
+
+
+    def init_user(self, user_config_path):
+
+        for config_path in user_config_path:
+            user = User(config_path, self.market_data_manager)
+            self.users[user.user_name] = user
+            print(f"用户 {user.user_name} 初始化完成")
+
+
+    def connect_market_data(self):
+        """
+        连接行情中心
+        """
+        self.market_data_user.init_exchange(self.CONFIG_FILE_PATH)
+        self.market_data_user.connect_master_data()
+        self.market_data_user.query_instrument()
+        self.market_data_user.subscribe_market_data()
+        self.market_data_user.init_user_memory()
+
+    def connect_trader(self):
         for user in self.users.values():
-            t = Thread(target=self.connect_user, args=(user,))
-            t.start()
-            threads.append(t)
-        for t in threads:
-            t.join()
-
-    def connect_user(self, user: User):
-        user.init_exchange(self.CONFIG_FILE_PATH)
-        user.connect_exchange()
-        user.query_instrument()
-        user.subscribe_market_data()
-        user.init_memory()
+            user.init_exchange(self.CONFIG_FILE_PATH)
+            user.connect_trade()
 
     def switch_to_user(self, user_name: str) -> bool:
         with self._lock:
             self.current_user = self.users.get(user_name, None)
             if self.current_user is not None:
-                logging.info(f"当前用户切换为：{user_name}")
+                print(f"当前用户切换为：{user_name}")
                 return True
             else:
-                logging.warning(f"未找到用户：{user_name}")
+                print(f"未找到用户：{user_name}")
                 return False
-
-
-    def tick(self):
-        while True:
-            if self.current_user is None or self.current_user.memory is None:
-                continue
-            depth_market_date: DepthMarketData = self.current_user.memory.market_data.get(True)
-
-            # update_time = depth_market_date.UpdateTime
-            full_symbol = depth_market_date.symbol
-            # 清洗编码问题，数据分类：-1为编码错误
-
-            if filter_index_option(full_symbol) or filter_etf_option(full_symbol):
-                # 导入期权行情
-                try:
-                    symbols = full_symbol.split('-')
-                    symbol = symbols[0]
-                    option_type = symbols[1]
-                    strike_price = float(symbols[-1])
-                    if option_type == 'C':
-                        self.current_user.memory.option_series_dict[symbol].strike_price_options[
-                            strike_price].call.market_data = depth_market_date
-                    elif option_type == 'P':
-                        self.current_user.memory.option_series_dict[symbol].strike_price_options[
-                            strike_price].put.market_data = depth_market_date
-                except IndexError:
-                    print(f"full_symbol:{full_symbol}")
-                    raise IndexError
-                except KeyError:
-                    print(f"full_symbol:{full_symbol}")
-                    raise KeyError
-            elif filter_index_future(full_symbol):
-                # 导入期货行情
-                symbol = full_symbol.split('-')[0]
-                if symbol in self.current_user.memory.index_futures_dict:
-                    self.current_user.memory.index_futures_dict[symbol].market_data = depth_market_date
-            else:
-                print(f"exception: {depth_market_date}")
-
-
-
-
-
-    #
-    #
-    # def query_investor_position:
 
 
 

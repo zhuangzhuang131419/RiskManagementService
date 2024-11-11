@@ -1,29 +1,30 @@
 import time
 from abc import ABC
-from uuid import uuid4
 
 from ctp.se.market_data_service import MarketDataService
 from ctp.se.trader_service import TraderService
 from memory.memory_manager import MemoryManager
-from model.exchange.exchange_base import Exchange
+from ctp.exchange.exchange_base import Exchange
 from api_se import ThostFtdcApiSOpt
 from helper.helper import judge_ret
+from memory.user_memory_manager import UserMemoryManager
 from model.direction import Direction
 from model.order_info import OrderInfo
 
 
 class SExchange(Exchange, ABC):
-    def __init__(self, config, config_file_path, memory_manager: MemoryManager):
+    def __init__(self, config, config_file_path, user_memory_manager: UserMemoryManager, market_data_manager: MemoryManager):
         super().__init__(config, config_file_path)
         print(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
-        self.memory: MemoryManager = memory_manager
+        self.user_memory_manager = user_memory_manager
+        self.market_data_manager = market_data_manager
 
     def connect_market_data(self):
         print(f"连接深交行情中心")
         # 创建API实例
         self.market_data_user_api = ThostFtdcApiSOpt.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
-        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config)
+        self.market_data_user_spi = MarketDataService(self.market_data_user_api, self.config, self.market_data_manager)
         # 连接行情前置服务器
         self.market_data_user_api.RegisterFront(self.config.market_server_front)
         # 将spi注册给api
@@ -33,7 +34,7 @@ class SExchange(Exchange, ABC):
     def connect_trader(self):
         print(f"连接深交交易中心")
         self.trader_user_api = ThostFtdcApiSOpt.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
-        self.trader_user_spi = TraderService(self.trader_user_api, self.config)
+        self.trader_user_spi = TraderService(self.trader_user_api, self.config, self.market_data_manager)
 
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
         self.trader_user_api.RegisterFront(self.config.trade_server_front)
@@ -64,7 +65,7 @@ class SExchange(Exchange, ABC):
 
     def insert_order(self, instrument_id: str, direction: Direction, limit_price: float, volume: int):
         order_field = ThostFtdcApiSOpt.CThostFtdcInputOrderField()
-        order_field.OrderRef = self.memory.get_order_ref()
+        order_field.OrderRef = self.user_memory_manager.get_order_ref()
         order_field.BrokerID = self.config.broker_id
 
         # order_field.ExchangeID = self.trader_user_spi.exchange_id[code]
@@ -170,8 +171,6 @@ class SExchange(Exchange, ABC):
             print(f"发送查询投资者持仓请求失败")
             judge_ret(ret)
 
-    def init_memory(self):
+    def init_market_data(self, market_data_manager: MemoryManager):
         subscribe_option = list(self.trader_user_spi.subscribe_instrument.values())
-        self.memory.add_options(subscribe_option)
-        self.trader_user_spi.set_memory_manager(self.memory)
-        self.market_data_user_spi.set_memory_manager(self.memory)
+        market_data_manager.add_options(subscribe_option)

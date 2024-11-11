@@ -4,7 +4,8 @@ from typing import Dict
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField, CThostFtdcTradeField, CThostFtdcInvestorPositionField, \
-    CThostFtdcInvestorPositionDetailField, CThostFtdcOrderField
+    CThostFtdcInvestorPositionDetailField, CThostFtdcOrderField, CThostFtdcInputOrderField, \
+    CThostFtdcRspAuthenticateField
 from helper.helper import *
 from memory.memory_manager import MemoryManager
 from model.instrument.future import Future
@@ -22,19 +23,15 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
     trading_day = None
 
-    memory_manager: MemoryManager = None
 
-
-    def __init__(self, trader_user_api, config):
+    def __init__(self, trader_user_api, config, market_data_manager: MemoryManager):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
         self.subscribe_instrument = {}
         self.login_finish = False
         self.query_finish: Dict[str, bool] = {}
-
-    def set_memory_manager(self, memory_manager):
-        self.memory_manager = memory_manager
+        self.memory_manager = market_data_manager
 
 
     def OnFrontConnected(self):
@@ -54,7 +51,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             print('发送穿透式认证请求失败！')
             judge_ret(ret)
 
-    def OnRspAuthenticate(self, pRspAuthenticateField: "CThostFtdcRspAuthenticateField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspAuthenticate(self, pRspAuthenticateField: CThostFtdcRspAuthenticateField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo.ErrorID != 0 and pRspInfo is not None:
             print('穿透式认证失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
@@ -74,7 +71,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
                 judge_ret(ret)
 
 
-    def OnRspUserLogin(self, pRspUserLogin: "CThostFtdcRspUserLoginField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo.ErrorID != 0 and pRspInfo is not None:
             print('登录交易账户失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
@@ -88,10 +85,10 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             # 保存交易日
             self.trading_day = pRspUserLogin.TradingDay
 
-            pSettlementInfoConfirm = ThostFtdcApi.CThostFtdcSettlementInfoConfirmField()
-            pSettlementInfoConfirm.BrokerID = self.config.broker_id
-            pSettlementInfoConfirm.InvestorID = self.config.investor_id
-            ret = self.trader_user_api.ReqSettlementInfoConfirm(pSettlementInfoConfirm, 0)
+            confirm_field = ThostFtdcApi.CThostFtdcSettlementInfoConfirmField()
+            confirm_field.BrokerID = self.config.broker_id
+            confirm_field.InvestorID = self.config.investor_id
+            ret = self.trader_user_api.ReqSettlementInfoConfirm(confirm_field, 0)
             if ret == 0:
                 print('发送结算单确认请求成功！')
             else:
@@ -127,7 +124,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
 
 
-    def OnRspOrderInsert(self, pInputOrder: "CThostFtdcInputOrderField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspOrderInsert(self, pInputOrder: CThostFtdcInputOrderField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('下单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
