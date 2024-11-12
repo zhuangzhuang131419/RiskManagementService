@@ -6,7 +6,8 @@ from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
     CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField
 from helper.helper import *
-from memory.memory_manager import MemoryManager
+from memory.market_data_manager import MarketDataManager
+from memory.user_memory_manager import UserMemoryManager
 from model.instrument.instrument import Instrument
 from model.instrument.option import Option, ETFOption
 from model.order_info import OrderInfo
@@ -23,17 +24,18 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
     trading_day = None
 
-    memory_manager: MemoryManager = None
+    market_data_manager: MarketDataManager = None
 
 
-    def __init__(self, trader_user_api, config, market_data_manager: MemoryManager):
+    def __init__(self, trader_user_api, config, market_data_manager: MarketDataManager, user_memory_manager: UserMemoryManager):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
         self.subscribe_instrument: Dict[str, Instrument] = {}
         self.login_finish = False
         self.query_finish: Dict[str, bool] = {}
-        self.memory_manager = market_data_manager
+        self.market_data_manager = market_data_manager
+        self.user_memory_manager = user_memory_manager
 
     def OnFrontConnected(self):
         print("开始建立交易连接")
@@ -118,7 +120,8 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 # if pInstrument.UnderlyingInstrID == "510050" and pInstrument.ExpireDate == "20241225" and str(pInstrument.StrikePrice) == "2.25":
                 #     print(f'InstrumentID = {pInstrument.InstrumentID}, OptionsType = {pInstrument.OptionsType}, StrikePrice = {pInstrument.StrikePrice} ')
                 option_type = 'C' if int(pInstrument.OptionsType) == 1 else 'P'
-                o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, pInstrument.StrikePrice, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
+
+                o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, pInstrument.StrikePrice * 10000, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID, pInstrument.VolumeMultiple)
                 self.subscribe_instrument[o.id] = o
 
         if bIsLast:
@@ -194,15 +197,14 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         instrument_id: str = pInvestorPosition.InstrumentID
         print(f"OnRspQryInvestorPosition: {instrument_id}")
 
-        if self.memory_manager is not None:
-            symbol, option_type, strike_price = self.memory_manager.transform_instrument_id(instrument_id)
+        if self.market_data_manager is not None and self.user_memory_manager is not None:
+            full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
+            self.user_memory_manager.position[full_symbol] = Position(instrument_id)
+            if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
+                self.user_memory_manager.position[full_symbol].long = int(pInvestorPosition.Position)
+            elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
+                self.user_memory_manager.position[full_symbol].short = int(pInvestorPosition.Position)
 
-            if self.memory_manager is not None:
-                symbol, option_type, strike_price = self.memory_manager.transform_instrument_id(instrument_id)
-                if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, True)
-                elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(option_type, pInvestorPosition.Position, False)
         if bIsLast:
             self.query_finish['RspQryInvestorPositionDetail'] = True
             print('查询投资者持仓完成')

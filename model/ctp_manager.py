@@ -6,7 +6,6 @@ from threading import Thread, Lock
 from typing import Dict
 
 from memory.market_data_manager import MarketDataManager
-from memory.memory_manager import MemoryManager
 from model.config.exchange_config import ExchangeConfig
 from model.enum.baseline_type import BaselineType
 from model.memory.market_data import DepthMarketData
@@ -24,20 +23,18 @@ class CTPManager:
     market_data_user : User = None
 
     # 行情内存
-    market_data_manager: MemoryManager = MemoryManager()
+    market_data_manager: MarketDataManager = MarketDataManager()
 
     # 普通的users
     users : Dict[str, User] = {}
 
-    baseline : BaselineType = BaselineType.INDIVIDUAL
+    baseline : BaselineType = BaselineType.SH
 
 
 
     def __init__(self):
         if not os.path.exists(self.CONFIG_FILE_PATH):
             os.makedirs(self.CONFIG_FILE_PATH)
-        self._lock = Lock()
-        self.market_data: Queue = Queue()
 
         user_config_path = []
 
@@ -76,26 +73,28 @@ class CTPManager:
         """
         连接行情中心
         """
+        print('连接行情中心')
         self.market_data_user.init_exchange(self.CONFIG_FILE_PATH)
         self.market_data_user.connect_master_data()
         self.market_data_user.query_instrument()
+        self.market_data_user.init_market_memory()
         self.market_data_user.subscribe_market_data()
-        self.market_data_user.init_user_memory()
 
     def connect_trader(self):
+        print('连接交易中心')
         for user in self.users.values():
             user.init_exchange(self.CONFIG_FILE_PATH)
             user.connect_trade()
 
     def switch_to_user(self, user_name: str) -> bool:
-        with self._lock:
-            self.current_user = self.users.get(user_name, None)
-            if self.current_user is not None:
-                print(f"当前用户切换为：{user_name}")
-                return True
-            else:
-                print(f"未找到用户：{user_name}")
-                return False
+        self.current_user = self.users.get(user_name, None)
+        if self.current_user is not None:
+            print(f"当前用户切换为：{user_name}")
+            return True
+        else:
+            print(f"未找到用户：{user_name}")
+            return False
+
 
 
 

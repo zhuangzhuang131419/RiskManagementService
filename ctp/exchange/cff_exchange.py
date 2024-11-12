@@ -4,7 +4,6 @@ from abc import ABC
 from ctp.cffex.market_data_service import MarketDataService
 from ctp.cffex.trader_service import TraderService
 from memory.market_data_manager import MarketDataManager
-from memory.memory_manager import MemoryManager
 from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
 from ctp.exchange.exchange_base import Exchange
@@ -16,7 +15,7 @@ from model.order_info import OrderInfo
 
 
 class CFFExchange(Exchange, ABC):
-    def __init__(self, config: ExchangeConfig, config_file_path: str, user_memory_manager: UserMemoryManager, market_data_manager: MemoryManager):
+    def __init__(self, config: ExchangeConfig, config_file_path: str, user_memory_manager: UserMemoryManager, market_data_manager: MarketDataManager):
         super().__init__(config, config_file_path)
         self.type = ExchangeType.CFFEX
         print(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
@@ -41,7 +40,7 @@ class CFFExchange(Exchange, ABC):
     def connect_trader(self):
         print(f"连接中金交易中心")
         self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
-        self.trader_user_spi = TraderService(self.trader_user_api, self.config, self.market_data_manager)
+        self.trader_user_spi = TraderService(self.trader_user_api, self.config, self.market_data_manager, self.user_memory_manager)
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
         self.trader_user_api.RegisterFront(self.config.trade_server_front)
 
@@ -179,7 +178,8 @@ class CFFExchange(Exchange, ABC):
                 time.sleep(5)
         time.sleep(1)
 
-    def init_market_data(self, market_data_manager: MemoryManager):
+    def init_market_data(self, market_data_manager: MarketDataManager):
+        print("cffex init_market_data")
         subscribe_future = []
         subscribe_option = []
         for instrument_id, instrument in self.trader_user_spi.subscribe_instrument.items():

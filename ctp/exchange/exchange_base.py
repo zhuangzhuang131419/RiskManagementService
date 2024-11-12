@@ -5,7 +5,6 @@ from statistics import pstdev
 from typing import Optional
 
 from memory.market_data_manager import MarketDataManager
-from memory.memory_manager import MemoryManager
 from model.config.exchange_config import ExchangeConfig
 from model.direction import Direction
 
@@ -62,5 +61,5 @@ class Exchange(ABC):
         pass
 
     @abstractmethod
-    def init_market_data(self, market_data_manager: MemoryManager):
+    def init_market_data(self, market_data_manager: MarketDataManager):
         pass

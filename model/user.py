@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from helper.api import ReqQryInvestorPosition
 from helper.helper import TIMEOUT
-from memory.memory_manager import MemoryManager
+from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
 from model.direction import Direction
@@ -18,7 +18,7 @@ from typing import Dict, Optional
 logging.basicConfig(level=logging.INFO)
 
 class User:
-    def __init__(self, config_path: str, market_data_manager: MemoryManager):
+    def __init__(self, config_path: str, market_data_manager: MarketDataManager):
         self.config = configparser.ConfigParser()
 
         try:
@@ -121,7 +121,8 @@ class User:
 
             logging.warning(f"跳过未成功连接的交易所：{self.user_name}的{exchange_type.value}")
 
-    def init_user_memory(self):
+    def init_market_memory(self):
+        print('init_market_memory')
         for exchange_id, exchange in self.exchanges.items():
             exchange.init_market_data(self.market_data_memory)
 
@@ -153,10 +154,10 @@ class User:
     def query_investor_position(self, exchange_type: ExchangeType, instrument_id: Optional[str], timeout=TIMEOUT) -> bool:
         print(f'查询投资者{exchange_type.value}持仓')
         if exchange_type in self.exchanges:
-            if not self.is_login(exchange_type):
+            exchange = self.exchanges[exchange_type]
+            if not exchange.is_login():
                 print(f"{exchange_type.value}未登录")
                 return False
-            exchange = self.exchanges[exchange_type]
             start_time = time.time()
             exchange.query_investor_position(instrument_id)
             while not self.is_query_finish(exchange_type, ReqQryInvestorPosition):
@@ -166,11 +167,14 @@ class User:
                 time.sleep(3)
         return True
 
-    def query_investor_position_detail(self, exchange_type: ExchangeType):
+    def query_investor_position_detail(self, exchange_type: ExchangeType) -> bool:
         print(f'查询投资者{exchange_type.value}持仓细节')
         if exchange_type in self.exchanges:
             exchange = self.exchanges[exchange_type]
+            if not exchange.is_login():
+                return False
             exchange.query_investor_position_detail()
+            return True
 
     def insert_order(self, exchange_type: ExchangeType, instrument_id: str, direction: Direction, limit_price: float, volume: int):
         print(f'报单{exchange_type.value}')

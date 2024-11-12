@@ -1,4 +1,6 @@
 import re
+
+from model.enum.category import Category, UNDERLYING_CATEGORY_MAPPING
 from model.instrument.instrument import Instrument
 
 def validate_future_id(instrument_id):
@@ -15,5 +17,6 @@ class Future(Instrument):
         if validate_future_id(instrument_id):
             self.symbol = underlying_id + expired_date
             self.full_symbol = self.symbol
+            self.category = UNDERLYING_CATEGORY_MAPPING[underlying_id]
         else:
             raise ValueError(f"期货代码格式无效：{instrument_id}")

@@ -5,9 +5,11 @@ from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField, CThostFtdcTradeField, CThostFtdcInvestorPositionField, \
     CThostFtdcInvestorPositionDetailField, CThostFtdcOrderField, CThostFtdcInputOrderField, \
-    CThostFtdcRspAuthenticateField
+    CThostFtdcRspAuthenticateField, CThostFtdcSettlementInfoConfirmField
 from helper.helper import *
-from memory.memory_manager import MemoryManager
+from memory.market_data_manager import MarketDataManager
+from memory.user_memory_manager import UserMemoryManager
+from model.enum.category import UNDERLYING_CATEGORY_MAPPING
 from model.instrument.future import Future
 from model.instrument.option import IndexOption
 from model.order_info import OrderInfo
@@ -24,14 +26,15 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
     trading_day = None
 
 
-    def __init__(self, trader_user_api, config, market_data_manager: MemoryManager):
+    def __init__(self, trader_user_api, config, market_data_manager: MarketDataManager, user_memory_manager: UserMemoryManager):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
         self.subscribe_instrument = {}
         self.login_finish = False
         self.query_finish: Dict[str, bool] = {}
-        self.memory_manager = market_data_manager
+        self.market_data_manager = market_data_manager
+        self.user_memory_manager = user_memory_manager
 
 
     def OnFrontConnected(self):
@@ -95,7 +98,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
                 print('发送结算单确认请求失败！')
                 judge_ret(ret)
 
-    def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: "CThostFtdcSettlementInfoConfirmField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+    def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: CThostFtdcSettlementInfoConfirmField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('结算单确认失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
@@ -112,7 +115,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         if pInstrument is not None:
             if filter_index_option(pInstrument.InstrumentID):
-                option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID)
+                option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingMultiple)
                 self.subscribe_instrument[option.id] = option
             elif filter_index_future(pInstrument.InstrumentID):
                 future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
@@ -183,23 +186,15 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         print(f"instrument: {instrument_id}, long: {pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}")
 
-        if filter_index_option(instrument_id):
-            if self.memory_manager is not None:
-                symbol, option_type, strike_price = parse_option_full_symbol(self.memory_manager.instrument_transform_full_symbol[instrument_id])
-                if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
-                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(
-                        option_type, pInvestorPosition.Position, True)
-                elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
-                    self.memory_manager.option_series_dict[symbol].strike_price_options[strike_price].set_position(
-                        option_type, pInvestorPosition.Position, False)
-        elif filter_index_future(instrument_id):
-            if self.memory_manager is not None:
-                symbol = self.memory_manager.instrument_transform_full_symbol[instrument_id]
-                if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
-                    self.memory_manager.index_futures_dict[symbol].position.long = pInvestorPosition.Position
-                elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
-                    self.memory_manager.index_futures_dict[symbol].position.short = pInvestorPosition.Position
+        if instrument_id not in self.market_data_manager.instrument_transform_full_symbol:
+            return
 
+        full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
+        self.user_memory_manager.position[full_symbol] = Position(instrument_id)
+        if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
+            self.user_memory_manager.position[full_symbol].long = int(pInvestorPosition.Position)
+        elif pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Short:
+            self.user_memory_manager.position[full_symbol].short = int(pInvestorPosition.Position)
 
         if bIsLast:
             self.query_finish['ReqQryInvestorPosition'] = True

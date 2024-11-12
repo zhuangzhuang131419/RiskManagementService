@@ -3,7 +3,7 @@ from abc import ABC
 
 from ctp.se.market_data_service import MarketDataService
 from ctp.se.trader_service import TraderService
-from memory.memory_manager import MemoryManager
+from memory.market_data_manager import MarketDataManager
 from ctp.exchange.exchange_base import Exchange
 from api_se import ThostFtdcApiSOpt
 from helper.helper import judge_ret
@@ -13,7 +13,7 @@ from model.order_info import OrderInfo
 
 
 class SExchange(Exchange, ABC):
-    def __init__(self, config, config_file_path, user_memory_manager: UserMemoryManager, market_data_manager: MemoryManager):
+    def __init__(self, config, config_file_path, user_memory_manager: UserMemoryManager, market_data_manager: MarketDataManager):
         super().__init__(config, config_file_path)
         print(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
         self.user_memory_manager = user_memory_manager
@@ -34,7 +34,7 @@ class SExchange(Exchange, ABC):
     def connect_trader(self):
         print(f"连接深交交易中心")
         self.trader_user_api = ThostFtdcApiSOpt.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
-        self.trader_user_spi = TraderService(self.trader_user_api, self.config, self.market_data_manager)
+        self.trader_user_spi = TraderService(self.trader_user_api, self.config, self.market_data_manager, self.user_memory_manager)
 
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
         self.trader_user_api.RegisterFront(self.config.trade_server_front)
@@ -171,6 +171,7 @@ class SExchange(Exchange, ABC):
             print(f"发送查询投资者持仓请求失败")
             judge_ret(ret)
 
-    def init_market_data(self, market_data_manager: MemoryManager):
+    def init_market_data(self, market_data_manager: MarketDataManager):
+        print("se init_market_data")
         subscribe_option = list(self.trader_user_spi.subscribe_instrument.values())
         market_data_manager.add_options(subscribe_option)

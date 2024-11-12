@@ -1,8 +1,9 @@
 import re
 from abc import abstractmethod
 
-from typing import Dict
+from typing import Dict, TypeVar, Generic
 
+from model.enum.category import Category, UNDERLYING_CATEGORY_MAPPING
 from model.enum.option_type import OptionType
 from model.instrument.instrument import Instrument
 from model.memory.greeks import Greeks
@@ -22,8 +23,9 @@ class Option(Instrument):
     strike_price: float
     symbol: str
 
-    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
+    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str, underlying_multiple: float):
         super().__init__(instrument_id, expired_date, exchange_id)
+        self.underlying_multiple = underlying_multiple
         self.greeks = Greeks()
 
     def is_call_option(self):
@@ -36,12 +38,14 @@ class Option(Instrument):
 
 
 class ETFOption(Option):
-    def __init__(self, instrument_id: str, expired_date: str, option_type: str, strike_price: str, exchange_id: str, underlying_instr_id: str):
-        super().__init__(instrument_id, expired_date, exchange_id)
+    def __init__(self, instrument_id: str, expired_date: str, option_type: str, strike_price: str, exchange_id: str, underlying_instr_id: str, underlying_multiple: float):
+        super().__init__(instrument_id, expired_date, exchange_id, underlying_multiple)
         self.option_type = option_type
         self.strike_price = float(strike_price)
         self.symbol = underlying_instr_id + expired_date
         self.full_symbol = self.symbol + "-" + self.option_type + "-" + str(strike_price)
+        if underlying_instr_id in UNDERLYING_CATEGORY_MAPPING:
+            self.category = UNDERLYING_CATEGORY_MAPPING[underlying_instr_id]
 
     def __str__(self):
         """返回期权的详细信息"""
@@ -51,14 +55,15 @@ class ETFOption(Option):
                 f"行权价: {self.strike_price}")
 
 class IndexOption(Option):
-    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str):
+    def __init__(self, instrument_id: str, expired_date: str, exchange_id: str, underlying_multiple: float):
         # eg. io2410-C-4100
-        super().__init__(instrument_id, expired_date, exchange_id)
+        super().__init__(instrument_id, expired_date, exchange_id, underlying_multiple)
         if validate_option_id(instrument_id):
             self.option_type = instrument_id[7]
             self.strike_price = float(instrument_id.split('-')[-1])
             self.symbol = instrument_id[:2] + expired_date
             self.full_symbol = self.symbol + "-" + self.option_type + "-" + str(self.strike_price)
+            self.category = UNDERLYING_CATEGORY_MAPPING[instrument_id[:2]]
         else:
             raise ValueError(f'期权{instrument_id}不符合')
 
@@ -103,26 +108,6 @@ class OptionTuple:
         print(f"Invalid {option_type}")
         raise ValueError
 
-    def set_position(self, option_type: OptionType, position, long: bool):
-        if option_type == OptionType.C:
-            if long:
-                self.call.position.long = position
-            else:
-                self.call.position.short = position
+    def __str__(self):
+        return f"Call: {self.call.full_symbol}, Put: {self.put.full_symbol}"
 
-        if option_type == OptionType.P:
-            if long:
-                self.put.position.long = position
-            else:
-                self.put.position.short = position
-
-
-    def get_position(self, option_type: OptionType):
-        if option_type == OptionType.C:
-            return self.call.position
-
-        if option_type == OptionType.P:
-            return self.put.position
-
-        print(f"Invalid {option_type}")
-        raise ValueError

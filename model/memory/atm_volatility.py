@@ -7,8 +7,8 @@ class ATMVolatility:
     """
     该结构储存了计算中心波动率过程中的重要信息与最终结果。
     """
-    # 当前ATM有效性: 1为有效，0为初始值，-1为无效
-    atm_valid: int = field(default=-1)
+    # 当前ATM有效性
+    atm_valid: bool = field(default=False)
 
     # 各个行权价对应的波动率
     k1_volatility: float = field(default=-1)

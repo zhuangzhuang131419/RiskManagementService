@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Dict
+from typing import Dict, TypeVar, Generic
 
 from helper.helper import count_trading_days, HOLIDAYS, YEAR_TRADING_DAY
+from model.enum.option_type import OptionType
 from model.instrument.option import Option, OptionTuple
 from model.memory.atm_volatility import ATMVolatility
 from model.memory.imply_price import ImplyPrice
 from model.memory.wing_model_para import WingModelPara
-
 
 class OptionSeries:
 
@@ -18,7 +18,7 @@ class OptionSeries:
         :param options: 期权对象列表，包含该系列的所有期权。
         """
         self.name = symbol # 期权名字，例如 'HO2410' '005020241225'
-        self.strike_price_options: Dict[float, OptionTuple] = {}
+        self.strike_price_options: Dict[float, OptionTuple()] = {}
         self.expired_date = symbol[-8:]
 
         for option in options:
@@ -41,8 +41,8 @@ class OptionSeries:
         day_count = count_trading_days(datetime.now().date(), end_date, HOLIDAYS)
         self.remaining_year = round((day_count - 1) / YEAR_TRADING_DAY, 4)
 
-    def get_option(self, strike_price, is_put):
-        if is_put:
+    def get_option(self, strike_price, option_type: OptionType) -> Option:
+        if option_type == OptionType.P:
             return self.strike_price_options[strike_price].put
         else:
             return self.strike_price_options[strike_price].call

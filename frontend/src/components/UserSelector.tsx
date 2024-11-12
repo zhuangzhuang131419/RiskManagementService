@@ -13,7 +13,7 @@ interface UserSelectorProps {
 
 const UserSelector: React.FC<UserSelectorProps> = ({ accounts, onSelect }) => {
   // 保存当前选中的基准类型
-  const [selectedUser, setSelectedUser] = useState<string>();
+  const [selectedUser, setSelectedUser] = useState<string | null>();
   const [message, setMessage] = useState<{ text: string; type: MessageBarType } | null>(null);
 
   const accountOptions = accounts.map((acc) => ({
@@ -25,8 +25,6 @@ const UserSelector: React.FC<UserSelectorProps> = ({ accounts, onSelect }) => {
     onSelect(userName);
     setSelectedUser(userid)
     setMessage(null); // 清除之前的消息
-
-    console.log('userName: ' + userName)
 
 
     try {
