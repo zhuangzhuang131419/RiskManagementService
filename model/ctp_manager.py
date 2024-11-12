@@ -53,10 +53,7 @@ class CTPManager:
         # 先获取行情
         self.connect_market_data()
 
-        # 初始化market_data_memory
-        for exchange_id, exchange in self.market_data_user.exchanges.items():
-            exchange.init_market_data(self.market_data_manager)
-
+        # 连接各个user
         self.init_user(user_config_path)
         self.connect_trader()
 
@@ -79,6 +76,7 @@ class CTPManager:
         self.market_data_user.query_instrument()
         self.market_data_user.init_market_memory()
         self.market_data_user.subscribe_market_data()
+        print('行情初始化结束')
 
     def connect_trader(self):
         print('连接交易中心')

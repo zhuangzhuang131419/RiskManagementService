@@ -84,12 +84,12 @@ def init_ctp():
     print(f"合约Id对应full symbol: {ctp_manager.market_data_manager.instrument_transform_full_symbol}")
     print(f"品类分组: {ctp_manager.market_data_manager.grouped_instruments}")
     print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.market_data_manager.index_futures_dict)))
-    print('当前订阅期货合约月份为：{}'.format(ctp_manager.current_user.market_data_memory.index_future_symbol))
+    print('当前订阅期货合约月份为：{}'.format(ctp_manager.market_data_manager.index_future_symbol))
 
 
-    print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.current_user.market_data_memory.option_market_data)))
-    print('当前订阅指数期权合约月份为：{}'.format(ctp_manager.current_user.market_data_memory.index_option_symbol))
-    print('当前订阅ETF期权合约月份为：{}'.format(ctp_manager.current_user.market_data_memory.etf_option_symbol))
+    print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.market_data_manager.option_market_data)))
+    print('当前订阅指数期权合约月份为：{}'.format(ctp_manager.market_data_manager.index_option_symbol))
+    print('当前订阅ETF期权合约月份为：{}'.format(ctp_manager.market_data_manager.etf_option_symbol))
 
 
     # if ctp_manager.current_user is not None:
@@ -172,7 +172,7 @@ def main():
         #     f'HO2411的看跌期权的第一个行权价Greeks相关信息：delta{put_delta}, gamma{gamma}, vega{vega}, theta{put_theta}')
         # print('HO2410 期货价格:{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_price[0, :]))
         print(f"HO20241115: {get_wing_model_by_symbol('MO20241220')}")
-        print(f"15991920241127: {get_wing_model_by_symbol('51030020241225')}")
+        # print(f"51030020241225: {get_wing_model_by_symbol('51030020241225')}")
         time.sleep(3)
 
 
@@ -261,7 +261,7 @@ def get_wing_model_by_symbol(symbol):
     result = [generate_wing_model_response(symbol).to_dict()]
 
     expired_month = symbol[-8:][:6]
-    underlying_id = symbol[:2]
+    underlying_id = symbol[:-8]
     category = UNDERLYING_CATEGORY_MAPPING[underlying_id].value
     sh_symbol: str
     cffex_symbol: str
@@ -448,7 +448,7 @@ def get_position_greeks(symbol: str):
 
 
 def generate_wing_model_response(symbol: str) -> WingModelResp:
-    option_series = ctp_manager.current_user.market_data_memory.option_market_data[symbol]
+    option_series = ctp_manager.market_data_manager.option_market_data[symbol]
     wing_model_para: WingModelPara = option_series.wing_model_para
     atm_volatility: ATMVolatility = option_series.atm_volatility
     return WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)

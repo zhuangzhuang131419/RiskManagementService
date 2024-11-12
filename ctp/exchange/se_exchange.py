@@ -172,6 +172,5 @@ class SExchange(Exchange, ABC):
             judge_ret(ret)
 
     def init_market_data(self, market_data_manager: MarketDataManager):
-        print("se init_market_data")
         subscribe_option = list(self.trader_user_spi.subscribe_instrument.values())
         market_data_manager.add_options(subscribe_option)

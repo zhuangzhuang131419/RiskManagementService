@@ -15,8 +15,6 @@ from model.enum.exchange_type import ExchangeType
 from ctp.exchange.se_exchange import SExchange
 from typing import Dict, Optional
 
-logging.basicConfig(level=logging.INFO)
-
 class User:
     def __init__(self, config_path: str, market_data_manager: MarketDataManager):
         self.config = configparser.ConfigParser()
@@ -83,7 +81,7 @@ class User:
             exchange.query_instrument()
             while not self.is_query_finish(exchange_type, 'ReqQryInstrument'):
                 time.sleep(3)
-            logging.info(f"{self.user_name} 的 {exchange_type.value} 合约查询完成")
+            print(f"{self.user_name} 的 {exchange_type.value} 合约查询完成")
 
     def init_exchange(self, config_file_root: str):
         for exchange_type, config in self.exchange_config.items():
@@ -99,7 +97,7 @@ class User:
 
                 if exchange:
                     self.exchanges[exchange_type] = exchange
-                    logging.info(f"用户 {self.user_name} 的 {exchange_type.value} 交易所初始化成功")
+                    print(f"用户 {self.user_name} 的 {exchange_type.value} 交易所初始化成功")
             except Exception as e:
                 logging.error(f"初始化交易所 {exchange_type.value} 时出现错误: {e}")
 
@@ -122,7 +120,6 @@ class User:
             logging.warning(f"跳过未成功连接的交易所：{self.user_name}的{exchange_type.value}")
 
     def init_market_memory(self):
-        print('init_market_memory')
         for exchange_id, exchange in self.exchanges.items():
             exchange.init_market_data(self.market_data_memory)
 

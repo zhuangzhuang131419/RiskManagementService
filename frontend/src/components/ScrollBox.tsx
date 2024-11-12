@@ -1,15 +1,21 @@
 import { DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, DetailsRow, IDetailsRowStyles, Selection } from '@fluentui/react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 // 定义 ScrollBox 的通用 Props
 interface ScrollBoxProps<T> {
   items: T[];
-  onClick: (item: T | null) => void;
+  onClick: (key: string) => void;
   renderItem: (item: T) => string; // 用于渲染每一项的显示内容
   title: string;
+  selectedItemKey: string;
 }
 
-const ScrollBox = <T extends unknown>({ items, onClick, renderItem, title }: ScrollBoxProps<T>) => {
+const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, title, selectedItemKey }: ScrollBoxProps<T>) => {
+
+  console.log('selectkey from trading' + selectedItemKey)
+
+  const [selectedItem, setSelectedItem] = useState<string>(selectedItemKey);
+
   // 自定义样式：只允许上下滚动
   const scrollBoxStyle: React.CSSProperties = {
     maxHeight: '100%', // 限制高度以产生滚动条
@@ -32,14 +38,22 @@ const ScrollBox = <T extends unknown>({ items, onClick, renderItem, title }: Scr
     },
   ];
 
+  useEffect(() => {
+    console.log('scroll box useEffect selectedItem: ' + selectedItem + selectedItemKey)
+  }, [selectedItem])
+
   const selection = new Selection({
     onSelectionChanged: () => {
       const selectedItems = selection.getSelection();
+      console.log('onSelectionChanged' + JSON.stringify(selectedItems))
       if (selectedItems.length > 0) {
         const selectedItem = selectedItems[0] as T;
-        onClick(selectedItem); // 将选中的期权符号传递给父组件
-      } else {
-        onClick(null)
+        onClick(selectedItem.key);
+        setSelectedItem(selectedItem.key)
+      }
+      else {
+        onClick("");
+        setSelectedItem("")
       }
     },
   });

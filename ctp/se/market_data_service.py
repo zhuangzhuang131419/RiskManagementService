@@ -58,8 +58,8 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
         if self.market_data_manager is not None:
             if pDepthMarketData.InstrumentID in self.market_data_manager.instrument_transform_full_symbol:
 
-                if pDepthMarketData.InstrumentID == "10007328":
-                    print(pDepthMarketData.AskPrice1)
+                # if pDepthMarketData.InstrumentID == "10007328":
+                #     print(pDepthMarketData.AskPrice1)
 
                 depth_market_data = DepthMarketData()
                 depth_market_data.symbol = self.market_data_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]

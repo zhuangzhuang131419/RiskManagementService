@@ -8,9 +8,10 @@ import { useState } from "react";
 // 定义组件的 props 类型
 interface BaselineSelectorProps {
   onSelect: (accountId: string) => void; // onSelect 函数接受选中的账户 ID
+  selectedBaselineKey: string;
 }
 
-const BaselineSelector: React.FC<BaselineSelectorProps> = ({ onSelect }) => {
+const BaselineSelector: React.FC<BaselineSelectorProps> = ({ onSelect, selectedBaselineKey }) => {
   const options = [
     { key: 'average', text: '平均基准' },
     { key: 'sh', text: '上交基准' },
@@ -18,7 +19,7 @@ const BaselineSelector: React.FC<BaselineSelectorProps> = ({ onSelect }) => {
   ];
 
   // 保存当前选中的基准类型
-  const [selectedBaseline, setSelectedBaseline] = useState<string>();
+  const [selectedBaseline, setSelectedBaseline] = useState<string>(selectedBaselineKey);
 
   const { data, isFetching } = useQuery(
     ['baseline'],
@@ -28,7 +29,6 @@ const BaselineSelector: React.FC<BaselineSelectorProps> = ({ onSelect }) => {
         return data
       },
       onSuccess(data) {
-        console.log("fetchBaseline" + data)
         setSelectedBaseline(data);
       },
     }

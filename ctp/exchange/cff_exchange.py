@@ -179,7 +179,6 @@ class CFFExchange(Exchange, ABC):
         time.sleep(1)
 
     def init_market_data(self, market_data_manager: MarketDataManager):
-        print("cffex init_market_data")
         subscribe_future = []
         subscribe_option = []
         for instrument_id, instrument in self.trader_user_spi.subscribe_instrument.items():

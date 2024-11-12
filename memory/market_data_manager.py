@@ -2,6 +2,7 @@ import threading
 import time
 from queue import Queue
 
+from model.enum.category import Category, UNDERLYING_CATEGORY_MAPPING
 from model.instrument.future import Future
 from model.instrument.grouped_instrument import GroupedInstrument
 
@@ -162,7 +163,8 @@ class MarketDataManager:
                 k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
             elif filter_index_option(symbol):
                 expired_month = symbol[-8:][:6]
-                se_instrument = self.grouped_instruments[expired_month].etf_option_tuple.call
+                underlying_id = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value
+                se_instrument = self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_tuple.call
                 if se_instrument is not None:
                     k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_instrument.symbol].wing_model_para)
                 else:
