@@ -4,17 +4,17 @@ import React, { useEffect, useState } from 'react';
 // 定义 ScrollBox 的通用 Props
 interface ScrollBoxProps<T> {
   items: T[];
-  onClick: (key: string) => void;
+  onClick: (key: string | null) => void;
   renderItem: (item: T) => string; // 用于渲染每一项的显示内容
   title: string;
-  selectedItemKey: string;
+  selectedItemKey: string | null;
 }
 
 const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, title, selectedItemKey }: ScrollBoxProps<T>) => {
 
-  console.log('selectkey from trading' + selectedItemKey)
+  console.log('selectkey from trading' + selectedItemKey + title)
 
-  const [selectedItem, setSelectedItem] = useState<string>(selectedItemKey);
+  const [selectedItem, setSelectedItem] = useState<string | null>(selectedItemKey);
 
   // 自定义样式：只允许上下滚动
   const scrollBoxStyle: React.CSSProperties = {
@@ -39,7 +39,11 @@ const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, titl
   ];
 
   useEffect(() => {
-    console.log('scroll box useEffect selectedItem: ' + selectedItem + selectedItemKey)
+    const index = items.findIndex((item) => item.key === selectedItem);
+    if (index >= 0) {
+      selection.setIndexSelected(index, true, false);
+      setSelectedItem(selectedItem); // 更新本地 `selectedItem` 状态
+    }
   }, [selectedItem])
 
   const selection = new Selection({
@@ -52,8 +56,8 @@ const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, titl
         setSelectedItem(selectedItem.key)
       }
       else {
-        onClick("");
-        setSelectedItem("")
+        onClick(null);
+        setSelectedItem(null)
       }
     },
   });

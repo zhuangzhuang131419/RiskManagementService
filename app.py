@@ -171,7 +171,7 @@ def main():
         # print(
         #     f'HO2411的看跌期权的第一个行权价Greeks相关信息：delta{put_delta}, gamma{gamma}, vega{vega}, theta{put_theta}')
         # print('HO2410 期货价格:{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_price[0, :]))
-        print(f"HO20241115: {get_wing_model_by_symbol('MO20241220')}")
+        # print(f"HO20241115: {get_wing_model_by_symbol('MO20241220')}")
         # print(f"51030020241225: {get_wing_model_by_symbol('51030020241225')}")
         time.sleep(3)
 
@@ -251,34 +251,38 @@ def get_option_greeks():
 
 
 
-# @app.route('/api/option/wing_model/', methods=['GET'])
-def get_wing_model_by_symbol(symbol):
-    # symbol: str = request.args.get('symbol')
+@app.route('/api/option/wing_model/', methods=['GET'])
+def get_wing_model_by_symbol():
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
     print(f"get_wing_model_by_symbol: {symbol}")
+
+
     # if symbol is None or symbol == "":
     #     return get_all_customized_wing_model_para()
 
     result = [generate_wing_model_response(symbol).to_dict()]
 
+
     expired_month = symbol[-8:][:6]
     underlying_id = symbol[:-8]
     category = UNDERLYING_CATEGORY_MAPPING[underlying_id].value
+    group_instrument = ctp_manager.market_data_manager.grouped_instruments[category + "-" + expired_month]
     sh_symbol: str
     cffex_symbol: str
     if filter_etf_option(symbol):
         sh_symbol = symbol
-        cffex_instrument = ctp_manager.current_user.market_data_memory.grouped_instruments[category + "-" + expired_month].index_option_tuple.call
-        if cffex_instrument is not None:
-            cffex_symbol = cffex_instrument.symbol
+        if group_instrument.index_option_series is not None:
+            cffex_symbol = group_instrument.index_option_series.symbol
         else:
             # 处理 cffex_instrument 为 None 的情况
             result.append(generate_wing_model_response(symbol).to_dict())
             return result
         print(f"symbol:{symbol}, se symbol:{sh_symbol}, cffex symbol: {cffex_symbol}")
     elif filter_index_option(symbol):
-        sh_instrument = ctp_manager.current_user.market_data_memory.grouped_instruments[category + "-" + expired_month].etf_option_tuple.call
-        if sh_instrument is not None:
-            sh_symbol = sh_instrument.symbol
+        if group_instrument.etf_option_series is not None:
+            sh_symbol = group_instrument.etf_option_series.symbol
         else:
             result.append(generate_wing_model_response(symbol).to_dict())
             return result
@@ -311,8 +315,8 @@ def get_wing_model_by_symbol(symbol):
         print(f"baseline:{ctp_manager.baseline}")
         return jsonify({"error": "Unrecognized baseline type"}), 400
 
-    # return jsonify(result)
-    return result
+    return jsonify(result)
+    # return result
 
 def get_all_customized_wing_model_para():
     resp: Dict[str, WingModelPara] = {}
@@ -400,7 +404,7 @@ def get_position_greeks(symbol: str):
         return jsonify({"error": f"Symbol invalid"}), 404
 
     grouped_instrument = ctp_manager.current_user.market_data_memory.grouped_instruments[category + "-" + expired_month]
-    if filter_etf_option(symbol) and grouped_instrument.index_option_tuple is None:
+    if filter_etf_option(symbol) and grouped_instrument.index_option_series is None:
         return
 
     option_series: OptionSeries = ctp_manager.current_user.market_data_memory.option_market_data[symbol]
@@ -422,14 +426,15 @@ def get_position_greeks(symbol: str):
             continue
         symbol, option_type, strike_price = parse_option_full_symbol(full_symbol)
         underlying_option = ctp_manager.market_data_manager.option_market_data[symbol].get_option(strike_price, option_type)
-        delta += underlying_option.greeks.delta * underlying_option.volume_multiple * (position.long - position.short)
-        gamma += underlying_option.greeks.gamma * underlying_option.volume_multiple * (position.long - position.short)
-        vega += underlying_option.greeks.vega * underlying_option.volume_multiple *  (position.long - position.short)
-        db += underlying_option.greeks.db * underlying_option.volume_multiple * (position.long - position.short)
-        charm += underlying_option.greeks.charm * underlying_option.volume_multiple *  (position.long - position.short)
-        vanna_vs += underlying_option.greeks.vanna_vs * underlying_option.volume_multiple *  (position.long - position.short)
-        vanna_sv += underlying_option.greeks.vanna_sv * underlying_option.volume_multiple *  (position.long - position.short)
-        dkurt += (underlying_option.greeks.dk1 + underlying_option.greeks.dk2) / 2 * underlying_option.volume_multiple *  (position.long - position.short)
+        multiple = underlying_option.underlying_multiple * (position.long - position.short)
+        delta += underlying_option.greeks.delta * multiple
+        gamma += underlying_option.greeks.gamma * multiple
+        vega += underlying_option.greeks.vega * multiple
+        db += underlying_option.greeks.db * multiple
+        charm += underlying_option.greeks.charm * multiple
+        vanna_vs += underlying_option.greeks.vanna_vs * multiple
+        vanna_sv += underlying_option.greeks.vanna_sv * multiple
+        dkurt += (underlying_option.greeks.dk1 + underlying_option.greeks.dk2) / 2 * multiple
 
     delta_cash = delta * option_series.wing_model_para.S * cash_multiplier
     gamma_cash = gamma * option_series.wing_model_para.S * cash_multiplier
@@ -449,7 +454,7 @@ def get_position_greeks(symbol: str):
 
 def generate_wing_model_response(symbol: str) -> WingModelResp:
     option_series = ctp_manager.market_data_manager.option_market_data[symbol]
-    wing_model_para: WingModelPara = option_series.wing_model_para
+    wing_model_para: WingModelPara = option_series.customized_wing_model_para if option_series.customized_wing_model_para.v != 0 else option_series.wing_model_para
     atm_volatility: ATMVolatility = option_series.atm_volatility
     return WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)
 

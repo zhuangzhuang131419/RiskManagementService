@@ -2,6 +2,8 @@ import threading
 import time
 from queue import Queue
 
+from unicodedata import category
+
 from model.enum.category import Category, UNDERLYING_CATEGORY_MAPPING
 from model.instrument.future import Future
 from model.instrument.grouped_instrument import GroupedInstrument
@@ -66,8 +68,8 @@ class MarketDataManager:
                 self.index_futures_dict[future.symbol] = future
             self.instrument_transform_full_symbol[future.id] = future.full_symbol
             self.index_future_symbol.append(future.symbol)
-            if future.expired_month not in self.grouped_instruments:
-                self.grouped_instruments[future.category.value + "-" + future.expired_month] = GroupedInstrument(None, OptionTuple(), OptionTuple())
+            if future.category.value + "-" + future.expired_month not in self.grouped_instruments:
+                self.grouped_instruments[future.category.value + "-" + future.expired_month] = GroupedInstrument(None, None, None)
             self.grouped_instruments[future.category.value + "-" + future.expired_month].future = future
 
     def add_options(self, options: [Option]):
@@ -87,16 +89,11 @@ class MarketDataManager:
             option_series_dict[option.symbol].append(option)
             self.instrument_transform_full_symbol[option.id] = option.full_symbol
 
-            if option.category is not None:
-                if option.expired_month not in self.grouped_instruments:
-                    self.grouped_instruments[option.category.value + "-" + option.expired_month] = GroupedInstrument(None, OptionTuple(), OptionTuple())  # 初始化集合
-                if filter_index_option(option.symbol):
-                    index_set.add(option.symbol)
-                    self.grouped_instruments[option.category.value + "-" + option.expired_month].index_option_tuple.set_option(option)
+            if filter_index_option(option.symbol):
+                index_set.add(option.symbol)
 
-                if filter_etf_option(option.symbol):
-                    etf_set.add(option.symbol)
-                    self.grouped_instruments[option.category.value + "-" + option.expired_month].etf_option_tuple.set_option(option)
+            if filter_etf_option(option.symbol):
+                etf_set.add(option.symbol)
 
         if len(index_set) > 0:
             self.index_option_symbol = sorted(list(index_set))
@@ -109,6 +106,13 @@ class MarketDataManager:
         # 初始化 OptionSeries
         for symbol, options_list in option_series_dict.items():
             self.option_market_data[symbol] = OptionSeries(symbol, options_list)
+            key = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value + "-" + symbol[-8:][:6]
+            if key not in self.grouped_instruments:
+                self.grouped_instruments[key] = GroupedInstrument(None, None, None)
+            if filter_etf_option(symbol):
+                self.grouped_instruments[key].etf_option_series = self.option_market_data[symbol]
+            if filter_index_option(symbol):
+                self.grouped_instruments[key].index_option_series = self.option_market_data[symbol]
 
     def get_instrument(self, instrument_id: str) -> Instrument:
 
@@ -164,9 +168,9 @@ class MarketDataManager:
             elif filter_index_option(symbol):
                 expired_month = symbol[-8:][:6]
                 underlying_id = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value
-                se_instrument = self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_tuple.call
-                if se_instrument is not None:
-                    k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_instrument.symbol].wing_model_para)
+                if self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_series is not None:
+                    se_symbol = self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_series.symbol
+                    k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_symbol].wing_model_para)
                 else:
                     k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
             else:

@@ -27,9 +27,9 @@ document.documentElement.style.overflow = 'hidden';
 
 const TradingDashboard: React.FC = () => {
     const [selectedUserKey, setSelectedUserKey] = useState<string | null>(null);
-    const [selectedIndexOption, setSelectedIndexOption] = useState<string>("");
+    const [selectedIndexOption, setSelectedIndexOption] = useState<string | null>(null);
     const [selectedFuture, setSelectedFuture] = useState<string | null>(null);
-    const [selectedETFOption, setSelectedETF] = useState<string>("");
+    const [selectedETFOption, setSelectedETF] = useState<string | null>(null);
     const [selectedBaseline, setSelectedBaseline] = useState<string>();
 
     const { data: userItems, isFetching: isUserFetching } = useQuery(
@@ -44,10 +44,6 @@ const TradingDashboard: React.FC = () => {
             select(data) {
                 return data.map((item) => ({ key: item }))
             },
-            onSuccess(data) {
-                console.log('selected: ' + selectedIndexOption)
-                console.log('fetch user data' + JSON.stringify(indexOptionItems))
-            },
         }
     );
 
@@ -60,10 +56,6 @@ const TradingDashboard: React.FC = () => {
             },
         }
     );
-
-    useEffect(() => {
-        console.log('TradingDashboard' + selectedIndexOption)
-    }, [selectedIndexOption])
 
     return (
 
@@ -87,11 +79,11 @@ const TradingDashboard: React.FC = () => {
 
 
             {/* 中间部分：期权滚动框和期权希腊字母展示 */}
-            <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { height: '90%' } }}>
+            <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { height: '95%' } }}>
                 {/* 左侧：ScrollBox */}
                 <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
                     {!isIndexOptionFetching && (
-                        <Stack styles={{ root: { height: '35%' } }}>
+                        <Stack styles={{ root: { height: '30%' } }}>
                             <ScrollBox
                                 items={indexOptionItems as { key: string }[]}
                                 onClick={setSelectedIndexOption}
@@ -101,18 +93,8 @@ const TradingDashboard: React.FC = () => {
                             />
                         </Stack>
                     )}
-                    {/* {!isFutureFetching && (
-                        <Stack styles={{ root: { height: '30%' } }}>
-                            <ScrollBox
-                                items={futureItems as string[]}
-                                onClick={setSelectedFuture}
-                                renderItem={(item) => item as string}
-                                title='期货'
-                            />
-                        </Stack> 
-                    )} */}
                     {!isETFOptionFetching && (
-                        <Stack styles={{ root: { height: '35%', overflowY: 'auto' } }}>
+                        <Stack styles={{ root: { height: '30%' } }}>
                             <ScrollBox
                                 items={etfOptionItems as { key: string }[]}
                                 onClick={setSelectedETF}
@@ -128,22 +110,22 @@ const TradingDashboard: React.FC = () => {
                             selectedBaselineKey={selectedBaseline as string}
                         />
                     </Stack>
-                    <Stack styles={{ root: { height: '10%' } }}>
+                    <Stack styles={{ root: { height: '20%' } }}>
                         <CustomizedParaDialog></CustomizedParaDialog>
                     </Stack>
                 </Stack>
 
                 {/* 右侧：OptionGreeks */}
-                {/* <Stack horizontal tokens={{ childrenGap: 10 }} grow={1} styles={{ root: { height: '100%' } }}>
-                        <Stack tokens={{ childrenGap: 10 }} styles={{ root: { flex: 1 } }}>
-                            <WingModelBar symbol={selectedIndexOption} style={{ flex: '0 0 10%' }} />
-                            <OptionGreeks symbol={selectedIndexOption} style={{ flex: '1 1 auto', overflowY: 'auto', height: '90%' }} />
-                        </Stack>
-                        <Stack tokens={{ childrenGap: 10 }} styles={{ root: { flex: 1 } }}>
-                            <WingModelBar symbol={selectedETFOption} style={{ flex: '0 0 10%' }} />
-                            <OptionGreeks symbol={selectedETFOption} style={{ flex: '1 1 auto', overflowY: 'auto', height: '90%' }} />
-                        </Stack>
-                    </Stack> */}
+                <Stack horizontal tokens={{ childrenGap: 10 }} grow={1} styles={{ root: { height: '100%' } }}>
+                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { flex: 1 } }}>
+                        <WingModelBar symbol={selectedIndexOption} style={{ flex: '0 0 10%' }} />
+                        <OptionGreeks symbol={selectedIndexOption} style={{ flex: '1 1 auto', overflowY: 'auto', height: '90%' }} />
+                    </Stack>
+                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { flex: 1 } }}>
+                        <WingModelBar symbol={selectedETFOption} style={{ flex: '0 0 10%' }} />
+                        <OptionGreeks symbol={selectedETFOption} style={{ flex: '1 1 auto', overflowY: 'auto', height: '90%' }} />
+                    </Stack>
+                </Stack>
             </Stack>
         </Stack>
     )

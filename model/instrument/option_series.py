@@ -17,7 +17,7 @@ class OptionSeries:
         :param symbol: 期权的名字，例如 'HO-2410' 表示某个品种（HO）和月份（2410）的期权系列。
         :param options: 期权对象列表，包含该系列的所有期权。
         """
-        self.name = symbol # 期权名字，例如 'HO2410' '005020241225'
+        self.symbol = symbol # 期权名字，例如 'HO2410' '005020241225'
         self.strike_price_options: Dict[float, OptionTuple()] = {}
         self.expired_date = symbol[-8:]
 
