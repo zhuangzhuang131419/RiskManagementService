@@ -5,6 +5,7 @@ from typing import Dict
 from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
     CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField
+from helper.api import ReqQryInvestorPosition
 from helper.helper import *
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
@@ -44,12 +45,12 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
         auth_field.BrokerID = self.config.broker_id
         auth_field.UserID = self.config.user_id
-        auth_field.Password = self.config.password
+        auth_field.AppID = self.config.app_id
         auth_field.AuthCode = self.config.auth_code
 
         ret = self.trader_user_api.ReqAuthenticate(auth_field, 0)
         if ret == 0:
-            print('发送穿透式认证请求成功！')
+            print(f'发送穿透式认证请求成功！')
         else:
             print('发送穿透式认证请求失败！')
             judge_ret(ret)
@@ -120,8 +121,8 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 # if pInstrument.UnderlyingInstrID == "510050" and pInstrument.ExpireDate == "20241225" and str(pInstrument.StrikePrice) == "2.25":
                 #     print(f'InstrumentID = {pInstrument.InstrumentID}, OptionsType = {pInstrument.OptionsType}, StrikePrice = {pInstrument.StrikePrice} ')
                 option_type = 'C' if int(pInstrument.OptionsType) == 1 else 'P'
-
-                o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, pInstrument.StrikePrice * 10000, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID, pInstrument.VolumeMultiple)
+                # print(f"InstrumentID: {pInstrument.InstrumentID}, VolumeMultiple: {pInstrument.VolumeMultiple}")
+                o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, pInstrument.StrikePrice * 10000, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID, pInstrument.VolumeMultiple / 10000)
                 self.subscribe_instrument[o.id] = o
 
         if bIsLast:
@@ -194,19 +195,21 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
-        instrument_id: str = pInvestorPosition.InstrumentID
-        print(f"OnRspQryInvestorPosition: {instrument_id}")
+        if pInvestorPosition is not None:
+            instrument_id: str = pInvestorPosition.InstrumentID
 
-        if self.market_data_manager is not None and self.user_memory_manager is not None:
-            full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
-            self.user_memory_manager.position[full_symbol] = Position(instrument_id)
-            if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-                self.user_memory_manager.position[full_symbol].long = int(pInvestorPosition.Position)
-            elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-                self.user_memory_manager.position[full_symbol].short = int(pInvestorPosition.Position)
+
+            if self.market_data_manager is not None and self.user_memory_manager is not None:
+                full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
+                print(f"full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}")
+                self.user_memory_manager.position[full_symbol] = Position(instrument_id)
+                if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
+                    self.user_memory_manager.position[full_symbol].long = int(pInvestorPosition.Position)
+                elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
+                    self.user_memory_manager.position[full_symbol].short = int(pInvestorPosition.Position)
 
         if bIsLast:
-            self.query_finish['RspQryInvestorPositionDetail'] = True
+            self.query_finish[ReqQryInvestorPosition] = True
             print('查询投资者持仓完成')
 
 

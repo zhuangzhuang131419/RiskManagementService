@@ -103,13 +103,14 @@ class MarketDataManager:
         # 初始化 OptionSeries
         for symbol, options_list in option_series_dict.items():
             self.option_market_data[symbol] = OptionSeries(symbol, options_list)
-            key = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value + "-" + symbol[-8:][:6]
-            if key not in self.grouped_instruments:
-                self.grouped_instruments[key] = GroupedInstrument(None, None, None)
-            if filter_etf_option(symbol):
-                self.grouped_instruments[key].etf_option_series = self.option_market_data[symbol]
-            if filter_index_option(symbol):
-                self.grouped_instruments[key].index_option_series = self.option_market_data[symbol]
+            if symbol[:-8] in UNDERLYING_CATEGORY_MAPPING:
+                key = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value + "-" + symbol[-8:][:6]
+                if key not in self.grouped_instruments:
+                    self.grouped_instruments[key] = GroupedInstrument(None, None, None)
+                if filter_etf_option(symbol):
+                    self.grouped_instruments[key].etf_option_series = self.option_market_data[symbol]
+                if filter_index_option(symbol):
+                    self.grouped_instruments[key].index_option_series = self.option_market_data[symbol]
 
     def get_instrument(self, instrument_id: str) -> Instrument:
 

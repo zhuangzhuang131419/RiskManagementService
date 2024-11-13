@@ -44,6 +44,9 @@ const TradingDashboard: React.FC = () => {
             select(data) {
                 return data.map((item) => ({ key: item }))
             },
+            onSuccess(data) {
+                console.log('fetchIndexOptionSymbols:' + data)
+            },
         }
     );
 
@@ -53,6 +56,9 @@ const TradingDashboard: React.FC = () => {
         {
             select(data) {
                 return data.map((item) => ({ key: item }))
+            },
+            onSuccess(data) {
+                console.log('fetchETFOptionSymbols:' + data)
             },
         }
     );

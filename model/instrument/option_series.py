@@ -53,3 +53,6 @@ class OptionSeries:
     def get_num_strike_price(self):
         return len(self.strike_price_options.keys())
 
+    def __str__(self):
+        return f"OptionSeries: {self.symbol}"
+

@@ -44,7 +44,7 @@ ctp_manager = CTPManager()
 def init_ctp():
     # 初始化
     global ctp_manager
-    ctp_manager.switch_to_user("TestUser")
+    ctp_manager.switch_to_user("XueJianhua")
 
     # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 335, 1)
     # time.sleep(10)
@@ -82,7 +82,9 @@ def init_ctp():
 
 
     print(f"合约Id对应full symbol: {ctp_manager.market_data_manager.instrument_transform_full_symbol}")
-    print(f"品类分组: {ctp_manager.market_data_manager.grouped_instruments}")
+    print(f"品类分组:")
+    for category, group_instrument in ctp_manager.market_data_manager.grouped_instruments.items():
+        print(f'{category}: {group_instrument}')
     print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.market_data_manager.index_futures_dict)))
     print('当前订阅期货合约月份为：{}'.format(ctp_manager.market_data_manager.index_future_symbol))
     print(f"HO20241220的行权价{ctp_manager.market_data_manager.option_market_data['HO20241220'].strike_price_options.keys()}")
@@ -93,12 +95,12 @@ def init_ctp():
     print('当前订阅ETF期权合约月份为：{}'.format(ctp_manager.market_data_manager.etf_option_symbol))
 
 
-    # if ctp_manager.current_user is not None:
-    #     ctp_manager.current_user.query_investor_position(ExchangeType.SE, None, 20)
-    # if ctp_manager.current_user is not None:
-    #     ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None, 20)
+    if ctp_manager.current_user is not None:
+        ctp_manager.current_user.query_investor_position(ExchangeType.SE, None, 30)
+    if ctp_manager.current_user is not None:
+        ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None, 20)
 
-    Thread(target=ctp_manager.current_user.market_data_memory.index_volatility_calculator).start()
+    Thread(target=ctp_manager.market_data_manager.index_volatility_calculator).start()
 
 def main():
 
@@ -130,6 +132,7 @@ def main():
     # ctp_manager.query_investor_position_detail()
 
     while True:
+        print(get_position_greeks('51005020241127'))
         # if cffex_option_manager is not None:
             # print(f"{cffex_option_manager.option_series_dict['HO20241115'].imply_price}")
             # print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].call.market_data}")
@@ -206,22 +209,22 @@ def get_all_market_data():
 
 @app.route('/api/cffex/options', methods=['GET'])
 def get_cffex_option():
-    if ctp_manager.current_user.market_data_memory is not None:
-        return jsonify(list(ctp_manager.current_user.market_data_memory.index_option_symbol))
+    if ctp_manager.market_data_manager is not None:
+        return jsonify(list(ctp_manager.market_data_manager.index_option_symbol))
     else:
         return jsonify([])
 
 @app.route('/api/se/options', methods=['GET'])
 def get_se_option():
-    if ctp_manager.current_user.market_data_memory is not None:
-        return jsonify(list(ctp_manager.current_user.market_data_memory.etf_option_symbol))
+    if ctp_manager.market_data_manager is not None:
+        return jsonify(list(ctp_manager.market_data_manager.etf_option_symbol))
     else:
         return jsonify([])
 
 @app.route('/api/futures', methods=['GET'])
 def get_all_future():
-    if ctp_manager.current_user.market_data_memory is not None:
-        return jsonify(ctp_manager.current_user.market_data_memory.index_future_symbol)
+    if ctp_manager.market_data_manager is not None:
+        return jsonify(ctp_manager.market_data_manager.index_future_symbol)
     else:
         return jsonify([])
 
@@ -268,6 +271,11 @@ def get_wing_model_by_symbol():
 
     expired_month = symbol[-8:][:6]
     underlying_id = symbol[:-8]
+
+    if underlying_id not in UNDERLYING_CATEGORY_MAPPING:
+        # 深交所的
+        result.append([generate_wing_model_response(symbol).to_dict()])
+        return result
     category = UNDERLYING_CATEGORY_MAPPING[underlying_id].value
     group_instrument = ctp_manager.market_data_manager.grouped_instruments[category + "-" + expired_month]
     sh_symbol: str
@@ -322,8 +330,8 @@ def get_wing_model_by_symbol():
 @app.route('/api/option/wing_models', methods=['GET'])
 def get_all_customized_wing_model_para():
     resp: Dict[str, WingModelPara] = {}
-    if ctp_manager.current_user.market_data_memory is not None:
-        for symbol, option_series in ctp_manager.current_user.market_data_memory.option_market_data.items():
+    if ctp_manager.market_data_manager is not None:
+        for symbol, option_series in ctp_manager.market_data_manager.option_market_data.items():
             wing_model_para: WingModelPara = option_series.customized_wing_model_para
             resp[symbol] = wing_model_para
 
@@ -336,15 +344,15 @@ def set_customized_wing_model():
     if data is None:
         return jsonify({"error": "Invalid or missing JSON data"}), 400
     for symbol, value in data.items():
-        if ctp_manager.current_user.market_data_memory is not None:
+        if ctp_manager.market_data_manager is not None:
             if "v" in value:
-                ctp_manager.current_user.market_data_memory.option_market_data[symbol].customized_wing_model_para.v = value["v"]
+                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.v = value["v"]
             if "k1" in value:
-                ctp_manager.current_user.market_data_memory.option_market_data[symbol].customized_wing_model_para.k1 = value["k1"]
+                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k1 = value["k1"]
             if "k2" in value:
-                ctp_manager.current_user.market_data_memory.option_market_data[symbol].customized_wing_model_para.k2 = value["k2"]
+                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k2 = value["k2"]
             if "b" in value:
-                ctp_manager.current_user.market_data_memory.option_market_data[symbol].customized_wing_model_para.b = value["b"]
+                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.b = value["b"]
 
     return jsonify({"message": "Customized wing model received"}), 200
 
@@ -393,6 +401,9 @@ def get_greek_summary():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
+
+    if ctp_manager.current_user is None:
+        return jsonify({"error not set user"})
     # Convert each data instance to a dictionary and return as JSON
     return jsonify(get_position_greeks(symbol).to_dict())
 
@@ -400,16 +411,16 @@ def get_greek_summary():
 def get_position_greeks(symbol: str):
 
     expired_month = symbol[-8:][:6]
-    underlying_id = symbol[:2]
+    underlying_id = symbol[:-8]
     category = UNDERLYING_CATEGORY_MAPPING[underlying_id].value
     if filter_index_future(symbol):
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    grouped_instrument = ctp_manager.current_user.market_data_memory.grouped_instruments[category + "-" + expired_month]
+    grouped_instrument = ctp_manager.market_data_manager.grouped_instruments[category + "-" + expired_month]
     if filter_etf_option(symbol) and grouped_instrument.index_option_series is None:
         return
 
-    option_series: OptionSeries = ctp_manager.current_user.market_data_memory.option_market_data[symbol]
+    option_series: OptionSeries = ctp_manager.market_data_manager.option_market_data[symbol]
 
     delta = 0
     gamma = 0
@@ -449,7 +460,7 @@ def get_position_greeks(symbol: str):
 
     resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash)
 
-    return resp
+    return resp.to_dict()
 
 
 

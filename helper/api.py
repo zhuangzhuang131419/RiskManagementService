@@ -1,1 +1,2 @@
 ReqQryInvestorPosition = "ReqQryInvestorPosition"
+RspQryInvestorPositionDetail = "RspQryInvestorPositionDetail"

@@ -166,6 +166,7 @@ class SExchange(Exchange, ABC):
             query_file.InstrumentID = instrument_id
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
+            print(f"发送查询投资者持仓请求成功")
             pass
         else:
             print(f"发送查询投资者持仓请求失败")
