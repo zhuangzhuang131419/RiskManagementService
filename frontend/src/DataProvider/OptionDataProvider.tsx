@@ -62,7 +62,7 @@ class OptionDataProvider implements IOptionDataProvider {
   }
 
   fetchWingModelPara = async (): Promise<{ [key: string]: WingModelData }> => {
-    const response = await fetch(`/api/option/wing_model`);
+    const response = await fetch(`/api/option/wing_models`);
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
@@ -74,7 +74,7 @@ class OptionDataProvider implements IOptionDataProvider {
   }
 
   postWingModelPara = async (para: { [key: string]: WingModelData; }): Promise<void> => {
-    const response = await fetch('/api/option/wing_model', {
+    const response = await fetch('/api/option/wing_models', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

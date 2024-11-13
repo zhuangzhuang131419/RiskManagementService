@@ -85,6 +85,7 @@ def init_ctp():
     print(f"品类分组: {ctp_manager.market_data_manager.grouped_instruments}")
     print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.market_data_manager.index_futures_dict)))
     print('当前订阅期货合约月份为：{}'.format(ctp_manager.market_data_manager.index_future_symbol))
+    print(f"HO20241220的行权价{ctp_manager.market_data_manager.option_market_data['HO20241220'].strike_price_options.keys()}")
 
 
     print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.market_data_manager.option_market_data)))
@@ -318,6 +319,7 @@ def get_wing_model_by_symbol():
     return jsonify(result)
     # return result
 
+@app.route('/api/option/wing_models', methods=['GET'])
 def get_all_customized_wing_model_para():
     resp: Dict[str, WingModelPara] = {}
     if ctp_manager.current_user.market_data_memory is not None:
@@ -328,7 +330,7 @@ def get_all_customized_wing_model_para():
     print(f"get_all_customized_wing_model_para: {resp}")
     return jsonify(resp)
 
-@app.route('/api/option/wing_model', methods=['POST'])
+@app.route('/api/option/wing_models', methods=['POST'])
 def set_customized_wing_model():
     data: Dict[str, dict] = request.get_json()
     if data is None:

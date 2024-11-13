@@ -60,9 +60,9 @@ const TradingDashboard: React.FC = () => {
     return (
 
         // 主布局
-        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100%' } }}>
+        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100vw' } }}>
             {/* 顶部：账户选择器和数据展示 */}
-            <Stack horizontal tokens={{ childrenGap: 20 }}>
+            <Stack horizontal styles={{ root: { height: '20%' } }} tokens={{ childrenGap: 20 }}>
                 <Stack.Item>
                     {!isUserFetching && (
                         <UserSelector accounts={userItems as User[]} onSelect={setSelectedUserKey} selectedUserKey={selectedUserKey} />
@@ -79,11 +79,11 @@ const TradingDashboard: React.FC = () => {
 
 
             {/* 中间部分：期权滚动框和期权希腊字母展示 */}
-            <Stack horizontal tokens={{ childrenGap: 20 }} styles={{ root: { height: '95%' } }}>
+            <Stack horizontal styles={{ root: { height: '80%' } }} tokens={{ childrenGap: 20 }}>
                 {/* 左侧：ScrollBox */}
                 <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
                     {!isIndexOptionFetching && (
-                        <Stack styles={{ root: { height: '30%' } }}>
+                        <Stack styles={{ root: { height: '30%', overflowY: 'auto' } }}>
                             <ScrollBox
                                 items={indexOptionItems as { key: string }[]}
                                 onClick={setSelectedIndexOption}
@@ -94,7 +94,7 @@ const TradingDashboard: React.FC = () => {
                         </Stack>
                     )}
                     {!isETFOptionFetching && (
-                        <Stack styles={{ root: { height: '30%' } }}>
+                        <Stack styles={{ root: { height: '30%', overflowY: 'auto' } }}>
                             <ScrollBox
                                 items={etfOptionItems as { key: string }[]}
                                 onClick={setSelectedETF}
@@ -104,26 +104,26 @@ const TradingDashboard: React.FC = () => {
                             />
                         </Stack>
                     )}
-                    <Stack styles={{ root: { height: '20%' } }}>
+                    <Stack styles={{ root: { height: '20%', overflowY: 'auto' } }}>
                         <BaselineSelector
                             onSelect={setSelectedBaseline}
                             selectedBaselineKey={selectedBaseline as string}
                         />
                     </Stack>
-                    <Stack styles={{ root: { height: '20%' } }}>
+                    <Stack styles={{ root: { height: '20%', overflowY: 'auto' } }}>
                         <CustomizedParaDialog></CustomizedParaDialog>
                     </Stack>
                 </Stack>
 
                 {/* 右侧：OptionGreeks */}
-                <Stack horizontal tokens={{ childrenGap: 10 }} grow={1} styles={{ root: { height: '100%' } }}>
-                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { flex: 1 } }}>
-                        <WingModelBar symbol={selectedIndexOption} style={{ flex: '0 0 10%' }} />
-                        <OptionGreeks symbol={selectedIndexOption} style={{ flex: '1 1 auto', overflowY: 'auto', height: '90%' }} />
+                <Stack horizontal styles={{ root: { height: '100%', width: '85%' } }} tokens={{ childrenGap: 10 }}>
+                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '50%' } }}>
+                        <WingModelBar symbol={selectedIndexOption} style={{ height: '20%' }} />
+                        <OptionGreeks symbol={selectedIndexOption} style={{ overflowY: 'auto', height: '90%' }} />
                     </Stack>
-                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { flex: 1 } }}>
-                        <WingModelBar symbol={selectedETFOption} style={{ flex: '0 0 10%' }} />
-                        <OptionGreeks symbol={selectedETFOption} style={{ flex: '1 1 auto', overflowY: 'auto', height: '90%' }} />
+                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '50%' } }}>
+                        <WingModelBar symbol={selectedETFOption} style={{ height: '20%' }} />
+                        <OptionGreeks symbol={selectedETFOption} style={{ overflowY: 'auto', height: '90%' }} />
                     </Stack>
                 </Stack>
             </Stack>

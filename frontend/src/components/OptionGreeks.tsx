@@ -73,7 +73,9 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
     const scrollBoxStyles = {
         root: {
             overflowX: 'hidden', // 禁用水平滚动
-            // overflowY: 'auto', // 垂直滚动
+            overflowY: 'auto', // 垂直滚动
+            maxHeight: '100%', // 限制高度以产生滚动条
+            maxWidth: '100%',
         },
     };
 

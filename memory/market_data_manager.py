@@ -33,9 +33,6 @@ from model.memory.wing_model_para import WingModelPara
 
 class MarketDataManager:
     def __init__(self):
-
-        # self.init_future_option(instruments)
-        self.market_data = Queue()
         # 期权链
         self.option_market_data: Dict[str, OptionSeries] = {}
         self.greeks_lock = threading.Lock()
