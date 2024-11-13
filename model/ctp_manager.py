@@ -30,7 +30,7 @@ class CTPManager:
 
     baseline : BaselineType = BaselineType.SH
 
-
+    timestamp : time
 
     def __init__(self):
         if not os.path.exists(self.CONFIG_FILE_PATH):

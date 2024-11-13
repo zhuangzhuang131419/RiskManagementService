@@ -12,8 +12,6 @@ interface ScrollBoxProps<T> {
 
 const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, title, selectedItemKey }: ScrollBoxProps<T>) => {
 
-  console.log('selectkey from trading' + selectedItemKey + title)
-
   const [selectedItem, setSelectedItem] = useState<string | null>(selectedItemKey);
 
   // 自定义样式：只允许上下滚动
@@ -49,7 +47,6 @@ const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, titl
   const selection = new Selection({
     onSelectionChanged: () => {
       const selectedItems = selection.getSelection();
-      console.log('onSelectionChanged' + JSON.stringify(selectedItems))
       if (selectedItems.length > 0) {
         const selectedItem = selectedItems[0] as T;
         onClick(selectedItem.key);

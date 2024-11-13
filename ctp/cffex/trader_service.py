@@ -6,7 +6,7 @@ from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLogi
     CThostFtdcInstrumentField, CThostFtdcTradeField, CThostFtdcInvestorPositionField, \
     CThostFtdcInvestorPositionDetailField, CThostFtdcOrderField, CThostFtdcInputOrderField, \
     CThostFtdcRspAuthenticateField, CThostFtdcSettlementInfoConfirmField
-from helper.api import ReqQryInvestorPosition, RspQryInvestorPositionDetail
+from helper.api import ReqQryInvestorPosition, RspQryInvestorPositionDetail, RspOrderInsert
 from helper.helper import *
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
@@ -138,7 +138,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             print('下单成功, 风控通过')
 
         if bIsLast:
-            self.query_finish['RspOrderInsert'] = True
+            self.query_finish[RspOrderInsert] = True
 
     def OnRtnOrder(self, pOrder: CThostFtdcOrderField) -> "void":
         try:

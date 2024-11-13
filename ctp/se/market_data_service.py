@@ -61,6 +61,8 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
                 # if pDepthMarketData.InstrumentID == "10007328":
                 #     print(pDepthMarketData.AskPrice1)
 
+                self.market_data_manager.clock = pDepthMarketData.UpdateTime
+
                 depth_market_data = DepthMarketData()
                 depth_market_data.symbol = self.market_data_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 

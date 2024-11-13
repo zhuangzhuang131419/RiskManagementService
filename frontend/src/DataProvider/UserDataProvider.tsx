@@ -1,14 +1,22 @@
 import { User } from "../Model/User";
-import { GreeksResponse } from "../Model/OptionData";
 
 export interface IUserDataProvider {
     fetchUsers(): Promise<User[]>;
     setUser(name: string): Promise<void>;
     fetchBaseline(): Promise<string>;
     setBaseline(baseline: string): Promise<void>;
+    fetchClock(): Promise<string>;
 }
 
 class UserDataProvider implements IUserDataProvider {
+    fetchClock = async (): Promise<string> => {
+        const response = await fetch('/api/clock');
+        if (!response.ok) {
+            throw new Error('Failed to fetch clock');
+        }
+        console.log(response);
+        return response.json();
+    }
     fetchUsers = async (): Promise<User[]> => {
         const response = await fetch('/api/users');
         if (!response.ok) {

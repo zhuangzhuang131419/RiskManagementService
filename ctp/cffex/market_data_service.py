@@ -15,7 +15,8 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
         super().__init__()
         self.market_data_user_api = market_data_user_api
         self.config = account_config
-        self.market_data_manager = market_data_manager
+        self.market_data_manager : MarketDataManager = market_data_manager
+
 
 
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
@@ -58,6 +59,7 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
 
                 # if pDepthMarketData.InstrumentID == "HO2412-C-2400":
                     # print(pDepthMarketData.AskPrice1)
+                self.market_data_manager.clock = pDepthMarketData.UpdateTime
 
                 depth_market_data = DepthMarketData()
                 depth_market_data.time = round(time.time())

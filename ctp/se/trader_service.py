@@ -5,7 +5,7 @@ from typing import Dict
 from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
     CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField
-from helper.api import ReqQryInvestorPosition
+from helper.api import ReqQryInvestorPosition, RspQryInvestorPositionDetail, ReqQryInstrument
 from helper.helper import *
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
@@ -126,7 +126,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 self.subscribe_instrument[o.id] = o
 
         if bIsLast:
-            self.query_finish['ReqQryInstrument'] = True
+            self.query_finish[ReqQryInstrument] = True
             print('查询合约完成')
 
 
@@ -143,7 +143,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
 
         if bIsLast:
-            self.query_finish['RspQryInvestorPositionDetail'] = True
+            self.query_finish[RspQryInvestorPositionDetail] = True
             print('查询投资者持仓明细完成')
 
     def OnRspOrderInsert(self, pInputOrder: CThostFtdcInputOrderField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":

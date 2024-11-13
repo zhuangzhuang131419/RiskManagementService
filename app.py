@@ -1,5 +1,4 @@
 import time
-from dataclasses import asdict
 
 import numpy as np
 from typing import Dict
@@ -132,7 +131,8 @@ def main():
     # ctp_manager.query_investor_position_detail()
 
     while True:
-        print(get_position_greeks('51005020241127'))
+        # print(get_position_greeks('51005020241127'))
+        print(ctp_manager.market_data_manager.clock)
         # if cffex_option_manager is not None:
             # print(f"{cffex_option_manager.option_series_dict['HO20241115'].imply_price}")
             # print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].call.market_data}")
@@ -183,6 +183,10 @@ def main():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/api/clock', methods=['GET'])
+def get_clock():
+    return jsonify(ctp_manager.market_data_manager.clock)
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
@@ -405,7 +409,7 @@ def get_greek_summary():
     if ctp_manager.current_user is None:
         return jsonify({"error not set user"})
     # Convert each data instance to a dictionary and return as JSON
-    return jsonify(get_position_greeks(symbol).to_dict())
+    return jsonify(get_position_greeks(symbol))
 
 
 def get_position_greeks(symbol: str):

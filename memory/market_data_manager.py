@@ -53,6 +53,9 @@ class MarketDataManager:
         # category-expired_month
         self.grouped_instruments: Dict[str, GroupedInstrument] = {}
 
+        # 同步时钟
+        self.clock: str = time.strftime('%H:%M:%S', time.localtime(time.time()))
+
 
     def add_index_future(self, index_futures: List[Future]):
         """

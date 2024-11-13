@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChoiceGroup, Stack, IChoiceGroupOption, Dialog } from '@fluentui/react';
+import { ChoiceGroup, Stack, IChoiceGroupOption, Dialog, Label, Text } from '@fluentui/react';
 import OptionGreeks from './OptionGreeks';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import UserSelector from './UserSelector';
@@ -31,10 +31,22 @@ const TradingDashboard: React.FC = () => {
     const [selectedFuture, setSelectedFuture] = useState<string | null>(null);
     const [selectedETFOption, setSelectedETF] = useState<string | null>(null);
     const [selectedBaseline, setSelectedBaseline] = useState<string>();
+    const [clock, setClock] = useState<string>();
 
     const { data: userItems, isFetching: isUserFetching } = useQuery(
         ['users'],
         userDataProvider.fetchUsers,
+    );
+
+    const { data } = useQuery(
+        ['clock'],
+        userDataProvider.fetchClock,
+        {
+            onSuccess(data) {
+                setClock(data);
+            },
+            refetchInterval: 3000,
+        }
     );
 
     const { data: indexOptionItems, isFetching: isIndexOptionFetching } = useQuery(
@@ -73,6 +85,7 @@ const TradingDashboard: React.FC = () => {
                     {!isUserFetching && (
                         <UserSelector accounts={userItems as User[]} onSelect={setSelectedUserKey} selectedUserKey={selectedUserKey} />
                     )}
+                    <Text>{clock}</Text>
                 </Stack.Item>
                 <Stack.Item>
                     <UserInfoTable></UserInfoTable>
