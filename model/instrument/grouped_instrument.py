@@ -14,10 +14,4 @@ class GroupedInstrument:
     etf_option_series: Union[OptionSeries, None]
 
     def __str__(self):
-        return (
-            f"GroupedInstrument(\n"
-            f"  Future: {self.future},\n"
-            f"  Index Option Series: {self.index_option_series},\n"
-            f"  ETF Option Series: {self.etf_option_series}\n"
-            f")"
-        )
+        return f"GroupedInstrument(Future: {self.future},Index Option Series: {self.index_option_series},ETF Option Series: {self.etf_option_series}"

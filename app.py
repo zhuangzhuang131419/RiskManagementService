@@ -381,27 +381,8 @@ def set_baseline():
 def get_baseline():
     return jsonify({"current_baseline": ctp_manager.baseline.name.lower()}), 200
 
-@app.route('/api/position/', methods=['GET'])
-def get_position():
-    symbol: str = request.args.get('symbol')
-    if symbol is None or symbol == "":
-        return jsonify({"error": f"Symbol invalid"}), 404
-    if filter_etf_option(symbol):
-        if ctp_manager.current_user.query_investor_position(ExchangeType.SE, None):
-            pass
-        else:
-            return jsonify({"error": f"Timeout"}), 404
-    elif filter_index_option(symbol):
-        if ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None):
-            # return
-            pass
-        else:
-            return jsonify({"error": f"Timeout"}), 404
-    else:
-        return jsonify({"error": f"Symbol invalid"}), 404
-
-@app.route('/api/cash/greeks', methods=['GET'])
-def get_greek_summary():
+@app.route('/api/option/greeks_summary', methods=['GET'])
+def get_greek_summary_by_option_symbol():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
@@ -411,19 +392,44 @@ def get_greek_summary():
     # Convert each data instance to a dictionary and return as JSON
     return jsonify(get_position_greeks(symbol))
 
-
-def get_position_greeks(symbol: str):
-
-    expired_month = symbol[-8:][:6]
-    underlying_id = symbol[:-8]
-    category = UNDERLYING_CATEGORY_MAPPING[underlying_id].value
-    if filter_index_future(symbol):
+@app.route('/api/future/greeks_summary', methods=['GET'])
+def get_greek_summary_by_future_symbol():
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    grouped_instrument = ctp_manager.market_data_manager.grouped_instruments[category + "-" + expired_month]
-    if filter_etf_option(symbol) and grouped_instrument.index_option_series is None:
-        return
+    if ctp_manager.current_user is None:
+        return jsonify({"error not set user"})
 
+    group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
+    if group_instrument is not None and group_instrument.future is not None:
+        # Convert each data instance to a dictionary and return as JSON
+        return jsonify(get_future_position_greeks(group_instrument.future.symbol))
+    else:
+        return jsonify({"error": f"Symbol invalid"}), 404
+
+def get_future_position_greeks(symbol: str):
+    future = ctp_manager.market_data_manager.index_futures_dict[symbol]
+
+    cash_multiplier = get_cash_multiplier(symbol)
+
+    print(ctp_manager.current_user.user_memory.position)
+
+    if symbol not in ctp_manager.current_user.user_memory.position:
+        return GreeksCashResp().to_dict()
+
+    future_position = ctp_manager.current_user.user_memory.position[symbol]
+    delta = (future_position.long - future_position.short)
+    delta_cash = delta * cash_multiplier * (future.market_data.bid_prices[0] + future.market_data.ask_prices[0]) / 2
+
+    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash)
+
+    print(f"GreeksCashResp: {resp.to_dict()}")
+    return resp.to_dict()
+
+
+
+def get_position_greeks(symbol: str):
     option_series: OptionSeries = ctp_manager.market_data_manager.option_market_data[symbol]
 
     delta = 0
@@ -464,6 +470,7 @@ def get_position_greeks(symbol: str):
 
     resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash)
 
+    print(f"GreeksCashResp: {resp.to_dict()}")
     return resp.to_dict()
 
 

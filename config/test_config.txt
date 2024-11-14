@@ -1,6 +1,5 @@
 [USER]
 Name = TestUser
-Master = False
 
 [CFFEX]
 BrokerName = simnow模拟7*24小时

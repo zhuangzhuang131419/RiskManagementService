@@ -1,5 +1,8 @@
 import datetime
 
+from unicodedata import category
+
+from model.enum.category import UNDERLYING_CATEGORY_MAPPING
 from model.enum.option_type import OptionType
 from model.instrument.option import validate_option_id
 
@@ -97,6 +100,7 @@ def parse_option_full_symbol(full_symbol: str) -> (str, OptionType, float):
             f"Invalid strike price '{strike_price_str}' in full_symbol: {full_symbol}. Expected a numeric value.")
 
     return symbol, option_type, strike_price
+
 
 
 

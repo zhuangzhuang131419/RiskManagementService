@@ -10,8 +10,8 @@ class GreeksCashResp:
     charm_cash: float
     dkurt_cash: float
 
-    def __init__(self, delta: float, delta_cash: float, gamma_p_cash: float, vega_cash: float,
-                 db_cash: float, vanna_vs_cash: float, vanna_sv_cash: float, charm_cash: float, dkurt_cash: float):
+    def __init__(self, delta: float = 0.0, delta_cash: float = 0.0, gamma_p_cash: float = 0.0, vega_cash: float = 0,
+                 db_cash: float = 0.0, vanna_vs_cash: float = 0.0, vanna_sv_cash: float = 0.0, charm_cash: float = 0.0, dkurt_cash: float = 0.0):
         """
         Initializes a GreeksCashResp object with the given values.
         """

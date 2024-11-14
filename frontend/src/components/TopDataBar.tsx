@@ -18,10 +18,22 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
 
   const [items, setItems] = useState<any[]>([]);
 
+  const { data: futureData } = useQuery(
+    ['futureGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
+    () => optionDataProvider.fetchFutureGreeksSummary(indexSymbol as string),
+    {
+      onSuccess(data) {
+      },
+      refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
+      enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
+      refetchOnWindowFocus: false, // 禁用在窗口获得焦点时重新获取数据
+    }
+  );
+
 
   const { data: indexData } = useQuery(
-    ['cashGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
-    () => optionDataProvider.fetchCashGreeks(indexSymbol as string),
+    ['optionGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
+    () => optionDataProvider.fetchOptionGreeksSummary(indexSymbol as string),
     {
       onSuccess(data) {
       },
@@ -32,8 +44,8 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
   );
 
   const { data: etfData } = useQuery(
-    ['cashGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
-    () => optionDataProvider.fetchCashGreeks(etfSymbol as string),
+    ['optionGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
+    () => optionDataProvider.fetchOptionGreeksSummary(etfSymbol as string),
     {
       onSuccess(data) {
       },
@@ -55,6 +67,20 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       charm_cash: null,
     };
 
+    const sumCashGreeks = (...dataItems: CashGreeksResponse[]) => {
+      const result: CashGreeksResponse = { ...defaultCashGreeks };
+
+      // Use 'keyof CashGreeksResponse' to iterate over valid keys
+      for (const key of Object.keys(result) as Array<keyof CashGreeksResponse>) {
+        result[key] = dataItems.reduce((sum, item) => {
+          // Ensure item[key] is not null before adding
+          return sum + (item[key] ?? 0);
+        }, 0);
+      }
+
+      return result;
+    };
+
     const combinedData = [
       indexData
         ? { type: "指数期权", ...indexData }
@@ -62,11 +88,20 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       etfData
         ? { type: "ETF期权", ...etfData }
         : { type: "ETF期权", defaultCashGreeks },
-      { type: "期货", defaultCashGreeks },
-      { type: "综合", defaultCashGreeks }
+      futureData
+        ? { type: "期货", ...futureData }
+        : { type: "期货", defaultCashGreeks },
+      {
+        type: "综合",
+        ...sumCashGreeks(
+          indexData || defaultCashGreeks,
+          etfData || defaultCashGreeks,
+          futureData || defaultCashGreeks
+        )
+      }
     ];
     setItems(combinedData);
-  }, [indexData, etfData]);
+  }, [indexData, etfData, futureData]);
 
 
   const columns = [

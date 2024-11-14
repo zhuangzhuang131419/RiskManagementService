@@ -195,22 +195,30 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
-        if pInvestorPosition is not None:
-            instrument_id: str = pInvestorPosition.InstrumentID
-
-
-            if self.market_data_manager is not None and self.user_memory_manager is not None:
-                full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
-                print(f"full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}")
-                self.user_memory_manager.position[full_symbol] = Position(instrument_id)
-                if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-                    self.user_memory_manager.position[full_symbol].long = int(pInvestorPosition.Position)
-                elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-                    self.user_memory_manager.position[full_symbol].short = int(pInvestorPosition.Position)
-
         if bIsLast:
             self.query_finish[ReqQryInvestorPosition] = True
             print('查询投资者持仓完成')
+
+        if pInvestorPosition is None:
+            return
+
+        instrument_id: str = pInvestorPosition.InstrumentID
+        if instrument_id not in self.market_data_manager.instrument_transform_full_symbol:
+            return
+
+        if self.market_data_manager is None or self.user_memory_manager is None:
+            return
+
+        full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
+        print(f"full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}")
+        self.user_memory_manager.position[full_symbol] = Position(instrument_id)
+        if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
+            self.user_memory_manager.position[full_symbol].long = int(pInvestorPosition.Position)
+        elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
+            self.user_memory_manager.position[full_symbol].short = int(pInvestorPosition.Position)
+
+
+
 
 
 

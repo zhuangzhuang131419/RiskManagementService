@@ -129,6 +129,14 @@ class MarketDataManager:
 
         raise KeyError(f"invalid instrument type: {instrument_id}")
 
+    def get_group_instrument_by_symbol(self, symbol: str) -> Optional[GroupedInstrument]:
+        expired_month = symbol[-8:][:6]
+        underlying_id = symbol[:-8]
+        if underlying_id in UNDERLYING_CATEGORY_MAPPING:
+            return self.grouped_instruments[UNDERLYING_CATEGORY_MAPPING[underlying_id].value + "-" + expired_month]
+        else:
+            return None
+
     def index_volatility_calculator(self):
         while True:
             timestamp = time.time()

@@ -30,7 +30,6 @@ class User:
             raise
         self.user_id = uuid4()
         self.user_name = self.config.get('USER', 'Name')
-        self.is_master = self.config.get('USER', 'Master')
 
         self.exchange_config: Dict[ExchangeType, ExchangeConfig] = {}
 
