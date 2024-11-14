@@ -88,6 +88,8 @@ class CTPManager:
         self.current_user = self.users.get(user_name, None)
         if self.current_user is not None:
             print(f"当前用户切换为：{user_name}")
+            for exchange in self.current_user.exchanges.keys():
+                self.current_user.query_investor_position(exchange, None)
             return True
         else:
             print(f"未找到用户：{user_name}")

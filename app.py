@@ -93,12 +93,6 @@ def init_ctp():
     print('当前订阅指数期权合约月份为：{}'.format(ctp_manager.market_data_manager.index_option_symbol))
     print('当前订阅ETF期权合约月份为：{}'.format(ctp_manager.market_data_manager.etf_option_symbol))
 
-
-    if ctp_manager.current_user is not None:
-        ctp_manager.current_user.query_investor_position(ExchangeType.SE, None, 30)
-    if ctp_manager.current_user is not None:
-        ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX, None, 20)
-
     Thread(target=ctp_manager.market_data_manager.index_volatility_calculator).start()
 
 def main():
