@@ -10,7 +10,7 @@ export type OptionGreeksData = {
     theta: number;
     vanna_vs: number;
     vanna_sv: number;
-
+    position: number;
 };
 
 export type WingModelData = {
