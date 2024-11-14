@@ -36,10 +36,6 @@ class OptionDataProvider implements IOptionDataProvider {
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
-    console.log('symbol' + symbol)
-    // 打印响应状态
-    console.log('Response status: ' + response.status);
-    console.log('Response status text: ' + response.statusText);
 
     // 解析并打印 JSON 数据
     const data = await response.json();
