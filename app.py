@@ -131,8 +131,8 @@ def main():
     # ctp_manager.query_investor_position_detail()
 
     while True:
-        # print(get_position_greeks('51005020241127'))
-        print(ctp_manager.market_data_manager.clock)
+        # print(get_position_greeks('51005020241225'))
+        # print(ctp_manager.market_data_manager.clock)
         # if cffex_option_manager is not None:
             # print(f"{cffex_option_manager.option_series_dict['HO20241115'].imply_price}")
             # print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].call.market_data}")

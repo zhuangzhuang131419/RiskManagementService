@@ -23,6 +23,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
     () => optionDataProvider.fetchFutureGreeksSummary(indexSymbol as string),
     {
       onSuccess(data) {
+        console.log('fetchFutureGreeksSummary' + JSON.stringify(data))
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
       enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
@@ -36,6 +37,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
     () => optionDataProvider.fetchOptionGreeksSummary(indexSymbol as string),
     {
       onSuccess(data) {
+        console.log('fetchOptionGreeksSummary' + JSON.stringify(data))
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
       enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
@@ -44,13 +46,14 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
   );
 
   const { data: etfData } = useQuery(
-    ['optionGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
+    ['optionGreeks', etfSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
     () => optionDataProvider.fetchOptionGreeksSummary(etfSymbol as string),
     {
       onSuccess(data) {
+        console.log('fetchOptionGreeksSummary' + JSON.stringify(data))
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
-      enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
+      enabled: !!etfSymbol,  // 只有当 symbol 存在时才启用查询
       refetchOnWindowFocus: false, // 禁用在窗口获得焦点时重新获取数据
     }
   );
@@ -72,10 +75,8 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
 
       // Use 'keyof CashGreeksResponse' to iterate over valid keys
       for (const key of Object.keys(result) as Array<keyof CashGreeksResponse>) {
-        result[key] = dataItems.reduce((sum, item) => {
-          // Ensure item[key] is not null before adding
-          return sum + (item[key] ?? 0);
-        }, 0);
+
+        result[key] = dataItems.reduce((sum, item) => sum + (item[key] ?? 0), 0);
       }
 
       return result;
