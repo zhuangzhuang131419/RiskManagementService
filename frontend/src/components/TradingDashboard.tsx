@@ -91,7 +91,9 @@ const TradingDashboard: React.FC = () => {
                     <UserInfoTable></UserInfoTable>
                 </Stack.Item>
                 <Stack.Item>
-                    <TopDataBar indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} />
+                    {selectedUserKey !== null && (
+                        <TopDataBar indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} />
+                    )}
                 </Stack.Item>
             </Stack>
 
