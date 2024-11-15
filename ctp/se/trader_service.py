@@ -198,6 +198,17 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             print('delete order map')
             del self.order_map[pTrade.OrderRef]
 
+        # 更新持仓信息
+        self.query_finish['ReqQryInvestorPosition'] = False
+        query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
+        ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
+        if ret == 0:
+            print(f"发送查询投资者持仓请求成功")
+            pass
+        else:
+            print(f"发送查询投资者持仓请求失败")
+            judge_ret(ret)
+
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))

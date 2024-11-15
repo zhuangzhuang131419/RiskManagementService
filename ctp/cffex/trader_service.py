@@ -178,9 +178,21 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             red_print(e)
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
-        print(pTrade.OrderRef)
-        print(pTrade.Price)
-        del self.order_map[pTrade.OrderRef]
+        print(f'OnRtnTrade: OrderRef {pTrade.OrderRef}')
+        if pTrade.OrderRef in self.order_map:
+            print('delete order map')
+            del self.order_map[pTrade.OrderRef]
+
+        # 更新持仓信息
+        self.query_finish['ReqQryInvestorPosition'] = False
+        query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
+        ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
+        if ret == 0:
+            print(f"发送查询投资者持仓请求成功")
+            pass
+        else:
+            print(f"发送查询投资者持仓请求失败")
+            judge_ret(ret)
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
