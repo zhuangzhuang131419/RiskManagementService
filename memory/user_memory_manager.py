@@ -13,3 +13,6 @@ class UserMemoryManager:
         order_ref = str(self.order_ref).zfill(12)
         self.order_ref += 1
         return order_ref
+
+    def refresh_position(self):
+        self.position = {}
