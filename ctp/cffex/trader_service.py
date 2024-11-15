@@ -185,7 +185,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         # 更新持仓信息
         self.query_finish['ReqQryInvestorPosition'] = False
-        query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
+        query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionField()
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
             print(f"发送查询投资者持仓请求成功")
