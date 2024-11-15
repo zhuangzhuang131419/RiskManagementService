@@ -122,7 +122,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 #     print(f'InstrumentID = {pInstrument.InstrumentID}, OptionsType = {pInstrument.OptionsType}, StrikePrice = {pInstrument.StrikePrice} ')
                 option_type = 'C' if int(pInstrument.OptionsType) == 1 else 'P'
                 # print(f"InstrumentID: {pInstrument.InstrumentID}, VolumeMultiple: {pInstrument.VolumeMultiple}")
-                o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, pInstrument.StrikePrice * 10000, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID, pInstrument.VolumeMultiple / 10000)
+                o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, int(pInstrument.StrikePrice * 10000), pInstrument.ExchangeID, pInstrument.UnderlyingInstrID, pInstrument.VolumeMultiple / 10000)
                 self.subscribe_instrument[o.id] = o
 
         if bIsLast:
@@ -153,11 +153,15 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             print('下单成功, 风控通过')
 
     def OnRtnOrder(self, pOrder: CThostFtdcOrderField) -> "void":
+        order_ref = pOrder.OrderRef
         try:
             # 报单已提交
             if pOrder.OrderStatus == 'a':
                 print('报单已提交')
-                self.order_map[pOrder.OrderRef].pOrder = copy.copy(pOrder)
+                if pOrder.OrderRef in self.order_map:
+                    print(pOrder.OrderType)
+                else:
+                    raise ValueError(f"{pOrder.OrderRef} 不存在")
             # 未成交
             elif pOrder.OrderStatus == '3':
                 # print(pOrder.StatusMsg)
@@ -189,7 +193,10 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             red_print(e)
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
-        del self.order_map[pTrade.OrderRef]
+        print(f'OnRtnTrade: OrderRef {pTrade.OrderRef}')
+        if pTrade.OrderRef in self.order_map:
+            print('delete order map')
+            del self.order_map[pTrade.OrderRef]
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:

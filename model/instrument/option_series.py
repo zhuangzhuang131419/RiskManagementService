@@ -1,5 +1,7 @@
+import math
 from datetime import datetime
 from typing import Dict, TypeVar, Generic
+
 
 from helper.helper import count_trading_days, HOLIDAYS, YEAR_TRADING_DAY
 from model.enum.option_type import OptionType
@@ -39,7 +41,7 @@ class OptionSeries:
         self.customized_wing_model_para = WingModelPara()
         end_date = datetime.strptime(self.expired_date, "%Y%m%d").date()
         day_count = count_trading_days(datetime.now().date(), end_date, HOLIDAYS)
-        self.remaining_year = round((day_count - 1) / YEAR_TRADING_DAY, 4)
+        self.remaining_year = max(round((day_count - 1) / YEAR_TRADING_DAY, 4), 1/240)
 
     def get_option(self, strike_price, option_type: OptionType) -> Option:
         if option_type == OptionType.P:

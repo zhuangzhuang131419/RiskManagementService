@@ -119,7 +119,7 @@ class SExchange(Exchange, ABC):
         ret = self.trader_user_api.ReqOrderInsert(order_field, 0)
 
         if ret == 0:
-            print('发送下单请求成功！')
+            print(f'发送下单请求成功！{order_field.OrderRef}')
             self.trader_user_spi.order_map[order_field.OrderRef] = OrderInfo(order_field.OrderRef, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
             # 报单回报里的报单价格和品种数据不对，所以自己记录数据
             self.trader_user_spi.order_map[order_field.OrderRef].order_price = limit_price

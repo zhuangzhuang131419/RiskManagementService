@@ -127,44 +127,6 @@ def main():
     while True:
         # print(get_position_greeks('51005020241225'))
         # print(ctp_manager.market_data_manager.clock)
-        # if cffex_option_manager is not None:
-            # print(f"{cffex_option_manager.option_series_dict['HO20241115'].imply_price}")
-            # print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].call.market_data}")
-            # print(f"{cffex_option_manager.option_series_dict['HO20241115'].strike_price_options[2425].put.market_data}")
-            # k1_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 1]
-            # k2_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 2]
-            # k3_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 3]
-            # k4_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 4]
-            # atm_volatility = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 5]
-            # # atm_vega = ctp_manager.memory.option_manager.index_option_month_atm_volatility[0, 6]
-            # print(f'HO2410的atm相关信息：k1_volatility: {k1_volatility}, k2_volatility: {k2_volatility}, k3_volatility: {k3_volatility}, k4_volatility: {k4_volatility}, atm_volatility: {atm_volatility}, atm_vega: {atm_vega}')
-
-
-
-        # strike_index = 22
-        # strike_price = ctp_manager.memory.option_manager.index_option_market_data[1, 0, strike_index, 0]
-        # timestamp = ctp_manager.memory.option_manager.index_option_market_data[1, 0, strike_index, 1]
-        # bid_price = ctp_manager.memory.option_manager.index_option_market_data[1, 0, strike_index, 2]
-        # bid_volume = ctp_manager.memory.option_manager.index_option_market_data[1, 0, strike_index, 3]
-        # ask_price = ctp_manager.memory.option_manager.index_option_market_data[1, 0, strike_index, 4]
-        # ask_volume = ctp_manager.memory.option_manager.index_option_market_data[1, 0, strike_index, 5]
-        # print(f'HO2411的看涨期权的第23个行权价相关信息：行权价{strike_price}, 时间{timestamp}, 买一价{bid_price}, 买一量{bid_volume}, 卖一价{ask_price}, 卖一量{ask_volume}')
-        # strike_price = ctp_manager.memory.option_manager.index_option_market_data[1, 1, strike_index, 0]
-        # timestamp = ctp_manager.memory.option_manager.index_option_market_data[1, 1, strike_index, 1]
-        # bid_price = ctp_manager.memory.option_manager.index_option_market_data[1, 1, strike_index, 2]
-        # bid_volume = ctp_manager.memory.option_manager.index_option_market_data[1, 1, strike_index, 3]
-        # ask_price = ctp_manager.memory.option_manager.index_option_market_data[1, 1, strike_index, 4]
-        # ask_volume = ctp_manager.memory.option_manager.index_option_market_data[1, 1, strike_index, 5]
-        # print(f'HO2411的看跌期权的第23个行权价相关信息：行权价{strike_price}, 时间{timestamp}, 买一价{bid_price}, 买一量{bid_volume}, 卖一价{ask_price}, 卖一量{ask_volume}')
-        # i = 0
-        # call_delta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 1]
-        # put_delta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 2]
-        # gamma = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 3]
-        # vega = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 4]
-        # call_theta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 5]
-        # put_theta = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 6]
-        # vanna_vs = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 7]
-        # vanna_sv = ctp_manager.memory.option_manager.index_option_month_greeks[1, i, 8]
         # print(f'HO2411的看涨期权的第一个行权价Greeks相关信息：delta{call_delta}, gamma{gamma}, vega{vega}, theta{call_theta}')
         # print(
         #     f'HO2411的看跌期权的第一个行权价Greeks相关信息：delta{put_delta}, gamma{gamma}, vega{vega}, theta{put_theta}')

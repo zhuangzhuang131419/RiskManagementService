@@ -20,7 +20,7 @@ def validate_option_id(instrument_id):
 
 class Option(Instrument):
     option_type: str
-    strike_price: float
+    strike_price: int
     symbol: str
 
     def __init__(self, instrument_id: str, expired_date: str, exchange_id: str, underlying_multiple: float):
@@ -38,10 +38,10 @@ class Option(Instrument):
 
 
 class ETFOption(Option):
-    def __init__(self, instrument_id: str, expired_date: str, option_type: str, strike_price: str, exchange_id: str, underlying_instr_id: str, underlying_multiple: float):
+    def __init__(self, instrument_id: str, expired_date: str, option_type: str, strike_price: int, exchange_id: str, underlying_instr_id: str, underlying_multiple: float):
         super().__init__(instrument_id, expired_date, exchange_id, underlying_multiple)
         self.option_type = option_type
-        self.strike_price = float(strike_price)
+        self.strike_price = strike_price
         self.symbol = underlying_instr_id + expired_date
         self.full_symbol = self.symbol + "-" + self.option_type + "-" + str(strike_price)
         if underlying_instr_id in UNDERLYING_CATEGORY_MAPPING:
@@ -60,7 +60,7 @@ class IndexOption(Option):
         super().__init__(instrument_id, expired_date, exchange_id, underlying_multiple)
         if validate_option_id(instrument_id):
             self.option_type = instrument_id[7]
-            self.strike_price = float(instrument_id.split('-')[-1])
+            self.strike_price = int(instrument_id.split('-')[-1])
             self.symbol = instrument_id[:2] + expired_date
             self.full_symbol = self.symbol + "-" + self.option_type + "-" + str(self.strike_price)
             self.category = UNDERLYING_CATEGORY_MAPPING[instrument_id[:2]]
