@@ -43,12 +43,30 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style }) => {
     },
   };
 
+  const formatPercentage = (value: number | null): string =>
+    value !== null ? `${(value * 100).toFixed(2)}%` : '--';
+
   const columns = [
-    { key: 'atmVol', name: 'ATM波动率', fieldName: 'atm_vol', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'k1', name: 'K1', fieldName: 'k1', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'k2', name: 'K2', fieldName: 'k2', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'b', name: 'b', fieldName: 'b', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'atmAvailable', name: 'ATM 可用性', fieldName: 'atm_available', minWidth: 100, maxWidth: 150, isResizable: true },
+    {
+      key: 'atmVol', name: 'ATM波动率', fieldName: 'atm_vol', minWidth: 100, maxWidth: 150, isResizable: true,
+      onRender: (item: WingModelData) => <span>{formatPercentage(item.atm_vol)}</span>
+    },
+    {
+      key: 'k1', name: 'K1', fieldName: 'k1', minWidth: 100, maxWidth: 150, isResizable: true,
+      onRender: (item: WingModelData) => <span>{formatPercentage(item.k1)}</span>
+    },
+    {
+      key: 'k2', name: 'K2', fieldName: 'k2', minWidth: 100, maxWidth: 150, isResizable: true,
+      onRender: (item: WingModelData) => <span>{formatPercentage(item.k2)}</span>
+    },
+    {
+      key: 'b', name: 'b', fieldName: 'b', minWidth: 100, maxWidth: 150, isResizable: true,
+      onRender: (item: WingModelData) => <span>{formatPercentage(item.b)}</span>
+    },
+    {
+      key: 'atmAvailable', name: 'ATM 可用性', fieldName: 'atm_available', minWidth: 100, maxWidth: 150, isResizable: true,
+      onRender: (item: WingModelData) => <span>{item.atm_available ? 'Yes' : 'No'}</span>
+    },
   ];
 
   return (

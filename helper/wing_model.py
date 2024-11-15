@@ -115,7 +115,7 @@ def v_vannasv(flag, S, K, t, r, v, q, k1, k2, b):
     return v_delta(flag, S, K, t, r, v+0.005, q, k1, k2, b)- v_delta(flag, S, K, t, r, v-0.005, q, k1, k2, b)
 
 def v_vannavs(flag, S, K, t, r, v, q, k1, k2, b):
-    return v_vega(flag, S+0.5, K, t, r, v, q, k1, k2, b)-v_vega(flag, S-0.5, K, t, r, v, q, k1, k2, b)
+    return v_vega(flag, S*1.005, K, t, r, v, q, k1, k2, b)-v_vega(flag, S*0.995, K, t, r, v, q, k1, k2, b)
 
 def v_vomma(flag, S, K, t, r, v, q, k1, k2, b):
     return v_vega(flag, S, K, t, r, v+0.005, q, k1, k2, b) - v_vega(flag, S, K, t, r, v-0.005, q, k1, k2, b)

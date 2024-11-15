@@ -30,6 +30,8 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
                         callTheta: strikeData.call_option.theta,
                         callVanna_sv: strikeData.call_option.vanna_sv,
                         callVanna_vs: strikeData.call_option.vanna_vs,
+                        callDb: strikeData.call_option.db,
+                        callDkurt: strikeData.call_option.dkurt,
                         putDelta: strikeData.put_option.delta,
                         putPosition: strikeData.put_option.position,
                         putGamma: strikeData.put_option.gamma,
@@ -37,6 +39,8 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
                         putTheta: strikeData.put_option.theta,
                         putVanna_sv: strikeData.put_option.vanna_sv,
                         putVanna_vs: strikeData.put_option.vanna_vs,
+                        putDb: strikeData.put_option.db,
+                        putDkurt: strikeData.put_option.dkurt,
                     };
                 });
 
@@ -70,8 +74,8 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
         { key: 'vega', name: 'Vega', fieldName: 'callVega', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'callTheta', name: 'Call Theta', fieldName: 'callTheta', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'putTheta', name: 'Put Theta', fieldName: 'putTheta', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'vanna_vs', name: 'Vanna vs', fieldName: 'callVanna_vs', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'vanna_sv', name: 'Vanna sv', fieldName: 'callVanna_sv', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'db', name: 'db', fieldName: 'callDb', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'dkurt', name: 'dkurt', fieldName: 'callDkurt', minWidth: 10, maxWidth: 80, isResizable: true },
     ];
 
     const scrollBoxStyles = {

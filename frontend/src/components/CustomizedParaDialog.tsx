@@ -51,8 +51,19 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
         }
     );
 
+    const renderItem = (symbol: string) => {
+        const prefix = symbol.slice(0, symbol.length - 8);
+        const year = symbol.slice(symbol.length - 8, symbol.length - 6);
+        const month = symbol.slice(symbol.length - 6, symbol.length - 4);
+        return `${prefix}${year}${month}`;
+    }
+
     const columns: IColumn[] = [
-        { key: 'symbol', name: '品种', fieldName: 'symbol', minWidth: 100 },
+        {
+            key: 'symbol', name: '品种', fieldName: 'symbol', minWidth: 100, onRender: (item, index?: number) => (
+                <div>{renderItem(item.symbol)}</div> // Custom rendering for each row item
+            ),
+        },
         { key: 'v', name: 'v', fieldName: 'v', minWidth: 50 },
         { key: 'k1', name: 'k1', fieldName: 'k1', minWidth: 50 },
         { key: 'k2', name: 'k2', fieldName: 'k2', minWidth: 50 },

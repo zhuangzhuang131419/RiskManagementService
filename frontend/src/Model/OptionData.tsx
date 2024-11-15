@@ -10,6 +10,8 @@ export type OptionGreeksData = {
     theta: number;
     vanna_vs: number;
     vanna_sv: number;
+    db: number;
+    dkurt: number;
     position: number;
 };
 

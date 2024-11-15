@@ -104,22 +104,33 @@ const TradingDashboard: React.FC = () => {
                 {/* 左侧：ScrollBox */}
                 <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
                     {!isIndexOptionFetching && (
-                        <Stack styles={{ root: { height: '30%', overflowY: 'auto' } }}>
+                        <Stack styles={{ root: { height: '30%' } }}>
+                            <Text>指数期权</Text>
                             <ScrollBox
                                 items={indexOptionItems as { key: string }[]}
                                 onClick={setSelectedIndexOption}
-                                renderItem={(item) => item.key}
+                                renderItem={(item) => {
+                                    const prefix = item.key.slice(0, item.key.length - 8);
+                                    const year = item.key.slice(item.key.length - 8, item.key.length - 6);
+                                    const month = item.key.slice(item.key.length - 6, item.key.length - 4);
+                                    return `${prefix}${year}${month}`;
+                                }}
                                 title='指数期权'
                                 selectedItemKey={selectedIndexOption}
                             />
                         </Stack>
                     )}
                     {!isETFOptionFetching && (
-                        <Stack styles={{ root: { height: '30%', overflowY: 'auto' } }}>
+                        <Stack styles={{ root: { height: '30%' } }}>
                             <ScrollBox
                                 items={etfOptionItems as { key: string }[]}
                                 onClick={setSelectedETF}
-                                renderItem={(item) => item.key}
+                                renderItem={(item) => {
+                                    const prefix = item.key.slice(0, item.key.length - 8);
+                                    const year = item.key.slice(item.key.length - 8, item.key.length - 6);
+                                    const month = item.key.slice(item.key.length - 6, item.key.length - 4);
+                                    return `${prefix}${year}${month}`;
+                                }}
                                 title='ETF期权'
                                 selectedItemKey={selectedETFOption}
                             />

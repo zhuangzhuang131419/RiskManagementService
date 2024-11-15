@@ -1,4 +1,4 @@
-import { DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, DetailsRow, IDetailsRowStyles, Selection } from '@fluentui/react';
+import { DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, DetailsRow, IDetailsRowStyles, Selection, DetailsHeader, IRenderFunction, IDetailsHeaderProps, IDetailsListStyles, mergeStyleSets } from '@fluentui/react';
 import React, { useEffect, useState } from 'react';
 
 // 定义 ScrollBox 的通用 Props
@@ -13,14 +13,6 @@ interface ScrollBoxProps<T> {
 const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, title, selectedItemKey }: ScrollBoxProps<T>) => {
 
   const [selectedItem, setSelectedItem] = useState<string | null>(selectedItemKey);
-
-  // 自定义样式：只允许上下滚动
-  const scrollBoxStyle: React.CSSProperties = {
-    maxHeight: '100%', // 限制高度以产生滚动条
-    maxWidth: '100%',
-    overflowY: 'auto',  // 只允许上下滚动
-    overflowX: 'hidden', // 禁止左右滚动
-  };
 
   const columns: IColumn[] = [
     {
@@ -59,18 +51,24 @@ const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, titl
     },
   });
 
+  const gridStyles: Partial<IDetailsListStyles> = {
+    root: {
+      overflowX: 'hidden', // 禁止左右滚动
+      overflowY: 'auto',
+    }
+  };
+
   return (
-    <div style={scrollBoxStyle}>
-      <DetailsList
-        items={items}
-        columns={columns}
-        layoutMode={DetailsListLayoutMode.justified}
-        selectionMode={SelectionMode.single}
-        selection={selection}
-        selectionPreservedOnEmptyClick={true}
-        compact={true}
-      />
-    </div>
+    <DetailsList
+      items={items}
+      columns={columns}
+      layoutMode={DetailsListLayoutMode.justified}
+      selectionMode={SelectionMode.single}
+      selection={selection}
+      selectionPreservedOnEmptyClick={true}
+      compact={true}
+      styles={gridStyles}
+    />
   );
 };
 

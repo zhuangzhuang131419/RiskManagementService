@@ -205,20 +205,22 @@ def get_option_greeks():
         put_theta = option_tuple.put.greeks.theta
         vanna_vs = option_tuple.call.greeks.vanna_vs
         vanna_sv = option_tuple.call.greeks.vanna_sv
+        db = option_tuple.call.greeks.db
+        dkurt = (option_tuple.call.greeks.dk1 + option_tuple.call.greeks.dk2) / 2
 
         net_position = 0
         if ctp_manager.current_user is not None and option_tuple.call.full_symbol in ctp_manager.current_user.user_memory.position:
             position = ctp_manager.current_user.user_memory.position[option_tuple.call.full_symbol]
             net_position = position.long - position.short
 
-        call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, position=net_position)
+        call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position)
 
         net_position = 0
         if ctp_manager.current_user is not None and option_tuple.put.full_symbol in ctp_manager.current_user.user_memory.position:
             position = ctp_manager.current_user.user_memory.position[option_tuple.put.full_symbol]
             net_position = position.long - position.short
 
-        put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, position=net_position)
+        put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position)
         resp.strike_prices[strike_price] = StrikePrices(call_option, put_option)
 
 
@@ -433,7 +435,7 @@ def get_position_greeks(symbol: str):
     db_cash = db * cash_multiplier
     charm_cash = charm * cash_multiplier
     vanna_vs_cash = vanna_vs * cash_multiplier
-    vanna_sv_cash = vanna_sv * cash_multiplier
+    vanna_sv_cash = vanna_sv * option_series.wing_model_para.S * cash_multiplier
     dkurt_cash = dkurt * cash_multiplier
 
     resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash)
