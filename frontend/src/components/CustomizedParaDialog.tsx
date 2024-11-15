@@ -23,7 +23,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
 
     const [rows, setRows] = useState<ICustomizedParaItem[]>([])
 
-    let updatedRows: ICustomizedParaItem[] = []
+    const [updatedRows, setUpdatedRows] = useState<ICustomizedParaItem[]>([])
 
     const [notification, setNotification] = useState<{ message: string; type: MessageBarType } | null>(null);
 
@@ -45,7 +45,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
                 return rows;
             },
             onSuccess(data) {
-                console.log('onsuccess:' + JSON.stringify(data))
+                console.log('fetchWingModelPara onsuccess:' + JSON.stringify(data))
                 setRows(data)
             },
         }
@@ -60,6 +60,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
     ];
 
     const onhandleComfirm = async () => {
+        console.log('updatedRows:' + JSON.stringify(updatedRows))
 
         const para: { [key: string]: WingModelData } = updatedRows.reduce((acc, item) => {
             acc[item.symbol] = {
@@ -82,7 +83,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
         } catch (error) {
             setNotification({ message: "Failed to send data", type: MessageBarType.error });
         } finally {
-            updatedRows = []
+            setUpdatedRows([])
             refresh();
             setTimeout(() => setNotification(null), 3000); // 3秒后消失
         }
@@ -110,7 +111,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
         } catch (error) {
             setNotification({ message: "Failed to send data", type: MessageBarType.error });
         } finally {
-            updatedRows = []
+            setUpdatedRows([])
             refresh()
         }
     }
@@ -170,7 +171,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
                                         defaultValue={String(item[fieldName])}
                                         onChange={(e, newValue) => {
                                             updatedRows[index as number] = { ...updatedRows[index as number], [fieldName]: newValue, symbol: rows[index as number].symbol };
-                                            rows[index as number] = { ...updatedRows[index as number], [fieldName]: newValue };
+                                            rows[index as number] = { ...rows[index as number], [fieldName]: newValue };
                                         }}
                                         disabled={fieldName === 'symbol'}
                                     />

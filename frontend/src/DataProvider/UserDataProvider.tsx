@@ -14,7 +14,6 @@ class UserDataProvider implements IUserDataProvider {
         if (!response.ok) {
             throw new Error('Failed to fetch clock');
         }
-        console.log(response);
         return response.json();
     }
     fetchUsers = async (): Promise<User[]> => {

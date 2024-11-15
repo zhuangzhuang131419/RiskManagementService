@@ -196,7 +196,7 @@ def get_option_greeks():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     resp = OptionGreeksResp(symbol)
-    for strike_price, option_tuple in ctp_manager.current_user.market_data_memory.option_market_data[symbol].strike_price_options.items():
+    for strike_price, option_tuple in ctp_manager.market_data_manager.option_market_data[symbol].strike_price_options.items():
         call_delta = option_tuple.call.greeks.delta
         put_delta = option_tuple.put.greeks.delta
         gamma = option_tuple.call.greeks.gamma
@@ -205,8 +205,20 @@ def get_option_greeks():
         put_theta = option_tuple.put.greeks.theta
         vanna_vs = option_tuple.call.greeks.vanna_vs
         vanna_sv = option_tuple.call.greeks.vanna_sv
-        call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
-        put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv)
+
+        net_position = 0
+        if ctp_manager.current_user is not None and option_tuple.call.full_symbol in ctp_manager.current_user.user_memory.position:
+            position = ctp_manager.current_user.user_memory.position[option_tuple.call.full_symbol]
+            net_position = position.long - position.short
+
+        call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, position=net_position)
+
+        net_position = 0
+        if ctp_manager.current_user is not None and option_tuple.put.full_symbol in ctp_manager.current_user.user_memory.position:
+            position = ctp_manager.current_user.user_memory.position[option_tuple.put.full_symbol]
+            net_position = position.long - position.short
+
+        put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, position=net_position)
         resp.strike_prices[strike_price] = StrikePrices(call_option, put_option)
 
 
@@ -344,7 +356,7 @@ def get_greek_summary_by_option_symbol():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     if ctp_manager.current_user is None:
-        return jsonify({"error not set user"})
+        return jsonify({"error": f"error not set user"}), 404
     # Convert each data instance to a dictionary and return as JSON
     return jsonify(get_position_greeks(symbol))
 
@@ -355,7 +367,7 @@ def get_greek_summary_by_future_symbol():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     if ctp_manager.current_user is None:
-        return jsonify({"error not set user"})
+        return jsonify({"error": f"error not set user"}), 404
 
     group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
     if group_instrument is not None and group_instrument.future is not None:

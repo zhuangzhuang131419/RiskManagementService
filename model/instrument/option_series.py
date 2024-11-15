@@ -20,7 +20,7 @@ class OptionSeries:
         :param options: 期权对象列表，包含该系列的所有期权。
         """
         self.symbol = symbol # 期权名字，例如 'HO2410' '005020241225'
-        self.strike_price_options: Dict[float, OptionTuple()] = {}
+        self.strike_price_options: Dict[float, OptionTuple] = {}
         self.expired_date = symbol[-8:]
 
         for option in options:

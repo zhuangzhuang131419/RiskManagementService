@@ -23,6 +23,7 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
                     // console.log('Response data: ', strikeData);
                     return {
                         strikePrice, // 行权价格
+                        callPosition: strikeData.call_option.position,
                         callDelta: strikeData.call_option.delta,
                         callGamma: strikeData.call_option.gamma,
                         callVega: strikeData.call_option.vega,
@@ -30,6 +31,7 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
                         callVanna_sv: strikeData.call_option.vanna_sv,
                         callVanna_vs: strikeData.call_option.vanna_vs,
                         putDelta: strikeData.put_option.delta,
+                        putPosition: strikeData.put_option.position,
                         putGamma: strikeData.put_option.gamma,
                         putVega: strikeData.put_option.vega,
                         putTheta: strikeData.put_option.theta,
@@ -61,6 +63,8 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
     // 设置列
     const columns: IColumn[] = [
         { key: 'strikePrice', name: 'Strike Price', fieldName: 'strikePrice', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'callPosition', name: 'Call Position', fieldName: 'callPosition', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'putPosition', name: 'Put Position', fieldName: 'putPosition', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'callDelta', name: 'Call Delta', fieldName: 'callDelta', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'putDelta', name: 'Put Delta', fieldName: 'putDelta', minWidth: 10, maxWidth: 80, isResizable: true },
         { key: 'vega', name: 'Vega', fieldName: 'callVega', minWidth: 10, maxWidth: 80, isResizable: true },
