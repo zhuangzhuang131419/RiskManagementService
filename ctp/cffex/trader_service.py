@@ -185,7 +185,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         # 更新持仓信息
         self.user_memory_manager.refresh_position()
-        self.query_finish['ReqQryInvestorPosition'] = False
+        self.query_finish[ReqQryInvestorPosition] = False
         query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionField()
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:

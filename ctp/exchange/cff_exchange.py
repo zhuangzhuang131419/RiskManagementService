@@ -3,6 +3,7 @@ from abc import ABC
 
 from ctp.cffex.market_data_service import MarketDataService
 from ctp.cffex.trader_service import TraderService
+from helper.api import ReqQryInstrument, ReqQryInvestorPosition
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
@@ -117,7 +118,7 @@ class CFFExchange(Exchange, ABC):
 
     # 查询合约
     def query_instrument(self):
-        self.trader_user_spi.query_finish['ReqQryInstrument'] = False
+        self.trader_user_spi.query_finish[ReqQryInstrument] = False
         query_file = ThostFtdcApi.CThostFtdcQryInstrumentField()
         query_file.ExchangeID = self.type.name
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
@@ -146,7 +147,7 @@ class CFFExchange(Exchange, ABC):
 
 
     def query_investor_position(self, instrument_id):
-        self.trader_user_spi.query_finish['ReqQryInvestorPosition'] = False
+        self.trader_user_spi.query_finish[ReqQryInvestorPosition] = False
         query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionField()
         if instrument_id is not None:
             query_file.InstrumentID = instrument_id
