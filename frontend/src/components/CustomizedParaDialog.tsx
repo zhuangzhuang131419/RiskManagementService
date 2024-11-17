@@ -53,8 +53,8 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
 
     const renderItem = (symbol: string) => {
         const prefix = symbol.slice(0, symbol.length - 8);
-        const year = symbol.slice(symbol.length - 8, symbol.length - 6);
-        const month = symbol.slice(symbol.length - 6, symbol.length - 4);
+        const year = symbol.slice(symbol.length - 6, symbol.length - 4);
+        const month = symbol.slice(symbol.length - 4, symbol.length - 2);
         return `${prefix}${year}${month}`;
     }
 

@@ -110,8 +110,8 @@ const TradingDashboard: React.FC = () => {
                                 onClick={setSelectedIndexOption}
                                 renderItem={(item) => {
                                     const prefix = item.key.slice(0, item.key.length - 8);
-                                    const year = item.key.slice(item.key.length - 8, item.key.length - 6);
-                                    const month = item.key.slice(item.key.length - 6, item.key.length - 4);
+                                    const year = item.key.slice(item.key.length - 6, item.key.length - 4);
+                                    const month = item.key.slice(item.key.length - 4, item.key.length - 2);
                                     return `${prefix}${year}${month}`;
                                 }}
                                 title='指数期权'
@@ -126,9 +126,9 @@ const TradingDashboard: React.FC = () => {
                                 onClick={setSelectedETF}
                                 renderItem={(item) => {
                                     const prefix = item.key.slice(0, item.key.length - 8);
-                                    const year = item.key.slice(item.key.length - 8, item.key.length - 6);
-                                    const month = item.key.slice(item.key.length - 6, item.key.length - 4);
-                                    return `${prefix}${year}${month}`;
+                                    const year = item.key.slice(item.key.length - 6, item.key.length - 4);
+                                    const month = item.key.slice(item.key.length - 4, item.key.length - 2);
+                                    return `${prefix}-${year}${month}`;
                                 }}
                                 title='ETF期权'
                                 selectedItemKey={selectedETFOption}
