@@ -25,6 +25,8 @@ class OptionGreeksData:
             "theta": self.theta,
             "vanna_vs": self.vanna_vs,
             "vanna_sv": self.vanna_vs,
+            "dkurt": self.dkurt,
+            "db": self.db,
             "position": self.position
         }
 

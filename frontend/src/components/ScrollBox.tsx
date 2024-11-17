@@ -55,7 +55,13 @@ const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, titl
     root: {
       overflowX: 'hidden', // 禁止左右滚动
       overflowY: 'auto',
-    }
+      height: '100%'
+    },
+    headerWrapper: {
+      position: 'sticky', // 表头固定
+      top: 0, // 距顶部的距离
+      zIndex: 1, // 确保表头在内容上方
+    },
   };
 
   return (

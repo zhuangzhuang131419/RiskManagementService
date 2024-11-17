@@ -39,9 +39,7 @@ class OptionSeries:
         self.atm_volatility = ATMVolatility()
         self.wing_model_para = WingModelPara()
         self.customized_wing_model_para = WingModelPara()
-        end_date = datetime.strptime(self.expired_date, "%Y%m%d").date()
-        day_count = count_trading_days(datetime.now().date(), end_date, HOLIDAYS)
-        self.remaining_year = max(round((day_count - 1) / YEAR_TRADING_DAY, 4), 1/240)
+
 
     def get_option(self, strike_price, option_type: OptionType) -> Option:
         if option_type == OptionType.P:

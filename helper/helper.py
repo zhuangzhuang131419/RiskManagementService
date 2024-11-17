@@ -1,7 +1,4 @@
 import datetime
-
-from unicodedata import category
-
 from model.enum.category import UNDERLYING_CATEGORY_MAPPING
 from model.enum.option_type import OptionType
 from model.instrument.option import validate_option_id
@@ -128,6 +125,39 @@ def count_trading_days(start_date, end_date, holidays_list) -> int:
         current_date += datetime.timedelta(days=1)
     return working_days
 
+
+def inter_daytime(total_trading_days: int) -> float:
+    # Base calculation
+    unit_year_daytime = 0.8 / total_trading_days
+    now = datetime.datetime.now()
+
+    # Stock market hours
+    stock_time_am_open = datetime.datetime(now.year, now.month, now.day, 9, 30)
+    # stocktime_amclose = datetime.datetime(now.year, now.month, now.day, 11, 30)
+    # stocktime_pmopen = datetime.datetime(now.year, now.month, now.day, 13, 0)
+    # stocktime_pmclose = datetime.datetime(now.year, now.month, now.day, 15, 0)
+
+    # Time difference in minutes from the open
+    delta_time = (now - stock_time_am_open).total_seconds() / 60
+
+    if delta_time < 0:
+        # Before market opens
+        unit_year_daytime = 0.8 / total_trading_days
+    elif 0 <= delta_time < 120:
+        # Morning session
+        unit_year_daytime = ((120 - delta_time) / 240 + 0.5) * 0.8 / total_trading_days
+    elif 120 <= delta_time < 210:
+        # Lunch break
+        unit_year_daytime = 0.4 / total_trading_days
+    elif 210 <= delta_time < 330:
+        # Afternoon session
+        unit_year_daytime = (330 - delta_time) / 240 * 0.8 / total_trading_days
+    else:
+        # After market closes
+        unit_year_daytime = 0
+
+    return unit_year_daytime
+
 def count_sundays(start_date, end_date):
     """
     :param start_date:
@@ -171,6 +201,7 @@ def print_swing_fields(obj):
 
 
 if __name__ == '__main__':
+    print(f"{inter_daytime(YEAR_TRADING_DAY)}")
     print(f'2503-P-4400:{filter_index_option("2503-P-4400")}')
     print(f'2503-P-4400:{filter_index_future("2503-P-4400")}')
     print(f'2412-C-3800:{filter_index_future("2412-C-3800")}')

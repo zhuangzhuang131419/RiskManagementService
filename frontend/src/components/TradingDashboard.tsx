@@ -105,7 +105,6 @@ const TradingDashboard: React.FC = () => {
                 <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
                     {!isIndexOptionFetching && (
                         <Stack styles={{ root: { height: '30%' } }}>
-                            <Text>指数期权</Text>
                             <ScrollBox
                                 items={indexOptionItems as { key: string }[]}
                                 onClick={setSelectedIndexOption}
