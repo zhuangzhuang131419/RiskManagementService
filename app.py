@@ -93,7 +93,7 @@ def init_ctp():
     print('当前订阅指数期权合约月份为：{}'.format(ctp_manager.market_data_manager.index_option_symbol))
     print('当前订阅ETF期权合约月份为：{}'.format(ctp_manager.market_data_manager.etf_option_symbol))
 
-    Thread(target=ctp_manager.market_data_manager.index_volatility_calculator).start()
+
 
 def main():
 

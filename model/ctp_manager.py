@@ -57,6 +57,36 @@ class CTPManager:
         self.init_user(user_config_path)
         self.connect_trader()
 
+        Thread(target=self.market_data_manager.index_volatility_calculator).start()
+        Thread(target=self.run_daily_job).start()
+
+    def run_daily_job(self):
+        while True:
+            now = datetime.datetime.now()
+            # 设置目标时间为今天的 9 点
+            target_time = now.replace(hour=8, minute=0, second=0, microsecond=0)
+
+            # 如果当前时间已经过了目标时间，则设为明天的 9 点
+            if now > target_time:
+                target_time += datetime.timedelta(days=1)
+
+            # 计算需要等待的时间（秒）
+            wait_time = (target_time - now).total_seconds()
+
+            print(f"距离下一次执行还有 {wait_time} 秒")
+
+            # 等待直到目标时间
+            time.sleep(wait_time)
+
+            print(f"执行daily job")
+
+            # 执行 daily_job
+            self.market_data_manager.refresh()
+            self.market_data_user.query_instrument()
+            self.market_data_user.init_market_memory()
+            self.market_data_user.subscribe_market_data()
+
+
 
     def init_user(self, user_config_path):
 

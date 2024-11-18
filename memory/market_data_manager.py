@@ -35,7 +35,6 @@ class MarketDataManager:
     def __init__(self):
         # 期权链
         self.option_market_data: Dict[str, OptionSeries] = {}
-        self.greeks_lock = threading.Lock()
         self.index_option_symbol: List = []
         self.etf_option_symbol: List = []
 
@@ -55,6 +54,20 @@ class MarketDataManager:
 
         # 同步时钟
         self.clock: str = time.strftime('%H:%M:%S', time.localtime(time.time()))
+
+    def refresh(self):
+        # Option
+        self.option_market_data = {}
+        self.index_option_symbol = []
+        self.etf_option_symbol: List = []
+
+        # Future
+        self.index_futures_dict: Dict[str, Future] = {}
+        self.index_future_symbol = []
+
+        self.instrument_transform_full_symbol: Dict[str, str] = {}
+        self.grouped_instruments: Dict[str, GroupedInstrument] = {}
+
 
 
     def add_index_future(self, index_futures: List[Future]):
