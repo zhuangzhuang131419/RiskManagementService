@@ -114,7 +114,7 @@ const TradingDashboard: React.FC = () => {
                                     const month = item.key.slice(item.key.length - 4, item.key.length - 2);
                                     return `${prefix}${year}${month}`;
                                 }}
-                                title='指数期权'
+                                title='Index期权'
                                 selectedItemKey={selectedIndexOption}
                             />
                         </Stack>
