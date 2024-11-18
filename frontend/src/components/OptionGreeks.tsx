@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
-import { Stack, DetailsList, IColumn, Text, SelectionMode } from '@fluentui/react';
+import { Stack, DetailsList, IColumn, Text, SelectionMode, IDetailsListStyles } from '@fluentui/react';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 
 interface OptionGreeksProps {
     symbol: string | null;
-    style?: React.CSSProperties;
 }
 
-const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
+const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
 
     const [items, setItems] = useState<any[]>([]);
 
@@ -32,6 +31,8 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
                         callVanna_vs: strikeData.call_option.vanna_vs,
                         callDb: strikeData.call_option.db,
                         callDkurt: strikeData.call_option.dkurt,
+                        callBid: strikeData.call_option.bid,
+                        callAsk: strikeData.call_option.ask,
                         putDelta: strikeData.put_option.delta,
                         putPosition: strikeData.put_option.position,
                         putGamma: strikeData.put_option.gamma,
@@ -41,6 +42,8 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
                         putVanna_vs: strikeData.put_option.vanna_vs,
                         putDb: strikeData.put_option.db,
                         putDkurt: strikeData.put_option.dkurt,
+                        putBid: strikeData.put_option.bid,
+                        putAsk: strikeData.put_option.ask,
                     };
                 });
 
@@ -66,36 +69,43 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol, style }) => {
 
     // 设置列
     const columns: IColumn[] = [
-        { key: 'strikePrice', name: 'Strike Price', fieldName: 'strikePrice', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'callPosition', name: 'Call Position', fieldName: 'callPosition', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'putPosition', name: 'Put Position', fieldName: 'putPosition', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'callDelta', name: 'Call Delta', fieldName: 'callDelta', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'putDelta', name: 'Put Delta', fieldName: 'putDelta', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'vega', name: 'Vega', fieldName: 'callVega', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'callTheta', name: 'Call Theta', fieldName: 'callTheta', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'putTheta', name: 'Put Theta', fieldName: 'putTheta', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'db', name: 'db', fieldName: 'callDb', minWidth: 10, maxWidth: 80, isResizable: true },
-        { key: 'dkurt', name: 'dkurt', fieldName: 'callDkurt', minWidth: 10, maxWidth: 80, isResizable: true },
+        { key: 'strikePrice', name: '行权价', fieldName: 'strikePrice', minWidth: 10, maxWidth: 50, isResizable: true },
+        { key: 'callPosition', name: 'Call持仓', fieldName: 'callPosition', minWidth: 10, maxWidth: 60, isResizable: true },
+        { key: 'putPosition', name: 'Put持仓', fieldName: 'putPosition', minWidth: 10, maxWidth: 60, isResizable: true },
+        { key: 'callDelta', name: 'Delta.C', fieldName: 'callDelta', minWidth: 10, maxWidth: 50, isResizable: true },
+        { key: 'putDelta', name: 'Delta.P', fieldName: 'putDelta', minWidth: 10, maxWidth: 50, isResizable: true },
+        { key: 'vega', name: 'Vega', fieldName: 'callVega', minWidth: 10, maxWidth: 50, isResizable: true },
+        { key: 'callTheta', name: 'Theta.C', fieldName: 'callTheta', minWidth: 10, maxWidth: 50, isResizable: true },
+        { key: 'putTheta', name: 'Theta.P', fieldName: 'putTheta', minWidth: 10, maxWidth: 50, isResizable: true },
+        { key: 'db', name: 'db', fieldName: 'callDb', minWidth: 10, maxWidth: 50, isResizable: true },
+        { key: 'dkurt', name: 'dkurt', fieldName: 'callDkurt', minWidth: 10, maxWidth: 50, isResizable: true },
+        { key: 'callbid', name: '买一价.C', fieldName: 'callBid', minWidth: 10, maxWidth: 60, isResizable: true },
+        { key: 'callask', name: '卖一价.C', fieldName: 'callAsk', minWidth: 10, maxWidth: 60, isResizable: true },
+        { key: 'putbid', name: '买一价.P', fieldName: 'putBid', minWidth: 10, maxWidth: 60, isResizable: true },
+        { key: 'putask', name: '卖一价.P', fieldName: 'putAsk', minWidth: 10, maxWidth: 60, isResizable: true },
     ];
 
-    const scrollBoxStyles = {
+    const gridStyles: Partial<IDetailsListStyles> = {
         root: {
-            overflowX: 'hidden', // 禁用水平滚动
-            overflowY: 'auto', // 垂直滚动
-            maxHeight: '100%', // 限制高度以产生滚动条
-            maxWidth: '100%',
+            overflowX: 'auto', // 禁止左右滚动
+            overflowY: 'auto',
+            height: '100%',
+            width: '100%',
+        },
+        headerWrapper: {
+            position: 'sticky', // 表头固定
+            top: 0, // 距顶部的距离
+            zIndex: 1, // 确保表头在内容上方
         },
     };
 
     return (
-        <div style={{ ...style }}>
-            <DetailsList
-                items={items}
-                columns={columns}
-                selectionMode={SelectionMode.none}
-                styles={scrollBoxStyles}
-            />
-        </div>
+        <DetailsList
+            items={items}
+            columns={columns}
+            selectionMode={SelectionMode.none}
+            styles={gridStyles}
+        />
     );
 };
 

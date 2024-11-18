@@ -213,14 +213,14 @@ def get_option_greeks():
             position = ctp_manager.current_user.user_memory.position[option_tuple.call.full_symbol]
             net_position = position.long - position.short
 
-        call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position)
+        call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position, ask=option_tuple.call.market_data.ask_prices[0], bid=option_tuple.call.market_data.bid_prices[0])
 
         net_position = 0
         if ctp_manager.current_user is not None and option_tuple.put.full_symbol in ctp_manager.current_user.user_memory.position:
             position = ctp_manager.current_user.user_memory.position[option_tuple.put.full_symbol]
             net_position = position.long - position.short
 
-        put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position)
+        put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position, ask=option_tuple.put.market_data.ask_prices[0], bid=option_tuple.put.market_data.bid_prices[0])
         resp.strike_prices[strike_price] = StrikePrices(call_option, put_option)
 
 

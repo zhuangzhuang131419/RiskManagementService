@@ -7,11 +7,10 @@ import CustomizedModel from './CustomizedParaDialog';
 
 interface WingModelProps {
   symbol: string | null;
-  style?: React.CSSProperties;
 }
 
 
-const WingModelBar: React.FC<WingModelProps> = ({ symbol, style }) => {
+const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
 
   const [items, setItems] = useState<WingModelData[]>([]);
 
@@ -39,7 +38,7 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style }) => {
   const scrollBoxStyles = {
     root: {
       overflowX: 'hidden', // 禁用水平滚动
-      overflowY: 'hidden', // 禁用滚动
+      overflowY: 'auto', // 禁用滚动
     },
   };
 
@@ -70,15 +69,12 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol, style }) => {
   ];
 
   return (
-    <div style={{ ...style }}>
-      <DetailsList
-        items={items}
-        selectionMode={SelectionMode.none}
-        columns={columns}
-        styles={scrollBoxStyles}
-      />
-    </div>
-
+    <DetailsList
+      items={items}
+      selectionMode={SelectionMode.none}
+      columns={columns}
+      styles={scrollBoxStyles}
+    />
   );
 };
 

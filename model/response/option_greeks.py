@@ -6,7 +6,7 @@ class OptionGreeksResp(OptionRespBase):
 
 
 class OptionGreeksData:
-    def __init__(self, delta, gamma, vega, theta, vanna_vs, vanna_sv, db, dkurt, position):
+    def __init__(self, delta, gamma, vega, theta, vanna_vs, vanna_sv, db, dkurt, position, ask, bid):
         self.delta = round(delta, 2)
         self.gamma = round(gamma, 2)
         self.vega = round(vega, 2)
@@ -16,6 +16,8 @@ class OptionGreeksData:
         self.db = round(db, 2)
         self.dkurt = round(dkurt, 2)
         self.position = position
+        self.ask = round(ask, 2)
+        self.bid = round(bid, 2)
 
     def to_dict(self):
         return {
@@ -27,6 +29,8 @@ class OptionGreeksData:
             "vanna_sv": self.vanna_vs,
             "dkurt": self.dkurt,
             "db": self.db,
-            "position": self.position
+            "position": self.position,
+            "ask": self.ask,
+            "bid": self.bid
         }
 

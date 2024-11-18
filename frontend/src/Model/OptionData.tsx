@@ -13,6 +13,8 @@ export type OptionGreeksData = {
     db: number;
     dkurt: number;
     position: number;
+    bid: number;
+    ask: number;
 };
 
 export type WingModelData = {
