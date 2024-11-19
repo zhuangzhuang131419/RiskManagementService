@@ -393,8 +393,6 @@ def get_future_position_greeks(symbol: str):
     delta_cash = delta * cash_multiplier * (future.market_data.bid_prices[0] + future.market_data.ask_prices[0]) / 2
 
     resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash)
-
-    print(f"GreeksCashResp: {resp.to_dict()}")
     return resp.to_dict()
 
 
@@ -440,7 +438,6 @@ def get_position_greeks(symbol: str):
 
     resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash)
 
-    print(f"GreeksCashResp: {resp.to_dict()}")
     return resp.to_dict()
 
 

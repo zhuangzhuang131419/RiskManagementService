@@ -70,13 +70,17 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       charm_cash: null,
     };
 
-    const sumCashGreeks = (...dataItems: CashGreeksResponse[]) => {
+    const sumCashGreeks = (index: CashGreeksResponse, etf: CashGreeksResponse, future: CashGreeksResponse) => {
       const result: CashGreeksResponse = { ...defaultCashGreeks };
 
       // Use 'keyof CashGreeksResponse' to iterate over valid keys
       for (const key of Object.keys(result) as Array<keyof CashGreeksResponse>) {
+        if (key === "delta") {
+          result[key] = (index[key] ?? 0) + (etf[key] ?? 0) / 10 + (future[key] ?? 0) * 3;
+        } else {
+          result[key] = (index[key] ?? 0) + (etf[key] ?? 0) + (future[key] ?? 0);
+        }
 
-        result[key] = dataItems.reduce((sum, item) => sum + (item[key] ?? 0), 0);
       }
 
       return result;
@@ -104,17 +108,84 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
     setItems(combinedData);
   }, [indexData, etfData, futureData]);
 
+  const formatPercentage = (value: number | null): string =>
+    value !== null && !isNaN(value) ? `${(value).toFixed(2)}` : '--';
+
 
   const columns = [
     { key: 'type', name: '类型', fieldName: 'type', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'delta', name: 'Delta', fieldName: 'delta', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'delta_cash', name: 'Delta Cash', fieldName: 'delta_cash', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'gamma_p_cash', name: 'GammaP Cash', fieldName: 'gamma_p_cash', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'vega_cash', name: 'Vega Cash', fieldName: 'vega_cash', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'db_cash', name: 'Db Cash', fieldName: 'db_cash', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'vanna_vs_cash', name: 'VannaVS Cash', fieldName: 'vanna_vs_cash', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'vanna_sv_cash', name: 'VannaSV Cash', fieldName: 'vanna_sv_cash', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'charm_cash', name: 'Charm Cash', fieldName: 'charm_cash', minWidth: 100, maxWidth: 150, isResizable: true },
+    {
+      key: 'delta',
+      name: 'Delta',
+      fieldName: 'delta',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.delta)}</span>,
+    },
+    {
+      key: 'delta_cash',
+      name: 'Delta Cash',
+      fieldName: 'delta_cash',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.delta_cash)}</span>,
+    },
+    {
+      key: 'gamma_p_cash',
+      name: 'GammaP Cash',
+      fieldName: 'gamma_p_cash',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.gamma_p_cash)}</span>,
+    },
+    {
+      key: 'vega_cash',
+      name: 'Vega Cash',
+      fieldName: 'vega_cash',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.vega_cash)}</span>,
+    },
+    {
+      key: 'db_cash',
+      name: 'Db Cash',
+      fieldName: 'db_cash',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.db_cash)}</span>,
+    },
+    {
+      key: 'vanna_vs_cash',
+      name: 'VannaVS Cash',
+      fieldName: 'vanna_vs_cash',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.vanna_vs_cash)}</span>,
+    },
+    {
+      key: 'vanna_sv_cash',
+      name: 'VannaSV Cash',
+      fieldName: 'vanna_sv_cash',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.vanna_sv_cash)}</span>,
+    },
+    {
+      key: 'charm_cash',
+      name: 'Charm Cash',
+      fieldName: 'charm_cash',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.charm_cash)}</span>,
+    },
   ];
 
   return (

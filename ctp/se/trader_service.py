@@ -9,6 +9,7 @@ from helper.api import ReqQryInvestorPosition, RspQryInvestorPositionDetail, Req
 from helper.helper import *
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
+from model.enum.exchange_type import ExchangeType
 from model.instrument.instrument import Instrument
 from model.instrument.option import Option, ETFOption
 from model.order_info import OrderInfo
@@ -194,20 +195,16 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         print(f'OnRtnTrade: OrderRef {pTrade.OrderRef}')
-        if pTrade.OrderRef in self.order_map:
-            print('delete order map')
-            del self.order_map[pTrade.OrderRef]
-
         # 更新持仓信息
-        self.user_memory_manager.refresh_position()
+        self.user_memory_manager.refresh_se_position()
         self.query_finish[ReqQryInvestorPosition] = False
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
-            print(f"发送查询投资者持仓请求成功")
+            print(f"发送查询上/深交所投资者持仓请求成功")
             pass
         else:
-            print(f"发送查询投资者持仓请求失败")
+            print(f"发送查询上/深交所投资者持仓请求失败")
             judge_ret(ret)
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":

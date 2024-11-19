@@ -19,6 +19,7 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
     () => optionDataProvider.fetchWingModelParaBySymbol(symbol as string),
     {
       onSuccess(data) {
+        console.log('fetchWingModelParaBySymbol' + JSON.stringify(data))
         setItems(data); // 更新表格项
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
@@ -37,13 +38,15 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
 
   const scrollBoxStyles = {
     root: {
+      height: '100%',
+      width: '100%',
       overflowX: 'hidden', // 禁用水平滚动
-      overflowY: 'auto', // 禁用滚动
+      overflowY: 'hidden', // 禁用滚动
     },
   };
 
   const formatPercentage = (value: number | null): string =>
-    value !== null ? `${(value * 100).toFixed(2)}%` : '--';
+    value !== null && !isNaN(value) ? `${(value * 100).toFixed(2)}%` : '--';
 
   const columns = [
     {

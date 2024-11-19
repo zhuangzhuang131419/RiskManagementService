@@ -26,17 +26,27 @@ document.body.style.overflow = 'hidden';
 document.documentElement.style.overflow = 'hidden';
 
 const TradingDashboard: React.FC = () => {
-    const [selectedUserKey, setSelectedUserKey] = useState<string | null>(null);
+
     const [selectedIndexOption, setSelectedIndexOption] = useState<string | null>(null);
     const [selectedFuture, setSelectedFuture] = useState<string | null>(null);
     const [selectedETFOption, setSelectedETF] = useState<string | null>(null);
     const [selectedBaseline, setSelectedBaseline] = useState<string>();
     const [clock, setClock] = useState<string>();
 
-    const { data: userItems, isFetching: isUserFetching } = useQuery(
+    const { data: userItems = [], isFetching: isUserFetching } = useQuery<User[]>(
         ['users'],
         userDataProvider.fetchUsers,
+        {
+            onSuccess(data) {
+                if (selectedUserKey === null) {
+                    setSelectedUserKey(data.length > 0 ? data[0].id : null)
+                }
+            },
+            refetchInterval: 1000 * 60 * 5
+        }
     );
+
+    const [selectedUserKey, setSelectedUserKey] = useState<string | null>(null);
 
     const { data } = useQuery(
         ['clock'],
@@ -49,7 +59,7 @@ const TradingDashboard: React.FC = () => {
         }
     );
 
-    const { data: indexOptionItems, isFetching: isIndexOptionFetching } = useQuery(
+    const { data: indexOptionItems = [], isFetching: isIndexOptionFetching } = useQuery(
         ['indexOptions'],
         optionDataProvider.fetchIndexOptionSymbols,
         {
@@ -57,12 +67,15 @@ const TradingDashboard: React.FC = () => {
                 return data.map((item) => ({ key: item }))
             },
             onSuccess(data) {
-                console.log('fetchIndexOptionSymbols:' + data)
+                console.log('fetchIndexOptionSymbols:' + JSON.stringify(data))
             },
+            refetchOnWindowFocus: false,
+            refetchInterval: 1000 * 60 * 60,
         }
+
     );
 
-    const { data: etfOptionItems, isFetching: isETFOptionFetching } = useQuery(
+    const { data: etfOptionItems = [], isFetching: isETFOptionFetching } = useQuery(
         ['etfOptions'],
         optionDataProvider.fetchETFOptionSymbols,
         {
@@ -70,8 +83,11 @@ const TradingDashboard: React.FC = () => {
                 return data.map((item) => ({ key: item }))
             },
             onSuccess(data) {
-                console.log('fetchETFOptionSymbols:' + data)
+                console.log('fetchETFOptionSymbols:' + JSON.stringify(data))
             },
+
+            refetchOnWindowFocus: false,
+            refetchInterval: 1000 * 60 * 60,
         }
     );
 
@@ -82,7 +98,7 @@ const TradingDashboard: React.FC = () => {
             {/* 顶部：账户选择器和数据展示 */}
             <Stack horizontal styles={{ root: { height: '20%' } }} tokens={{ childrenGap: 20 }}>
                 <Stack.Item>
-                    {!isUserFetching && (
+                    {selectedUserKey !== null && (
                         <UserSelector accounts={userItems as User[]} onSelect={setSelectedUserKey} selectedUserKey={selectedUserKey} />
                     )}
                     <Text>{clock}</Text>
@@ -91,9 +107,7 @@ const TradingDashboard: React.FC = () => {
                     <UserInfoTable></UserInfoTable>
                 </Stack.Item>
                 <Stack.Item>
-                    {selectedUserKey !== null && (
-                        <TopDataBar indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} />
-                    )}
+                    <TopDataBar indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} />
                 </Stack.Item>
             </Stack>
 
@@ -148,13 +162,21 @@ const TradingDashboard: React.FC = () => {
 
                 {/* 右侧：OptionGreeks */}
                 <Stack horizontal styles={{ root: { height: '100%', width: '85%' } }} tokens={{ childrenGap: 20 }}>
-                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '50%' } }}>
-                        <WingModelBar symbol={selectedIndexOption} />
-                        <OptionGreeks symbol={selectedIndexOption} />
+                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { height: '100%', width: '50%' } }}>
+                        <Stack.Item>
+                            <WingModelBar symbol={selectedIndexOption} />
+                        </Stack.Item>
+                        <Stack.Item grow styles={{ root: { overflowY: 'auto' } }}>
+                            <OptionGreeks symbol={selectedIndexOption} />
+                        </Stack.Item>
                     </Stack>
-                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '50%' } }}>
-                        <WingModelBar symbol={selectedETFOption} />
-                        <OptionGreeks symbol={selectedETFOption} />
+                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { height: '100%', width: '50%' } }}>
+                        <Stack.Item>
+                            <WingModelBar symbol={selectedETFOption} />
+                        </Stack.Item>
+                        <Stack.Item grow styles={{ root: { overflowY: 'auto' } }}>
+                            <OptionGreeks symbol={selectedETFOption} />
+                        </Stack.Item>
                     </Stack>
                 </Stack>
             </Stack>
