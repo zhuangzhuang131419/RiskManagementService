@@ -17,12 +17,11 @@ class UserMemoryManager:
         return order_ref
 
     def refresh_se_position(self):
-        for symbol in self.position.keys():
-            if filter_etf_option(symbol):
-                del self.position[symbol]
+        # 只保留不符合 filter_etf_option 条件的键值对
+        self.position = {symbol: value for symbol, value in self.position.items() if not filter_etf_option(symbol)}
 
     def refresh_cffex_position(self):
-        for symbol in self.position.keys():
-            if filter_index_future(symbol) or filter_index_option(symbol):
-                del self.position[symbol]
+        # 只保留不符合 filter_index_future 和 filter_index_option 条件的键值对
+        self.position = {symbol: value for symbol, value in self.position.items() if not (filter_index_future(symbol) or filter_index_option(symbol))}
+
 
