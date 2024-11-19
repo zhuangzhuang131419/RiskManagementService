@@ -45,4 +45,5 @@ export type CashGreeksResponse = {
     vanna_vs_cash: number | null,
     vanna_sv_cash: number | null,
     charm_cash: number | null
+    underlying_price: number | null,
 }

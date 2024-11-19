@@ -31,3 +31,16 @@ class ImplyPrice:
     # 隐含价格
     imply_s_ask: float = field(default=-1)  # 隐含卖价
     imply_s_bid: float = field(default=-1)  # 隐含买价
+
+    def __str__(self) -> str:
+        return (
+            f"ImplyPrice(\n"
+            f"  future_valid={self.future_valid},\n"
+            f"  forward_ask={self.forward_ask}, forward_bid={self.forward_bid},\n"
+            f"  ask_strike={self.ask_strike}, bid_strike={self.bid_strike},\n"
+            f"  atm_valid={self.atm_valid},\n"
+            f"  atms_ask={self.atms_ask}, atms_bid={self.atms_bid},\n"
+            f"  k1={self.k1}, k2={self.k2}, k3={self.k3}, k4={self.k4},\n"
+            f"  imply_s_ask={self.imply_s_ask}, imply_s_bid={self.imply_s_bid}\n"
+            f")"
+        )

@@ -163,20 +163,17 @@ const TradingDashboard: React.FC = () => {
                 {/* 右侧：OptionGreeks */}
                 <Stack horizontal styles={{ root: { height: '100%', width: '85%' } }} tokens={{ childrenGap: 20 }}>
                     <Stack tokens={{ childrenGap: 10 }} styles={{ root: { height: '100%', width: '50%' } }}>
-                        <Stack.Item>
+                        <Stack styles={{ root: { height: '20%' } }}>
                             <WingModelBar symbol={selectedIndexOption} />
-                        </Stack.Item>
-                        <Stack.Item grow styles={{ root: { overflowY: 'auto' } }}>
-                            <OptionGreeks symbol={selectedIndexOption} />
-                        </Stack.Item>
+                        </Stack>
+
+                        <OptionGreeks symbol={selectedIndexOption} />
                     </Stack>
                     <Stack tokens={{ childrenGap: 10 }} styles={{ root: { height: '100%', width: '50%' } }}>
-                        <Stack.Item>
+                        <Stack styles={{ root: { height: '20%' } }}>
                             <WingModelBar symbol={selectedETFOption} />
-                        </Stack.Item>
-                        <Stack.Item grow styles={{ root: { overflowY: 'auto' } }}>
-                            <OptionGreeks symbol={selectedETFOption} />
-                        </Stack.Item>
+                        </Stack>
+                        <OptionGreeks symbol={selectedETFOption} />
                     </Stack>
                 </Stack>
             </Stack>

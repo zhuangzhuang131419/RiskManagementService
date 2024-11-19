@@ -105,6 +105,7 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
             columns={columns}
             selectionMode={SelectionMode.none}
             styles={gridStyles}
+            compact={true}
         />
     );
 };

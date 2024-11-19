@@ -369,6 +369,8 @@ class MarketDataManager:
 
 
         self.option_market_data[symbol].atm_volatility = atm_volatility
+        # if symbol.startswith("51050020241225-C-48000"):
+        #     print(f"51050020241225-C-48000 atm volatility: {self.option_market_data[symbol].atm_volatility}")
 
     def calculate_index_option_month_t_iv(self, symbol, remaining_year):
         # 对应标的物的远期价格
@@ -529,6 +531,10 @@ class MarketDataManager:
                     imply_price.imply_s_bid = imply_price.forward_bid
 
         self.option_market_data[symbol].imply_price = imply_price
+
+        # if symbol.startswith("51050020241225-C-48000"):
+        #     print(f"imply price: {self.option_market_data[symbol].imply_price}")
+
 
 
 

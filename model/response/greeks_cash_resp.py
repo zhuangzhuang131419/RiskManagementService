@@ -11,7 +11,7 @@ class GreeksCashResp:
     dkurt_cash: float
 
     def __init__(self, delta: float = 0.0, delta_cash: float = 0.0, gamma_p_cash: float = 0.0, vega_cash: float = 0,
-                 db_cash: float = 0.0, vanna_vs_cash: float = 0.0, vanna_sv_cash: float = 0.0, charm_cash: float = 0.0, dkurt_cash: float = 0.0):
+                 db_cash: float = 0.0, vanna_vs_cash: float = 0.0, vanna_sv_cash: float = 0.0, charm_cash: float = 0.0, dkurt_cash: float = 0.0, underlying_price: float = 0.0):
         """
         Initializes a GreeksCashResp object with the given values.
         """
@@ -24,6 +24,7 @@ class GreeksCashResp:
         self.vanna_sv_cash = vanna_sv_cash
         self.charm_cash = charm_cash
         self.dkurt_cash = dkurt_cash
+        self.underlying_price = underlying_price
 
     def to_dict(self) -> dict:
         """

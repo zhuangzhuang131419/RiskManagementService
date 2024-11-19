@@ -86,7 +86,6 @@ def init_ctp():
         print(f'{category}: {group_instrument}')
     print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.market_data_manager.index_futures_dict)))
     print('当前订阅期货合约月份为：{}'.format(ctp_manager.market_data_manager.index_future_symbol))
-    print(f"HO20241220的行权价{ctp_manager.market_data_manager.option_market_data['HO20241220'].strike_price_options.keys()}")
 
 
     print('当前订阅期权合约数量为：{}'.format(len(ctp_manager.market_data_manager.option_market_data)))
@@ -436,7 +435,7 @@ def get_position_greeks(symbol: str):
     vanna_sv_cash = vanna_sv * option_series.wing_model_para.S * cash_multiplier
     dkurt_cash = dkurt * cash_multiplier
 
-    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash)
+    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash, underlying_price=option_series.wing_model_para.S)
 
     return resp.to_dict()
 

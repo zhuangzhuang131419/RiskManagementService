@@ -68,6 +68,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       vanna_vs_cash: null,
       vanna_sv_cash: null,
       charm_cash: null,
+      underlying_price: null,
     };
 
     const sumCashGreeks = (index: CashGreeksResponse, etf: CashGreeksResponse, future: CashGreeksResponse) => {
@@ -185,6 +186,15 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       maxWidth: 150,
       isResizable: true,
       onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.charm_cash)}</span>,
+    },
+    {
+      key: 'underlying_price',
+      name: 'S',
+      fieldName: 'underlying_price',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.underlying_price)}</span>,
     },
   ];
 
