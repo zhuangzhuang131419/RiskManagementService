@@ -97,18 +97,6 @@ class OptionDataProvider implements IOptionDataProvider {
     return data;
   }
 
-  fetchFutureGreeksSummary = async (symbol: string): Promise<CashGreeksResponse> => {
-    const response = await fetch(`/api/future/greeks_summary?symbol=${symbol}`);
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-
-    // 解析并打印 JSON 数据
-    const data = await response.json();
-    // console.log('fetchWingModelParaBySymbol: ', data);
-
-    return data;
-  }
 }
 
 export const optionDataProvider = new OptionDataProvider()

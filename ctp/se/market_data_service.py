@@ -97,8 +97,6 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
                 symbol, option_type, strike_price = parse_option_full_symbol(depth_market_data.symbol)
                 if option_type == OptionType.C:
                     self.market_data_manager.option_market_data[symbol].strike_price_options[strike_price].call.market_data = depth_market_data
-                    # if symbol == "51050020241225-C-48000":
-                    #     print(f'51050020241225-C-48000 买一价：{self.market_data_manager.option_market_data[symbol].strike_price_options[strike_price].call.market_data.bid_prices[0]}, 卖一价：{self.market_data_manager.option_market_data[symbol].strike_price_options[strike_price].call.market_data.ask_prices[0]}')
                 elif option_type == OptionType.P:
                     self.market_data_manager.option_market_data[symbol].strike_price_options[strike_price].put.market_data = depth_market_data
 

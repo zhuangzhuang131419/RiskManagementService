@@ -49,7 +49,7 @@ class UserDataProvider implements IUserDataProvider {
 
         const data = await response.json(); // 使用 await 获取解析后的 JSON 数据
         console.log('fetchBaseline', data);
-        return data.current_baseline; // 假设后端返回的数据结构包含 { current_baseline: ... }
+        return data; // 假设后端返回的数据结构包含 { current_baseline: ... }
     }
 
     setBaseline = async (baseline: string): Promise<void> => {

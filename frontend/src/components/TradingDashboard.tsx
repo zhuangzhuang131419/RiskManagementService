@@ -33,6 +33,19 @@ const TradingDashboard: React.FC = () => {
     const [selectedBaseline, setSelectedBaseline] = useState<string>();
     const [clock, setClock] = useState<string>();
 
+    const { data: baseline } = useQuery<string>(
+        ['baseline'],
+        userDataProvider.fetchBaseline,
+        {
+            onSuccess(data) {
+                if (selectedBaseline === null) {
+                    setSelectedBaseline(data)
+                }
+            },
+            refetchInterval: 1000 * 60 * 5
+        }
+    );
+
     const { data: userItems = [], isFetching: isUserFetching } = useQuery<User[]>(
         ['users'],
         userDataProvider.fetchUsers,

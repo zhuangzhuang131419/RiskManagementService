@@ -369,8 +369,6 @@ class MarketDataManager:
 
 
         self.option_market_data[symbol].atm_volatility = atm_volatility
-        # if symbol.startswith("51050020241225-C-48000"):
-        #     print(f"51050020241225-C-48000 atm volatility: {self.option_market_data[symbol].atm_volatility}")
 
     def calculate_index_option_month_t_iv(self, symbol, remaining_year):
         # 对应标的物的远期价格
@@ -517,7 +515,7 @@ class MarketDataManager:
 
                     # 检查两侧的额外执行价是否有效
                     if atm_location[1] < len(strike_prices) - 1:
-                        k4_strike_price = strike_prices[atm_location[0] - 1]
+                        k4_strike_price = strike_prices[atm_location[1] + 1]
                         k4_option: OptionTuple = self.option_market_data[symbol].strike_price_options[k4_strike_price]
                         k4_tradable = k4_option.call.market_data.available and k4_option.put.market_data.available
                         if k4_tradable:
@@ -531,9 +529,6 @@ class MarketDataManager:
                     imply_price.imply_s_bid = imply_price.forward_bid
 
         self.option_market_data[symbol].imply_price = imply_price
-
-        # if symbol.startswith("51050020241225-C-48000"):
-        #     print(f"imply price: {self.option_market_data[symbol].imply_price}")
 
 
 

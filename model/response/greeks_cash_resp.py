@@ -40,5 +40,6 @@ class GreeksCashResp:
             "db_cash": self.db_cash,
             "vanna_vs_cash": self.vanna_vs_cash,
             "vanna_sv_cash": self.vanna_sv_cash,
-            "charm_cash": self.charm_cash
+            "charm_cash": self.charm_cash,
+            "underlying_price": self.underlying_price
         }

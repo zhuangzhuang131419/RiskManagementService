@@ -247,7 +247,7 @@ def get_wing_model_by_symbol():
 
     if underlying_id not in UNDERLYING_CATEGORY_MAPPING:
         # 深交所的
-        result.append([generate_wing_model_response(symbol).to_dict()])
+        result.append(generate_wing_model_response(symbol).to_dict())
         return result
     category = UNDERLYING_CATEGORY_MAPPING[underlying_id].value
     group_instrument = ctp_manager.market_data_manager.grouped_instruments[category + "-" + expired_month]
@@ -348,7 +348,7 @@ def set_baseline():
 # 获取当前基准类型的接口
 @app.route('/api/baseline', methods=['GET'])
 def get_baseline():
-    return jsonify({"current_baseline": ctp_manager.baseline.name.lower()}), 200
+    return jsonify(ctp_manager.baseline.name.lower())
 
 @app.route('/api/option/greeks_summary', methods=['GET'])
 def get_greek_summary_by_option_symbol():
@@ -382,16 +382,17 @@ def get_future_position_greeks(symbol: str):
 
     cash_multiplier = get_cash_multiplier(symbol)
 
-    print(ctp_manager.current_user.user_memory.position)
+    underlying_price = (future.market_data.bid_prices[0] + future.market_data.ask_prices[0]) / 2
 
     if symbol not in ctp_manager.current_user.user_memory.position:
-        return GreeksCashResp().to_dict()
+        return GreeksCashResp(underlying_price=underlying_price).to_dict()
 
     future_position = ctp_manager.current_user.user_memory.position[symbol]
     delta = (future_position.long - future_position.short)
-    delta_cash = delta * cash_multiplier * (future.market_data.bid_prices[0] + future.market_data.ask_prices[0]) / 2
 
-    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash)
+    delta_cash = delta * cash_multiplier * underlying_price
+
+    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, underlying_price=underlying_price)
     return resp.to_dict()
 
 

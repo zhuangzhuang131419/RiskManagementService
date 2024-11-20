@@ -98,13 +98,20 @@ def calculate_vega(option_type: str, underlying_price: float, strike_price: floa
 
 #当K<0,or,t<0时返回nan，nan与任何数对比都会返回false，k=时严重错误，k取值使得option价格小于实值额度时，返回0，所以用>0做赛选可以避免除0/0以外的所有错误
 def estimate_atm_volatility(strike_price_list: np.ndarray, volatility_list: np.ndarray, price: float):
-    # volatility = a0 + a1 * strike_price + a2 * strike_price ^ 2
-    inverse = np.linalg.inv(np.vstack((np.array([1, 1, 1]), strike_price_list, strike_price_list ** 2)).T)
-    para = np.matmul(inverse, volatility_list)
-    # 将当前价格 price 代入拟合的二次多项式
-    return np.dot(np.array([1, price, price * price]), para)
+    # 归一化数据
+    mean_strike = np.mean(strike_price_list)
+    normalized_strike = strike_price_list - mean_strike
+    normalized_price = price - mean_strike
+
+    # 构造设计矩阵
+    A = np.vstack([np.ones_like(normalized_strike), normalized_strike, normalized_strike ** 2]).T
+    para, _, _, _ = np.linalg.lstsq(A, volatility_list, rcond=None)
+
+    # 使用归一化后的系数计算平值隐含波动率
+    return para[0] + para[1] * normalized_price + para[2] * normalized_price ** 2
 
 def is_close(a, b, precision=3):
     return round(a, precision) == round(b, precision)
+
 
 
