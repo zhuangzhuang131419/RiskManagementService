@@ -32,7 +32,7 @@ class CTPManager:
 
     timestamp : time
 
-    def __init__(self):
+    def __init__(self, env):
         if not os.path.exists(self.CONFIG_FILE_PATH):
             os.makedirs(self.CONFIG_FILE_PATH)
 
@@ -42,6 +42,8 @@ class CTPManager:
             for root, _, files in os.walk("config"):
                 for file_name in files:
                     if not file_name.endswith('.ini'):
+                        continue
+                    if not file_name.startswith(env):
                         continue
                     user_config_path.append(os.path.join(root, file_name))
         except Exception as e:

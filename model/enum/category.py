@@ -8,10 +8,10 @@ class Category(Enum):
     CSI1000 = "CSI1000"
 
 INDEX_OPTION_ETF_OPTION_FUTURE_MAPPING = {
-    Category.SSE50: {"HO", "510050", "IH"},
-    Category.CSI300: {"IO", "510300", "IF"},
-    Category.CSI500: {None, "510500", "IC"},
-    Category.CSI1000: {"MO", None, "IM"},
+    Category.SSE50: { "HO", "510050", "IH" },
+    Category.CSI300: { "IO", "510300", "IF" },
+    Category.CSI500: { None, "510500", "IC" },
+    Category.CSI1000: { "MO", None, "IM" },
 }
 
 UNDERLYING_CATEGORY_MAPPING: Dict[str, Category] = {

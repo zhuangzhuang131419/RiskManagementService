@@ -38,47 +38,15 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager()
+ctp_manager = CTPManager('test')
 
 def init_ctp():
     # 初始化
     global ctp_manager
-    ctp_manager.switch_to_user("XueJianhua")
 
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 335, 1)
-    # time.sleep(10)
-
-
-
-    # time.sleep(10)
-
-    # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
-    # time.sleep(10)
-    # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 285, 1)
-    # time.sleep(10)
-    # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
-    # time.sleep(10)
-    # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_OPEN, 285, 1)
-    # time.sleep(10)
-    # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
-    # time.sleep(10)
-    # # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.BUY_CLOSE, 295, 1)
-    # time.sleep(10)
-    # ctp_manager.current_user.query_investor_position(ExchangeType.CFFEX.name)
-
-    # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.SELL_CLOSE, 0.10, 3)
-    # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.SELL_OPEN, 0.10, 4)
-
-    # ctp_manager.current_user.query_investor_position_detail(ExchangeType.SE.name)
-    # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.BUY_OPEN, 0.12, 2)
-    # time.sleep(10)
-
-
-    # ctp_manager.current_user.insert_order(ExchangeType.SE.name, "10007328", Direction.BUY_CLOSE, 0.12, 4)
-    # time.sleep(10)
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX.name, "HO2412-C-2400", Direction.SELL_CLOSE, 280, 1)
-    # ctp_manager.current_user.query_investor_position(ExchangeType.SE.name)
-
+    for user in ctp_manager.users.keys():
+        ctp_manager.switch_to_user(user)
+        break
 
     print(f"合约Id对应full symbol: {ctp_manager.market_data_manager.instrument_transform_full_symbol}")
     print(f"品类分组:")
@@ -133,6 +101,14 @@ def main():
         # print(f"HO20241115: {get_wing_model_by_symbol('MO20241220')}")
         # print(f"51030020241225: {get_wing_model_by_symbol('51030020241225')}")
         time.sleep(3)
+
+
+def test():
+    ctp_manager.switch_to_user("Zhuang")
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 10)
+
+    ctp_manager.switch_to_user("Xue")
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 20)
 
 
 @app.route('/')

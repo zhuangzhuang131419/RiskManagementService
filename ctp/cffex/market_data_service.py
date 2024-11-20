@@ -57,8 +57,8 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
         if self.market_data_manager is not None:
             if pDepthMarketData.InstrumentID in self.market_data_manager.instrument_transform_full_symbol:
 
-                # if pDepthMarketData.InstrumentID == "HO2412-C-2400":
-                    # print(pDepthMarketData.AskPrice1)
+                if pDepthMarketData.InstrumentID == "HO2412-C-2400":
+                    print(pDepthMarketData.AskPrice1)
                 self.market_data_manager.clock = pDepthMarketData.UpdateTime
 
                 depth_market_data = DepthMarketData()
