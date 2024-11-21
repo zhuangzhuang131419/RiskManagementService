@@ -3,7 +3,7 @@ from abc import ABC
 
 from ctp.cffex.market_data_service import MarketDataService
 from ctp.cffex.trader_service import TraderService
-from helper.api import ReqQryInstrument, ReqQryInvestorPosition
+from helper.api import ReqQryInstrument, ReqQryInvestorPosition, ReqOrderInsert, ReqQryInvestorPositionDetail, ReqOrderAction
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
@@ -53,7 +53,31 @@ class CFFExchange(Exchange, ABC):
         self.trader_user_api.SubscribePublicTopic(ThostFtdcApi.THOST_TERT_QUICK)
         self.trader_user_api.Init()
 
-    def insert_order(self, instrument_id: str, direction: Direction, limit_price: float, volume: int):
+    def order_action(self, instrument_id: str, order_ref: str):
+        self.trader_user_spi.query_finish[ReqOrderAction] = False
+        order_action_field = ThostFtdcApi.CThostFtdcInputOrderActionField()
+        order_action_field.BrokerID = self.config.broker_id
+        order_action_field.UserID = self.config.user_id
+        order_action_field.InvestorID = self.config.investor_id
+        order_action_field.FrontID = self.trader_user_spi.front_id
+        order_action_field.SessionID = self.trader_user_spi.session_id
+        order_action_field.InstrumentID = instrument_id
+        order_action_field.ActionFlag = ThostFtdcApi.THOST_FTDC_AF_Delete
+        order_action_field.OrderRef = order_ref
+
+        ret = self.trader_user_api.ReqOrderAction(order_action_field, 0)
+
+        if ret == 0:
+            print(f'发送撤单请求成功！{order_action_field.OrderRef}')
+        else:
+            print('发送撤单请求失败！')
+            judge_ret(ret)
+
+
+
+
+    def insert_order(self, instrument_id: str, direction: Direction, limit_price: float, volume: int) -> str:
+        self.trader_user_spi.query_finish[ReqOrderInsert] = False
         order_field = ThostFtdcApi.CThostFtdcInputOrderField()
         order_field.OrderRef = self.user_memory_manager.get_order_ref()
         order_field.BrokerID = self.config.broker_id
@@ -80,7 +104,7 @@ class CFFExchange(Exchange, ABC):
             order_field.Direction, order_field.CombOffsetFlag = direction_mapping[direction]
         else:
             print('下单委托类型错误！停止下单！')
-            return -9
+            raise ValueError
 
         # 普通限价单默认参数
         # 报单价格条件
@@ -105,16 +129,11 @@ class CFFExchange(Exchange, ABC):
         ret = self.trader_user_api.ReqOrderInsert(order_field, 0)
 
         if ret == 0:
-            print(f'发送下单请求成功！{order_field.OrderRef}')
-            self.trader_user_spi.order_map[order_field.OrderRef] = OrderInfo(order_field.OrderRef, self.trader_user_spi.front_id, self.trader_user_spi.session_id)
-            # 报单回报里的报单价格和品种数据不对，所以自己记录数据
-            self.trader_user_spi.order_map[order_field.OrderRef].order_price = limit_price
-            self.trader_user_spi.order_map[order_field.OrderRef].instrument_id = instrument_id
-            print(self.trader_user_spi.order_map[order_field.OrderRef])
+            print(f'发送下单{order_field.OrderRef}请求成功！')
         else:
             print('发送下单请求失败！')
             judge_ret(ret)
-        return ret, order_field.OrderRef
+        return order_field.OrderRef
 
     # 查询合约
     def query_instrument(self):
@@ -164,6 +183,7 @@ class CFFExchange(Exchange, ABC):
 
     # 查看持仓明细
     def query_investor_position_detail(self):
+        self.trader_user_spi.query_finish[ReqQryInvestorPositionDetail] = False
         query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionDetailField()
         # query_file.BrokerID = self.config.broker_id
         ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)

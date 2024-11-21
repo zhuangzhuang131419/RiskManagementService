@@ -45,7 +45,11 @@ class Exchange(ABC):
         pass
 
     @abstractmethod
-    def insert_order(self, instrument_id: str, direction: Direction, price, volume):
+    def insert_order(self, instrument_id: str, direction: Direction, price, volume) -> Optional[str]:
+        pass
+
+    @abstractmethod
+    def order_action(self, instrument_id: str, order_ref: str):
         pass
 
     @abstractmethod

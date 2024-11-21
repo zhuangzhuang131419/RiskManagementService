@@ -4,8 +4,9 @@ from click import option
 from typing import Dict
 from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
-    CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField
-from helper.api import ReqQryInvestorPosition, RspQryInvestorPositionDetail, ReqQryInstrument
+    CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField, CThostFtdcInputOrderActionField, THOST_FTDC_OST_Unknown, THOST_FTDC_OST_NoTradeQueueing, \
+    THOST_FTDC_OST_AllTraded, THOST_FTDC_OST_Canceled, THOST_FTDC_OST_PartTradedQueueing
+from helper.api import ReqQryInvestorPosition, ReqQryInvestorPositionDetail, ReqQryInstrument, ReqOrderInsert, ReqOrderAction
 from helper.helper import *
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
@@ -144,7 +145,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
 
         if bIsLast:
-            self.query_finish[RspQryInvestorPositionDetail] = True
+            self.query_finish[ReqQryInvestorPositionDetail] = True
             print('查询投资者持仓明细完成')
 
     def OnRspOrderInsert(self, pInputOrder: CThostFtdcInputOrderField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
@@ -154,38 +155,32 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             print('下单成功, 风控通过')
 
     def OnRtnOrder(self, pOrder: CThostFtdcOrderField) -> "void":
-        order_ref = pOrder.OrderRef
         try:
             # 报单已提交
-            if pOrder.OrderStatus == 'a':
-                print('报单已提交')
-                if pOrder.OrderRef in self.order_map:
-                    print(pOrder.OrderType)
-                else:
-                    raise ValueError(f"{pOrder.OrderRef} 不存在")
+            if pOrder.OrderStatus == THOST_FTDC_OST_Unknown:
+                print('上/深交所报单已提交')
             # 未成交
-            elif pOrder.OrderStatus == '3':
-                # print(pOrder.StatusMsg)
-                print('未成交')
+            elif pOrder.OrderStatus == THOST_FTDC_OST_NoTradeQueueing:
+                print('上/深交所未成交')
             # 全部成交
-            elif pOrder.OrderStatus == '0':
-                # print(pOrder.StatusMsg)
-                print('全部成交')
+            elif pOrder.OrderStatus == THOST_FTDC_OST_AllTraded:
+                print('上/深交所全部成交')
+                self.query_finish[ReqOrderInsert] = True
             # 撤单
-            elif pOrder.OrderStatus == '5':
-                # print(pOrder.OrderStatus)
+            elif pOrder.OrderStatus == THOST_FTDC_OST_Canceled:
+                self.query_finish[ReqOrderInsert] = True
                 # 被动撤单
                 if pOrder.OrderSubmitStatus == '4':
-                    print('被动撤单')
+                    print('上/深交所被动撤单')
                     print(pOrder.StatusMsg)
                 else:
                     print(pOrder.OrderSubmitStatus)
-                    print('撤单')
+                    print('上/深交所撤单')
                     print(pOrder.StatusMsg)
             # 部分成交，还在队列中
-            elif pOrder.OrderStatus == '1':
-                print(pOrder.OrderStatus)
-                print('部分成交，还在队列中')
+            elif pOrder.OrderStatus == THOST_FTDC_OST_PartTradedQueueing:
+                print('上/深交所部分成交，还在队列中')
+                self.query_finish[ReqOrderInsert] = True
             else:
                 print("OnRtnOrder")
                 print("OrderStatus=", pOrder.OrderStatus)
@@ -232,6 +227,14 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             self.user_memory_manager.position[full_symbol].long = int(pInvestorPosition.Position)
         elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
             self.user_memory_manager.position[full_symbol].short = int(pInvestorPosition.Position)
+
+    def OnRspOrderAction(self, pInputOrderAction: CThostFtdcInputOrderActionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('撤单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+
+        if bIsLast:
+            self.query_finish[ReqOrderAction] = True
+            print('撤单完成')
 
 
 

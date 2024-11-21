@@ -3,7 +3,7 @@ import logging
 import time
 from uuid import uuid4
 
-from helper.api import ReqQryInvestorPosition
+from helper.api import ReqQryInvestorPosition, ReqOrderInsert, ReqOrderAction
 from helper.helper import TIMEOUT
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
@@ -172,10 +172,39 @@ class User:
             exchange.query_investor_position_detail()
             return True
 
-    def insert_order(self, exchange_type: ExchangeType, instrument_id: str, direction: Direction, limit_price: float, volume: int):
+    def insert_order(self, exchange_type: ExchangeType, instrument_id: str, direction: Direction, limit_price: float, volume: int, timeout=TIMEOUT) -> Optional[str]:
         print(f'报单{exchange_type.value}')
         if exchange_type in self.exchanges:
-            self.exchanges[exchange_type].insert_order(instrument_id, direction, limit_price, volume)
+            exchange = self.exchanges[exchange_type]
+            if not exchange.is_login():
+                print(f"{exchange_type.value}未登录")
+                return None
+            start_time = time.time()
+            order_ref = exchange.insert_order(instrument_id, direction, limit_price, volume)
+            while not self.is_query_finish(exchange_type, ReqOrderInsert):
+                if time.time() - start_time > timeout:
+                    logging.error(f'{exchange_type.value} {ReqOrderInsert} 查询超时')
+                time.sleep(3)
+            return order_ref
+        return None
+
+
+    def order_action(self, exchange_type: ExchangeType, instrument_id: str, order_ref: str, timeout=TIMEOUT) -> bool:
+        print(f'撤单{exchange_type.value}')
+        if exchange_type in self.exchanges:
+            exchange = self.exchanges[exchange_type]
+            if not exchange.is_login():
+                print(f"{exchange_type.value}未登录")
+                return False
+            start_time = time.time()
+            self.exchanges[exchange_type].order_action(instrument_id, order_ref)
+            while not self.is_query_finish(exchange_type, ReqOrderAction):
+                if time.time() - start_time > timeout:
+                    logging.error(f'{exchange_type.value} {ReqOrderAction} 查询超时')
+                time.sleep(3)
+            return True
+        return False
+
 
 
 

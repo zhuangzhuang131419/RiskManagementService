@@ -1,4 +1,6 @@
 ReqQryInvestorPosition = "ReqQryInvestorPosition"
-RspQryInvestorPositionDetail = "RspQryInvestorPositionDetail"
-RspOrderInsert = "RspOrderInsert"
+ReqQryInvestorPositionDetail = "ReqQryInvestorPositionDetail"
+RspOrderInsert = "ReqOrderInsert"
 ReqQryInstrument = "ReqQryInstrument"
+ReqOrderInsert = "ReqOrderInsert"
+ReqOrderAction = "ReqOrderAction"

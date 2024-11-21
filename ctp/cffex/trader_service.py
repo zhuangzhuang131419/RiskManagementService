@@ -5,8 +5,8 @@ from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, \
     CThostFtdcInstrumentField, CThostFtdcTradeField, CThostFtdcInvestorPositionField, \
     CThostFtdcInvestorPositionDetailField, CThostFtdcOrderField, CThostFtdcInputOrderField, \
-    CThostFtdcRspAuthenticateField, CThostFtdcSettlementInfoConfirmField
-from helper.api import ReqQryInvestorPosition, RspQryInvestorPositionDetail, RspOrderInsert
+    CThostFtdcRspAuthenticateField, CThostFtdcSettlementInfoConfirmField, THOST_FTDC_OST_Unknown, THOST_FTDC_OST_NoTradeQueueing, THOST_FTDC_OST_Canceled, THOST_FTDC_OST_AllTraded, THOST_FTDC_OST_PartTradedQueueing
+from helper.api import ReqQryInvestorPosition, ReqQryInvestorPositionDetail, RspOrderInsert, ReqOrderInsert, ReqOrderAction
 from helper.helper import *
 from memory.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
@@ -142,41 +142,44 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             self.query_finish[RspOrderInsert] = True
 
     def OnRtnOrder(self, pOrder: CThostFtdcOrderField) -> "void":
-        try:
-            # 报单已提交
-            if pOrder.OrderStatus == 'a':
-                print('报单已提交')
-                self.order_map[pOrder.OrderRef] = OrderInfo(pOrder.OrderRef, self.front_id, self.session_id)
-                self.order_map[pOrder.OrderRef].pOrder = copy.copy(pOrder)
-            # 未成交
-            elif pOrder.OrderStatus == '3':
-                # print(pOrder.StatusMsg)
-                print('未成交')
-            # 全部成交
-            elif pOrder.OrderStatus == '0':
-                # print(pOrder.StatusMsg)
-                print('全部成交')
-            # 撤单
-            elif pOrder.OrderStatus == '5':
-                # print(pOrder.OrderStatus)
-                # 被动撤单
-                if pOrder.OrderSubmitStatus == '4':
-                    print('被动撤单')
-                    print(pOrder.StatusMsg)
-                else:
-                    print(pOrder.OrderSubmitStatus)
-                    print('撤单')
-                    print(pOrder.StatusMsg)
-            # 部分成交，还在队列中
-            elif pOrder.OrderStatus == '1':
-                print(pOrder.OrderStatus)
-                print('部分成交，还在队列中')
-            else:
-                print("OnRtnOrder")
-                print("OrderStatus=", pOrder.OrderStatus)
-                print("StatusMsg=", pOrder.StatusMsg)
-        except Exception as e:
-            red_print(e)
+        print(f"order_status:{pOrder.OrderStatus}")
+        print(f"order_system_id:{pOrder.OrderSysID}")
+        print(f"order_submit_status:{pOrder.OrderSubmitStatus}")
+        print(f"order_ref:{pOrder.OrderRef}")
+
+
+        # try:
+        #     # 报单已提交
+        #     if pOrder.OrderStatus == THOST_FTDC_OST_Unknown:
+        #         print('中金报单已提交')
+        #     # 未成交
+        #     elif pOrder.OrderStatus == THOST_FTDC_OST_NoTradeQueueing:
+        #         print('中金未成交')
+        #     # 全部成交
+        #     elif pOrder.OrderStatus == THOST_FTDC_OST_AllTraded:
+        #         print('中金全部成交')
+        #         self.query_finish[ReqOrderInsert] = True
+        #     # 撤单
+        #     elif pOrder.OrderStatus == THOST_FTDC_OST_Canceled:
+        #         self.query_finish[ReqOrderInsert] = True
+        #         # 被动撤单
+        #         if pOrder.OrderSubmitStatus == '4':
+        #             print('中金被动撤单')
+        #             print(pOrder.StatusMsg)
+        #         else:
+        #             print(pOrder.OrderSubmitStatus)
+        #             print('中金撤单')
+        #             print(pOrder.StatusMsg)
+        #     # 部分成交，还在队列中
+        #     elif pOrder.OrderStatus == THOST_FTDC_OST_PartTradedQueueing:
+        #         print('中金部分成交，还在队列中')
+        #         self.query_finish[ReqOrderInsert] = True
+        #     else:
+        #         print("OnRtnOrder")
+        #         print("OrderStatus=", pOrder.OrderStatus)
+        #         print("StatusMsg=", pOrder.StatusMsg)
+        # except Exception as e:
+        #     red_print(e)
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         print(f'OnRtnTrade: OrderRef {pTrade.OrderRef}')
@@ -221,8 +224,17 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice}, open date: {pInvestorPositionDetail.OpenDate}, volume: {pInvestorPositionDetail.Volume}, direction: {pInvestorPositionDetail.Direction}")
 
         if bIsLast:
-            self.query_finish[RspQryInvestorPositionDetail] = True
+            self.query_finish[ReqQryInvestorPositionDetail] = True
             print('查询投资者持仓明细完成')
+
+    def OnRspOrderAction(self, pInputOrderAction: "CThostFtdcInputOrderActionField", pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
+        if pRspInfo is not None and pRspInfo.ErrorID != 0:
+            print('撤单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+
+        if bIsLast:
+            self.query_finish[ReqOrderAction] = True
+            print('撤单完成')
+
 
 
 

@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('prod')
+ctp_manager = CTPManager('test')
 
 def init_ctp():
     # 初始化
@@ -87,7 +87,15 @@ def main():
 
 
     # 模拟下单
-    # ctp_manager.insert_order('IF2412', Direction.BUY_OPEN, 4000, 2)
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "m2505", Direction.BUY_OPEN, 2800, 1)
+    # ctp_manager.current_user.order_action(ExchangeType.CFFEX, "m2505", "000000000000")
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "m2505", Direction.SELL_CLOSE, 2824, 1)
+    #
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "m2505", Direction.SELL_OPEN, 2900, 1)
+    if order_ref is not None:
+        ctp_manager.current_user.order_action(ExchangeType.CFFEX, "m2505", order_ref)
+    #
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "m2505", Direction.BUY_CLOSE, 2825, 1)
 
     # ctp_manager.query_investor_position_detail()
 
