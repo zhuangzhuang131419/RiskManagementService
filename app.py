@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-from typing import Dict
+from typing import Dict, List
 
 from helper.helper import filter_index_option, filter_etf_option, filter_index_future, get_cash_multiplier, \
     parse_option_full_symbol
@@ -63,7 +63,8 @@ def init_ctp():
 
 
 def main():
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.SELL_CLOSE, 270, 15)
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.SELL_OPEN, 270, 15)
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 280, 10)
     # ctp_manager.switch_to_user("Zhuang")
     # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 10)
 
@@ -404,18 +405,18 @@ def get_cffex_monitor():
         return jsonify({"error": f"ctp manager exception"}), 404
     result :Dict[str, int] = {}
     for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
-        result[full_symbol] = abs(position.long - position.short)
-
+        result[full_symbol] = position.short_open_volume + position.long_open_volume
     return jsonify(result)
 
 @app.route('/api/se/monitor', methods=['GET'])
 def get_se_monitor():
     if ctp_manager is None or ctp_manager.current_user is None:
         return jsonify({"error": f"ctp manager exception"}), 404
-    result :Dict[str, int] = {}
+    result :Dict[str, List[int]] = {}
     for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
-        result[full_symbol] = abs(position.long - position.short)
-
+        net_position = abs(position.long - position.short)
+        total_amount = position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume + min(position.long, position.short) * 2
+        result[full_symbol] = [net_position, total_amount, total_amount / net_position]
     return jsonify(result)
 
 

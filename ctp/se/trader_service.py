@@ -191,18 +191,29 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         print(f'OnRtnTrade: OrderRef {pTrade.OrderRef}')
 
-        print(f'OnRtnTrade: InstrumentID: {pTrade.InstrumentID}, Position: {pTrade.Volume}, Direction: {pTrade.Direction}')
-        # 更新持仓信息
-        self.user_memory_manager.refresh_se_position()
-        self.query_finish[ReqQryInvestorPosition] = False
-        query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
-        ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
-        if ret == 0:
-            print(f"发送查询上/深交所投资者持仓请求成功")
-            pass
-        else:
-            print(f"发送查询上/深交所投资者持仓请求失败")
-            judge_ret(ret)
+        full_symbol = self.market_data_manager.instrument_transform_full_symbol[pTrade.InstrumentID]
+        if full_symbol not in self.user_memory_manager.positions:
+            self.user_memory_manager.positions[full_symbol] = Position(pTrade.InstrumentID)
+
+        if pTrade.Direction == "0":
+            if pTrade.OffsetFlag == '0':
+                # 买开仓
+                self.user_memory_manager.positions[full_symbol].long += int(pTrade.Volume)
+                self.user_memory_manager.positions[full_symbol].long_open_volume += int(pTrade.Volume)
+            elif pTrade.OffsetFlag == '1':
+                # 买平仓
+                self.user_memory_manager.positions[full_symbol].short -= int(pTrade.Volume)
+                self.user_memory_manager.positions[full_symbol].long_close_volume += int(pTrade.Volume)
+        elif pTrade.Direction == "1":
+            if pTrade.OffsetFlag == '0':
+                # 卖开仓
+                self.user_memory_manager.positions[full_symbol].short += int(pTrade.Volume)
+                self.user_memory_manager.positions[full_symbol].short_open_volume += int(pTrade.Volume)
+            elif pTrade.OffsetFlag == '1':
+                # 卖平仓
+                self.user_memory_manager.positions[full_symbol].long -= int(pTrade.Volume)
+                self.user_memory_manager.positions[full_symbol].short_close_volume += int(pTrade.Volume)
+        print(f'交易成功后当前持仓:{self.user_memory_manager.print_position()}')
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
@@ -223,12 +234,16 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             return
 
         full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
-        print(f"full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}")
+        print(f"OnRspQryInvestorPosition full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}, today position: {pInvestorPosition.TodayPosition}")
         self.user_memory_manager.positions[full_symbol] = Position(instrument_id)
         if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
             self.user_memory_manager.positions[full_symbol].long = int(pInvestorPosition.Position)
+            self.user_memory_manager.positions[full_symbol].long_open_volume = int(pInvestorPosition.OpenVolume)
+            self.user_memory_manager.positions[full_symbol].long_close_volume = int(pInvestorPosition.CloseVolume)
         elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
             self.user_memory_manager.positions[full_symbol].short = int(pInvestorPosition.Position)
+            self.user_memory_manager.positions[full_symbol].short_open_volume = int(pInvestorPosition.OpenVolume)
+            self.user_memory_manager.positions[full_symbol].short_close_volume = int(pInvestorPosition.CloseVolume)
 
     def OnRspOrderAction(self, pInputOrderAction: CThostFtdcInputOrderActionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
