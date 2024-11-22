@@ -49,18 +49,21 @@ class CTPManager:
         except Exception as e:
             print(f"初始化用户时出现错误: {e}")
 
-        # 随机挑选一个连接行情
-        self.market_data_user = User(user_config_path[0], self.market_data_manager)
 
-        # 先获取行情
-        self.connect_market_data()
 
         # 连接各个user
         self.init_user(user_config_path)
-        self.connect_trader()
+
+
+        # 查询持仓
+        self.query_position()
 
         Thread(target=self.market_data_manager.index_volatility_calculator).start()
         Thread(target=self.run_daily_job).start()
+
+    def query_position(self):
+        for user in self.users.values():
+            user.query_investor_position()
 
     def run_daily_job(self):
         while True:
@@ -91,11 +94,25 @@ class CTPManager:
 
 
     def init_user(self, user_config_path):
+        try:
+            # 随机挑选一个连接行情
+            self.market_data_user = User(user_config_path[0], self.market_data_manager)
 
-        for config_path in user_config_path:
+            # 先获取行情
+            self.connect_market_data()
+            self.users[self.market_data_user.user_name] = self.market_data_user
+            print(f"用户 {self.market_data_user.user_name} 初始化完成")
+        except Exception as e:
+            print(f"初始化行情用户失败: {e}")
+            return
+
+
+        for config_path in user_config_path[1:]:
             user = User(config_path, self.market_data_manager)
             self.users[user.user_name] = user
             print(f"用户 {user.user_name} 初始化完成")
+            user.init_exchange(self.CONFIG_FILE_PATH)
+            user.connect_trade()
 
 
     def connect_market_data(self):
@@ -110,18 +127,11 @@ class CTPManager:
         self.market_data_user.subscribe_market_data()
         print('行情初始化结束')
 
-    def connect_trader(self):
-        print('连接交易中心')
-        for user in self.users.values():
-            user.init_exchange(self.CONFIG_FILE_PATH)
-            user.connect_trade()
-
     def switch_to_user(self, user_name: str) -> bool:
         self.current_user = self.users.get(user_name, None)
         if self.current_user is not None:
             print(f"当前用户切换为：{user_name}")
-            for exchange in self.current_user.exchanges.keys():
-                self.current_user.query_investor_position(exchange, None)
+            print(f"当前持仓信息：{self.current_user.user_memory.print_position()}")
             return True
         else:
             print(f"未找到用户：{user_name}")

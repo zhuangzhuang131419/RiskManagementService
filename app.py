@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('test')
+ctp_manager = CTPManager('dev')
 
 def init_ctp():
     # 初始化
@@ -63,60 +63,25 @@ def init_ctp():
 
 
 def main():
-
-
-    # ctp_manager.current_user.query_investor_position(ExchangeType.SSE.name)
-    # ctp_manager.current_user.query_investor_position(ExchangeType.SZSE.name)
-    # ctp_manager.current_user.query_investor_position_detail(ExchangeType.SSE.name)
-    # ctp_manager.current_user.query_investor_position_detail(ExchangeType.SZSE.name)
-
-
-
-
-    # print('HO2410的看涨期权的第一个行权价的行权价：{}'.format(ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0, 0]))
-    # print('HO2410的看涨期权的第二个行权价的行权价：{}'.format(
-    #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 1, 0]))
-
-
-
-    # print('HO2410的看涨期权的第一个行权价相关信息：{}'.format(
-    #     ctp_manager.memory.option_manager.index_option_market_data[0, 0, 0]))
-    # print('HO2410一共有几个行权价: {}'.format(memory_manager.option_manager.option_month_strike_prices['HO2410']))
-    # print('当前订阅期权合约行权价数量为：{}'.format(memory_manager.option_manager.option_month_strike_num))
-
-
-
-    # 模拟下单
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "m2505", Direction.BUY_OPEN, 2800, 1)
-    # ctp_manager.current_user.order_action(ExchangeType.CFFEX, "m2505", "000000000000")
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "m2505", Direction.SELL_CLOSE, 2824, 1)
-    #
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "m2505", Direction.SELL_OPEN, 2900, 1)
-    if order_ref is not None:
-        ctp_manager.current_user.order_action(ExchangeType.CFFEX, "m2505", order_ref)
-    #
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "m2505", Direction.BUY_CLOSE, 2825, 1)
-
-    # ctp_manager.query_investor_position_detail()
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.SELL_CLOSE, 270, 15)
+    # ctp_manager.switch_to_user("Zhuang")
+    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 10)
 
     while True:
-        # print(get_position_greeks('51005020241225'))
-        # print(ctp_manager.market_data_manager.clock)
-        # print(f'HO2411的看涨期权的第一个行权价Greeks相关信息：delta{call_delta}, gamma{gamma}, vega{vega}, theta{call_theta}')
-        # print(
-        #     f'HO2411的看跌期权的第一个行权价Greeks相关信息：delta{put_delta}, gamma{gamma}, vega{vega}, theta{put_theta}')
-        # print('HO2410 期货价格:{}'.format(ctp_manager.memory.option_manager.index_option_month_forward_price[0, :]))
-        # print(f"HO20241115: {get_wing_model_by_symbol('MO20241220')}")
-        # print(f"51030020241225: {get_wing_model_by_symbol('51030020241225')}")
         time.sleep(3)
 
 
 def test():
     ctp_manager.switch_to_user("Zhuang")
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 10)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 40)
 
     ctp_manager.switch_to_user("Xue")
     ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 20)
+
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "au2502", Direction.BUY_OPEN, 270, 1)
+    # print(f"order_ref:{order_ref}")
+    if order_ref is not None:
+        ctp_manager.current_user.order_action(ExchangeType.CFFEX, "au2502", order_ref)
 
 
 @app.route('/')
@@ -192,15 +157,15 @@ def get_option_greeks():
         dkurt = (option_tuple.call.greeks.dk1 + option_tuple.call.greeks.dk2) / 2
 
         net_position = 0
-        if ctp_manager.current_user is not None and option_tuple.call.full_symbol in ctp_manager.current_user.user_memory.position:
-            position = ctp_manager.current_user.user_memory.position[option_tuple.call.full_symbol]
+        if ctp_manager.current_user is not None and option_tuple.call.full_symbol in ctp_manager.current_user.user_memory.positions:
+            position = ctp_manager.current_user.user_memory.positions[option_tuple.call.full_symbol]
             net_position = position.long - position.short
 
         call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position, ask=option_tuple.call.market_data.ask_prices[0], bid=option_tuple.call.market_data.bid_prices[0])
 
         net_position = 0
-        if ctp_manager.current_user is not None and option_tuple.put.full_symbol in ctp_manager.current_user.user_memory.position:
-            position = ctp_manager.current_user.user_memory.position[option_tuple.put.full_symbol]
+        if ctp_manager.current_user is not None and option_tuple.put.full_symbol in ctp_manager.current_user.user_memory.positions:
+            position = ctp_manager.current_user.user_memory.positions[option_tuple.put.full_symbol]
             net_position = position.long - position.short
 
         put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position, ask=option_tuple.put.market_data.ask_prices[0], bid=option_tuple.put.market_data.bid_prices[0])
@@ -368,10 +333,10 @@ def get_future_position_greeks(symbol: str):
 
     underlying_price = (future.market_data.bid_prices[0] + future.market_data.ask_prices[0]) / 2
 
-    if symbol not in ctp_manager.current_user.user_memory.position:
+    if symbol not in ctp_manager.current_user.user_memory.positions:
         return GreeksCashResp(underlying_price=underlying_price).to_dict()
 
-    future_position = ctp_manager.current_user.user_memory.position[symbol]
+    future_position = ctp_manager.current_user.user_memory.positions[symbol]
     delta = (future_position.long - future_position.short)
 
     delta_cash = delta * cash_multiplier * underlying_price
@@ -396,7 +361,7 @@ def get_position_greeks(symbol: str):
 
 
 
-    for full_symbol, position in ctp_manager.current_user.user_memory.position.items():
+    for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
         if not full_symbol.startswith(symbol):
             continue
         symbol, option_type, strike_price = parse_option_full_symbol(full_symbol)
@@ -432,6 +397,29 @@ def generate_wing_model_response(symbol: str) -> WingModelResp:
     wing_model_para: WingModelPara = option_series.customized_wing_model_para if option_series.customized_wing_model_para.v != 0 else option_series.wing_model_para
     atm_volatility: ATMVolatility = option_series.atm_volatility
     return WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)
+
+@app.route('/api/cffex/monitor', methods=['GET'])
+def get_cffex_monitor():
+    if ctp_manager is None or ctp_manager.current_user is None:
+        return jsonify({"error": f"ctp manager exception"}), 404
+    result :Dict[str, int] = {}
+    for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
+        result[full_symbol] = abs(position.long - position.short)
+
+    return jsonify(result)
+
+@app.route('/api/se/monitor', methods=['GET'])
+def get_se_monitor():
+    if ctp_manager is None or ctp_manager.current_user is None:
+        return jsonify({"error": f"ctp manager exception"}), 404
+    result :Dict[str, int] = {}
+    for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
+        result[full_symbol] = abs(position.long - position.short)
+
+    return jsonify(result)
+
+
+
 
 
 if __name__ == "__main__":

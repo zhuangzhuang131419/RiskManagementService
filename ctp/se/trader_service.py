@@ -190,6 +190,8 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         print(f'OnRtnTrade: OrderRef {pTrade.OrderRef}')
+
+        print(f'OnRtnTrade: InstrumentID: {pTrade.InstrumentID}, Position: {pTrade.Volume}, Direction: {pTrade.Direction}')
         # 更新持仓信息
         self.user_memory_manager.refresh_se_position()
         self.query_finish[ReqQryInvestorPosition] = False
@@ -222,11 +224,11 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
         full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
         print(f"full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}")
-        self.user_memory_manager.position[full_symbol] = Position(instrument_id)
+        self.user_memory_manager.positions[full_symbol] = Position(instrument_id)
         if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-            self.user_memory_manager.position[full_symbol].long = int(pInvestorPosition.Position)
+            self.user_memory_manager.positions[full_symbol].long = int(pInvestorPosition.Position)
         elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-            self.user_memory_manager.position[full_symbol].short = int(pInvestorPosition.Position)
+            self.user_memory_manager.positions[full_symbol].short = int(pInvestorPosition.Position)
 
     def OnRspOrderAction(self, pInputOrderAction: CThostFtdcInputOrderActionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:

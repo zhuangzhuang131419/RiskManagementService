@@ -6,9 +6,10 @@ from model.position import Position
 
 
 class UserMemoryManager:
-    def __init__(self):
+    def __init__(self, user_name: str):
         self.order_ref = 0
-        self.position: Dict[str, Position]= {}
+        self.positions: Dict[str, Position]= {}
+        self.user = user_name
 
 
     def get_order_ref(self):
@@ -18,10 +19,19 @@ class UserMemoryManager:
 
     def refresh_se_position(self):
         # 只保留不符合 filter_etf_option 条件的键值对
-        self.position = {symbol: value for symbol, value in self.position.items() if not filter_etf_option(symbol)}
+        self.positions = {symbol: value for symbol, value in self.positions.items() if not filter_etf_option(symbol)}
 
     def refresh_cffex_position(self):
         # 只保留不符合 filter_index_future 和 filter_index_option 条件的键值对
-        self.position = {symbol: value for symbol, value in self.position.items() if not (filter_index_future(symbol) or filter_index_option(symbol))}
+        self.positions = {symbol: value for symbol, value in self.positions.items() if not (filter_index_future(symbol) or filter_index_option(symbol))}
+
+    def print_position(self) -> str:
+        if not self.positions:
+            return "No positions available."
+        return "\n".join(
+            f"{key}: {position}" for key, position in self.positions.items()
+        )
+
+
 
 

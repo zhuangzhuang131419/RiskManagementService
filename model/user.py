@@ -52,7 +52,7 @@ class User:
                     trade_server_front=self.config.get(section, 'TradeServerFront')
                 )
         # 内存中心
-        self.user_memory = UserMemoryManager()
+        self.user_memory = UserMemoryManager(self.user_name)
         self.market_data_memory = market_data_manager
 
     def connect_master_data(self):
@@ -146,8 +146,13 @@ class User:
 
         print('已发送全部订阅请求')
 
+    def query_investor_position(self):
+        for exchange_id, exchange in self.exchanges.items():
+            if not exchange.is_login():
+                continue
+            self.query_investor_position_by_exchange(exchange_id, None)
 
-    def query_investor_position(self, exchange_type: ExchangeType, instrument_id: Optional[str], timeout=TIMEOUT) -> bool:
+    def query_investor_position_by_exchange(self, exchange_type: ExchangeType, instrument_id: Optional[str], timeout=TIMEOUT) -> bool:
         print(f'查询投资者{exchange_type.value}持仓')
         if exchange_type in self.exchanges:
             exchange = self.exchanges[exchange_type]
@@ -184,6 +189,7 @@ class User:
             while not self.is_query_finish(exchange_type, ReqOrderInsert):
                 if time.time() - start_time > timeout:
                     logging.error(f'{exchange_type.value} {ReqOrderInsert} 查询超时')
+                    return order_ref
                 time.sleep(3)
             return order_ref
         return None
@@ -201,6 +207,7 @@ class User:
             while not self.is_query_finish(exchange_type, ReqOrderAction):
                 if time.time() - start_time > timeout:
                     logging.error(f'{exchange_type.value} {ReqOrderAction} 查询超时')
+                    return False
                 time.sleep(3)
             return True
         return False
