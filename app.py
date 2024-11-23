@@ -63,10 +63,6 @@ def init_ctp():
 
 
 def main():
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.SELL_OPEN, 270, 15)
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 280, 10)
-    # ctp_manager.switch_to_user("Zhuang")
-    # ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 10)
 
     while True:
         time.sleep(3)
@@ -306,6 +302,8 @@ def get_greek_summary_by_option_symbol():
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
+    print(f"get_greek_summary_by_option_symbol: {symbol}")
+
     if ctp_manager.current_user is None:
         return jsonify({"error": f"error not set user"}), 404
     # Convert each data instance to a dictionary and return as JSON
@@ -325,7 +323,7 @@ def get_greek_summary_by_future_symbol():
         # Convert each data instance to a dictionary and return as JSON
         return jsonify(get_future_position_greeks(group_instrument.future.symbol))
     else:
-        return jsonify({"error": f"Symbol invalid"}), 404
+        return jsonify(GreeksCashResp().to_dict())
 
 def get_future_position_greeks(symbol: str):
     future = ctp_manager.market_data_manager.index_futures_dict[symbol]
@@ -403,20 +401,38 @@ def generate_wing_model_response(symbol: str) -> WingModelResp:
 def get_cffex_monitor():
     if ctp_manager is None or ctp_manager.current_user is None:
         return jsonify({"error": f"ctp manager exception"}), 404
-    result :Dict[str, int] = {}
+
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
+
+    # print(f"get_cffex_monitor symbol:{symbol}")
+
+    result : int = 0
     for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
-        result[full_symbol] = position.short_open_volume + position.long_open_volume
-    return jsonify(result)
+        if full_symbol.startswith(symbol):
+            result += position.short_open_volume + position.long_open_volume
+    return jsonify(str(result))
 
 @app.route('/api/se/monitor', methods=['GET'])
 def get_se_monitor():
     if ctp_manager is None or ctp_manager.current_user is None:
         return jsonify({"error": f"ctp manager exception"}), 404
-    result :Dict[str, List[int]] = {}
+
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
+
+    # print(f"get_se_monitor symbol:{symbol}")
+
+    net_position : int = 0
+    total_amount : int = 0
     for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
-        net_position = abs(position.long - position.short)
-        total_amount = position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume + min(position.long, position.short) * 2
-        result[full_symbol] = [net_position, total_amount, total_amount / net_position]
+        if full_symbol.startswith(symbol):
+            net_position += abs(position.long - position.short)
+            total_amount += position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume + min(position.long, position.short) * 2
+
+    result = str(net_position) + "#" + str(total_amount) + "#" + str(total_amount / net_position)
     return jsonify(result)
 
 

@@ -19,7 +19,7 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
     () => optionDataProvider.fetchWingModelParaBySymbol(symbol as string),
     {
       onSuccess(data) {
-        console.log('fetchWingModelParaBySymbol' + JSON.stringify(data))
+        // console.log('fetchWingModelParaBySymbol' + JSON.stringify(data))
         setItems(data); // 更新表格项
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
