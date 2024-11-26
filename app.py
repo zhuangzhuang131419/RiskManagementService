@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('dev')
+ctp_manager = CTPManager('prod')
 
 def init_ctp():
     # 初始化
@@ -432,7 +432,10 @@ def get_se_monitor():
             net_position += abs(position.long - position.short)
             total_amount += position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume + min(position.long, position.short) * 2
 
-    result = str(net_position) + "#" + str(total_amount) + "#" + str(total_amount / net_position)
+    if net_position == 0:
+        result = str(net_position) + "#" + str(total_amount)
+    else:
+        result = str(net_position) + "#" + str(total_amount) + "#" + str(round(total_amount / net_position, 2))
     return jsonify(result)
 
 
