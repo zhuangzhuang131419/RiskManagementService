@@ -33,6 +33,7 @@ const UserInfoTable: React.FC<UserInfoTableProps> = ({ indexSymbol, etfSymbol })
             },
             enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
             refetchOnWindowFocus: false, // 禁用在窗口获得焦点时重新获取数据
+            refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
         }
     );
 
@@ -45,6 +46,7 @@ const UserInfoTable: React.FC<UserInfoTableProps> = ({ indexSymbol, etfSymbol })
             },
             enabled: !!etfSymbol,  // 只有当 symbol 存在时才启用查询
             refetchOnWindowFocus: false, // 禁用在窗口获得焦点时重新获取数据
+            refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
         }
     );
 
