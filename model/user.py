@@ -147,6 +147,8 @@ class User:
         print('已发送全部订阅请求')
 
     def query_investor_position(self):
+        # 查询前先清空内存持仓信息
+        self.user_memory.positions = {}
         for exchange_id, exchange in self.exchanges.items():
             if not exchange.is_login():
                 continue

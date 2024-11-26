@@ -67,13 +67,18 @@ def main():
     while True:
         time.sleep(3)
 
+def test_position():
+    print(get_se_monitor("HO20250221"))
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_OPEN, 220, 4)
+    print(get_se_monitor("HO20250221"))
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_OPEN, 240, 1)
+    print(get_se_monitor("HO20250221"))
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_CLOSE, 240, 1)
+    print(get_se_monitor("HO20250221"))
 
 def test():
     ctp_manager.switch_to_user("Zhuang")
     ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 40)
-
-    ctp_manager.switch_to_user("Xue")
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 20)
 
     order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "au2502", Direction.BUY_OPEN, 270, 1)
     # print(f"order_ref:{order_ref}")
@@ -179,7 +184,7 @@ def get_wing_model_by_symbol():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
-    print(f"get_wing_model_by_symbol: {symbol}")
+    # print(f"get_wing_model_by_symbol: {symbol}")
 
 
     # if symbol is None or symbol == "":
@@ -296,25 +301,15 @@ def set_baseline():
 def get_baseline():
     return jsonify(ctp_manager.baseline.name.lower())
 
-@app.route('/api/option/greeks_summary', methods=['GET'])
-def get_greek_summary_by_option_symbol():
-    symbol: str = request.args.get('symbol')
-    if symbol is None or symbol == "":
-        return jsonify({"error": f"Symbol invalid"}), 404
-
-    print(f"get_greek_summary_by_option_symbol: {symbol}")
-
+@app.route('/api/option/greeks_summary/<symbol>', methods=['GET'])
+def get_greek_summary_by_option_symbol(symbol):
     if ctp_manager.current_user is None:
         return jsonify({"error": f"error not set user"}), 404
     # Convert each data instance to a dictionary and return as JSON
     return jsonify(get_position_greeks(symbol))
 
-@app.route('/api/future/greeks_summary', methods=['GET'])
-def get_greek_summary_by_future_symbol():
-    symbol: str = request.args.get('symbol')
-    if symbol is None or symbol == "":
-        return jsonify({"error": f"Symbol invalid"}), 404
-
+@app.route('/api/future/greeks_summary/<symbol>', methods=['GET'])
+def get_greek_summary_by_future_symbol(symbol):
     if ctp_manager.current_user is None:
         return jsonify({"error": f"error not set user"}), 404
 
@@ -414,14 +409,10 @@ def get_cffex_monitor():
             result += position.short_open_volume + position.long_open_volume
     return jsonify(str(result))
 
-@app.route('/api/se/monitor', methods=['GET'])
-def get_se_monitor():
+@app.route('/api/se/monitor/<symbol>', methods=['GET'])
+def get_se_monitor(symbol):
     if ctp_manager is None or ctp_manager.current_user is None:
         return jsonify({"error": f"ctp manager exception"}), 404
-
-    symbol: str = request.args.get('symbol')
-    if symbol is None or symbol == "":
-        return jsonify({"error": f"Symbol invalid"}), 404
 
     # print(f"get_se_monitor symbol:{symbol}")
 
@@ -435,7 +426,7 @@ def get_se_monitor():
     if net_position == 0:
         result = str(net_position) + "#" + str(total_amount)
     else:
-        result = str(net_position) + "#" + str(total_amount) + "#" + str(round(total_amount / net_position, 2))
+        result = str(net_position) + "#" + str(total_amount) + "#" + f"{round((total_amount / net_position) * 100, 2)}%"
     return jsonify(result)
 
 
