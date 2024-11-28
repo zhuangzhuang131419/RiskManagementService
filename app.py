@@ -64,17 +64,57 @@ def init_ctp():
 
 def main():
 
+    # test_instruction()
+    # test_se_instruction()
+
     while True:
         time.sleep(3)
 
 def test_position():
     print(get_se_monitor("HO20250221"))
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_OPEN, 220, 4)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_OPEN, 200, 4)
     print(get_se_monitor("HO20250221"))
     ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_OPEN, 240, 1)
     print(get_se_monitor("HO20250221"))
     ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_CLOSE, 240, 1)
     print(get_se_monitor("HO20250221"))
+
+def test_se_instruction():
+    # 卖开
+    # ctp_manager.current_user.insert_order(ExchangeType.SE, "10007990", Direction.SELL_OPEN, 0.016, 1)
+    # 买开
+    # ctp_manager.current_user.insert_order(ExchangeType.SE, "10007990", Direction.BUY_OPEN, 0.017, 1)
+    # 买平
+    # ctp_manager.current_user.insert_order(ExchangeType.SE, "10007990", Direction.BUY_CLOSE, 0.017, 1)
+    # 卖平
+    # ctp_manager.current_user.insert_order(ExchangeType.SE, "10007990", Direction.SELL_CLOSE, 0.016, 1)
+
+    # 买撤
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.SE, "10007990", Direction.BUY_OPEN, 0.014, 1)
+    ctp_manager.current_user.order_action(ExchangeType.SE, "10007990", order_ref)
+    #
+    #卖撤
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.SE, "10007990", Direction.SELL_OPEN, 0.018, 1)
+    ctp_manager.current_user.order_action(ExchangeType.SE, "10007990", order_ref)
+
+def test_instruction():
+    # 卖开
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_OPEN, 200, 1)
+    # # 买开
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2500", Direction.BUY_OPEN, 270, 1)
+    # 买平
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_CLOSE, 250, 1)
+    # # # 卖平
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_CLOSE, 200, 1)
+
+    # 买撤
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_OPEN, 190, 1)
+    ctp_manager.current_user.order_action(ExchangeType.CFFEX, "HO2502-C-2400", order_ref)
+    #
+    #卖撤
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_OPEN, 270, 1)
+    ctp_manager.current_user.order_action(ExchangeType.CFFEX, "HO2502-C-2400", order_ref)
+
 
 def test():
     ctp_manager.switch_to_user("Zhuang")

@@ -2,6 +2,7 @@ import threading
 import time
 from queue import Queue
 
+from numpy.linalg import LinAlgError
 from unicodedata import category
 
 from model.enum.category import Category, UNDERLYING_CATEGORY_MAPPING
@@ -157,7 +158,7 @@ class MarketDataManager:
                 # 计算时间
                 end_date = datetime.datetime.strptime(self.option_market_data[symbol].expired_date, "%Y%m%d").date()
                 day_count = count_trading_days(datetime.datetime.now().date(), end_date, HOLIDAYS)
-                remaining_year = max(round((day_count - 1) / YEAR_TRADING_DAY + inter_daytime(YEAR_TRADING_DAY), 4), 1 / 240)
+                remaining_year = max(round((day_count - 1) / YEAR_TRADING_DAY + inter_daytime(YEAR_TRADING_DAY), 4), 1 / YEAR_TRADING_DAY)
                 # 计算forward价格，获取两侧行权价，标记FW价格无效，loc_index_month_available,标记IS无法取得,loc_index_IS_available
                 self.index_option_imply_forward_price(symbol, remaining_year)
                 if self.option_market_data[symbol].imply_price.future_valid == -1:
@@ -288,17 +289,21 @@ class MarketDataManager:
                 y_array[j] = (sample_volatility - volatility) * sample_available
 
         # 参数估计
-        para_array = np.dot(np.dot(np.linalg.inv(np.dot(np.transpose(x_array), x_array)), np.transpose(x_array)),y_array)
-        # 残差序列
-        residual = y_array - x_array @ para_array
+        try:
+            para_array = np.dot(np.dot(np.linalg.inv(np.dot(np.transpose(x_array), x_array)), np.transpose(x_array)),y_array)
+            # 残差序列
+            residual = y_array - x_array @ para_array
 
-        wing_model_para.S = underlying_price
-        wing_model_para.k1 = para_array[0]
-        wing_model_para.k2 = para_array[1]
-        wing_model_para.b = para_array[2]
-        wing_model_para.residual = (residual@residual) / available_num
+            wing_model_para.S = underlying_price
+            wing_model_para.k1 = para_array[0]
+            wing_model_para.k2 = para_array[1]
+            wing_model_para.b = para_array[2]
+            wing_model_para.residual = (residual @ residual) / available_num
 
-        self.option_market_data[symbol].wing_model_para = wing_model_para
+            self.option_market_data[symbol].wing_model_para = wing_model_para
+        except LinAlgError:
+            print(f"Singular matrix: x_array: {x_array}, y_array: {y_array}")
+            raise LinAlgError
 
 
     def calculate_atm_para(self, symbol, remaining_year):

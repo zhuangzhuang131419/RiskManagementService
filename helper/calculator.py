@@ -41,6 +41,8 @@ def calculate_x_distance(S, K, t, r, v, q):
     """
     # 计算价格差异并考虑时间、利率和股息的影响
     x_distance = math.log(K / (S * math.exp(t * (r - q)))) / (v * math.sqrt(t))
+    if x_distance == 0:
+        print(f"S = {S}, K={K}, t={t}, r={r}, v={v}, q={q}")
     return x_distance
 
 
