@@ -461,7 +461,7 @@ def get_se_monitor(symbol):
     for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
         if full_symbol.startswith(symbol):
             net_position += abs(position.long - position.short)
-            total_amount += position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume + min(position.long, position.short) * 2
+            total_amount += position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume
 
     if net_position == 0:
         result = str(net_position) + "#" + str(total_amount)
