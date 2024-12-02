@@ -341,17 +341,27 @@ def set_baseline():
 def get_baseline():
     return jsonify(ctp_manager.baseline.name.lower())
 
-@app.route('/api/option/greeks_summary/<symbol>', methods=['GET'])
-def get_greek_summary_by_option_symbol(symbol):
+@app.route('/api/option/greeks_summary', methods=['GET'])
+def get_greek_summary_by_option_symbol():
     if ctp_manager.current_user is None:
         return jsonify({"error": f"error not set user"}), 404
+
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
+
+    print(f"get_greek_summary_by_option_symbol: {symbol}")
     # Convert each data instance to a dictionary and return as JSON
     return jsonify(get_position_greeks(symbol))
 
-@app.route('/api/future/greeks_summary/<symbol>', methods=['GET'])
-def get_greek_summary_by_future_symbol(symbol):
+@app.route('/api/future/greeks_summary', methods=['GET'])
+def get_greek_summary_by_future_symbol():
     if ctp_manager.current_user is None:
         return jsonify({"error": f"error not set user"}), 404
+
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
 
     group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
     if group_instrument is not None and group_instrument.future is not None:
