@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('test.yangfan-stock')
+ctp_manager = CTPManager('prod')
 
 def init_ctp():
     # 初始化
@@ -65,7 +65,7 @@ def init_ctp():
 def main():
 
     # test_future_instruction("IF2412")
-    test_se_instruction("10007328", 0.0150, 0.0130)
+    # test_se_instruction("10007328", 0.0150, 0.0130)
 
     while True:
         time.sleep(3)
@@ -477,12 +477,16 @@ def get_cffex_monitor():
             result += position.short_open_volume + position.long_open_volume
     return jsonify(str(result))
 
-@app.route('/api/se/monitor/<symbol>', methods=['GET'])
-def get_se_monitor(symbol):
+@app.route('/api/se/monitor', methods=['GET'])
+def get_se_monitor():
     if ctp_manager is None or ctp_manager.current_user is None:
         return jsonify({"error": f"ctp manager exception"}), 404
 
-    # print(f"get_se_monitor symbol:{symbol}")
+    symbol: str = request.args.get('symbol')
+    if symbol is None or symbol == "":
+        return jsonify({"error": f"Symbol invalid"}), 404
+
+    print(f"get_se_monitor symbol:{symbol}")
 
     net_position : int = 0
     total_amount : int = 0
