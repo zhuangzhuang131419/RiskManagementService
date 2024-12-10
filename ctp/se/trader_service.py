@@ -1,6 +1,3 @@
-import copy
-
-from click import option
 from typing import Dict
 from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \

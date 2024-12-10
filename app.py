@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('test.xiangxiaoqin')
+ctp_manager = CTPManager('dev')
 
 def init_ctp():
     # 初始化
@@ -65,7 +65,7 @@ def init_ctp():
 def main():
 
     # test_future_instruction("IF2412")
-    test_se_instruction("10007328", 0.0065, 0.0060)
+    # test_se_instruction("10007328", 0.0065, 0.0060)
 
     while True:
         time.sleep(3)
