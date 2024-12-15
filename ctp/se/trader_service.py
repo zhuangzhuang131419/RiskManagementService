@@ -235,13 +235,13 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         if full_symbol not in self.user_memory_manager.positions:
             self.user_memory_manager.positions[full_symbol] = Position(instrument_id)
         if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-            self.user_memory_manager.positions[full_symbol].long = int(pInvestorPosition.Position)
-            self.user_memory_manager.positions[full_symbol].long_open_volume = int(pInvestorPosition.OpenVolume)
-            self.user_memory_manager.positions[full_symbol].long_close_volume = int(pInvestorPosition.CloseVolume)
+            self.user_memory_manager.positions[full_symbol].long += int(pInvestorPosition.Position)
+            self.user_memory_manager.positions[full_symbol].long_open_volume += int(pInvestorPosition.OpenVolume)
+            self.user_memory_manager.positions[full_symbol].long_close_volume += int(pInvestorPosition.CloseVolume)
         elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-            self.user_memory_manager.positions[full_symbol].short = int(pInvestorPosition.Position)
-            self.user_memory_manager.positions[full_symbol].short_open_volume = int(pInvestorPosition.OpenVolume)
-            self.user_memory_manager.positions[full_symbol].short_close_volume = int(pInvestorPosition.CloseVolume)
+            self.user_memory_manager.positions[full_symbol].short += int(pInvestorPosition.Position)
+            self.user_memory_manager.positions[full_symbol].short_open_volume += int(pInvestorPosition.OpenVolume)
+            self.user_memory_manager.positions[full_symbol].short_close_volume += int(pInvestorPosition.CloseVolume)
 
     def OnRspOrderAction(self, pInputOrderAction: CThostFtdcInputOrderActionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:

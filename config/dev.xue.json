@@ -11,17 +11,6 @@
       "AuthCode": "0000000000000000",
       "MarketServerFront": "tcp://180.168.146.187:10131",
       "TradeServerFront": "tcp://180.168.146.187:10130"
-    },
-    {
-      "BrokerName": "simnow模拟7*24小时",
-      "BrokerID": "2071",
-      "UserID": "82105958",
-      "InvestorID": "82105958",
-      "Password": "gtjaqh@123",
-      "AppID": "client_zyfp_2.0",
-      "AuthCode": "20241118ZHAOYF66",
-      "MarketServerFront": "tcp://112.65.128.131:42213",
-      "TradeServerFront": "tcp://112.65.128.131:42205"
     }
   ],
   "SE": [

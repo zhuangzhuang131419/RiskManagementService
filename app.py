@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('dev')
+ctp_manager = CTPManager('test.liangchen')
 
 def init_ctp():
     # 初始化
@@ -49,9 +49,9 @@ def init_ctp():
         break
 
     print(f"合约Id对应full symbol: {ctp_manager.market_data_manager.instrument_transform_full_symbol}")
-    print(f"品类分组:")
-    for category, group_instrument in ctp_manager.market_data_manager.grouped_instruments.items():
-        print(f'{category}: {group_instrument}')
+    # print(f"品类分组:")
+    # for category, group_instrument in ctp_manager.market_data_manager.grouped_instruments.items():
+    #     print(f'{category}: {group_instrument}')
     print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.market_data_manager.index_futures_dict)))
     print('当前订阅期货合约月份为：{}'.format(ctp_manager.market_data_manager.index_future_symbol))
 

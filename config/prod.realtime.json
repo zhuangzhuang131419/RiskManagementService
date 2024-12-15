@@ -1,0 +1,29 @@
+{
+  "Name": "XueJianhua",
+  "CFFEX": [
+    {
+      "BrokerName": "衣商行-CTP次席-1-188",
+      "BrokerID": "7090",
+      "UserID": "80039190",
+      "InvestorID": "80039190",
+      "Password": "xjh521700",
+      "AppID": "client_gtjast_2.0",
+      "AuthCode": "20201223GTJAST01",
+      "MarketServerFront": "tcp://114.80.225.76:41213",
+      "TradeServerFront": "tcp://114.80.225.75:41205"
+    }
+  ],
+  "SE": [
+    {
+      "BrokerName": "华京路-CTPmini-1",
+      "BrokerID": "7070",
+      "UserID": "9980039190",
+      "InvestorID": "9980039190",
+      "Password": "xjh521700",
+      "AppID": "client_Qqbdl_1.0",
+      "AuthCode": "20240919XUEJIAN1",
+      "MarketServerFront": "tcp://117.131.61.6:42723",
+      "TradeServerFront": "tcp://117.131.61.6:42715"
+    }
+  ]
+}

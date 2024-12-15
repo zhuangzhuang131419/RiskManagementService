@@ -91,8 +91,6 @@ class CTPManager:
             self.market_data_user.init_market_memory()
             self.market_data_user.subscribe_market_data()
 
-
-
     def init_user(self, user_config_path):
         try:
             # 随机挑选一个连接行情
@@ -104,7 +102,9 @@ class CTPManager:
             print(f"用户 {self.market_data_user.user_name} 初始化完成")
         except Exception as e:
             print(f"初始化行情用户失败: {e}")
-            return
+            raise
+
+        print('-------------------------行情连接完毕----------------------------')
 
 
         for config_path in user_config_path[1:]:
@@ -114,6 +114,7 @@ class CTPManager:
             user.init_exchange(self.CONFIG_FILE_PATH)
             user.connect_trade()
 
+        print("------------------------用户连接完毕-----------------------------")
 
     def connect_market_data(self):
         """

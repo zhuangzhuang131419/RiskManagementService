@@ -58,22 +58,24 @@ class User:
         return None
 
     def connect_master_data(self):
-        for exchange_type, exchange in self.exchanges.items():
+        for exchange_type, exchange_list in self.exchanges.items():
             print(f"正在连接 {self.user_name} 的交易所：{exchange_type.value}")
             start_time = time.time()
-            exchange[0].connect_market_data()
-            exchange[0].connect_trader()
-            while not self.is_login(exchange_type):
-                if time.time() - start_time > TIMEOUT:
-                    logging.error(f'{exchange_type.value} 登录超时')
-                    break
-                time.sleep(3)
-            else:
-                # 若登录成功，记录成功日志
-                print(f'{exchange_type.value} 登录成功')
-                continue
+            for exchange in exchange_list:
+                exchange.connect_market_data()
+                exchange.connect_trader()
+                while not exchange.is_login():
+                    if time.time() - start_time > TIMEOUT:
+                        print(f'{exchange_type.value} 登录超时')
+                        break
+                    time.sleep(3)
+                else:
+                    # 若登录成功，记录成功日志
+                    print(f'{exchange_type.value} 登录成功')
+                    continue
 
-            print(f"跳过未成功连接的交易所：{exchange_type.value}")
+                print(f"跳过未成功连接的交易所：{exchange_type.value}")
+
 
     def query_instrument(self):
         for exchange_type, exchange_list in self.exchanges.items():
@@ -93,7 +95,7 @@ class User:
             try:
                 exchange_list: List[Exchange] = []
                 for config in configs:
-                    path = f"{config_file_root}/{self.user_name}/{exchange_type.name}/{config.investor_id}"
+                    path = f"{config_file_root}/{self.user_name}/{exchange_type.name}/{config.investor_id}/"
                     if exchange_type == ExchangeType.CFFEX:
                         exchange_list.append(CFFExchange(config, path, self.user_memory, self.market_data_memory))
                     elif exchange_type == ExchangeType.SE:
@@ -129,8 +131,7 @@ class User:
 
     def init_market_memory(self):
         for exchange_id, exchange_list in self.exchanges.items():
-            for exchange in exchange_list:
-                exchange.init_market_data(self.market_data_memory)
+            exchange_list[0].init_market_data(self.market_data_memory)
 
 
     def is_login(self, exchange_type: ExchangeType) -> bool:
@@ -162,20 +163,16 @@ class User:
         # 查询前先清空内存持仓信息
         self.user_memory.positions = {}
         for exchange_id, exchange_list in self.exchanges.items():
-            if not self.is_login(exchange_id):
-                continue
             self.query_investor_position_by_exchange(exchange_id, None)
 
     def query_investor_position_by_exchange(self, exchange_type: ExchangeType, instrument_id: Optional[str], timeout=TIMEOUT) -> bool:
         print(f'查询投资者{exchange_type.value}持仓')
         if exchange_type in self.exchanges:
             exchange_list = self.exchanges[exchange_type]
-            if not self.is_login(exchange_type):
-                print(f"{exchange_type.value}未登录")
-                return False
-
             for exchange in exchange_list:
-
+                if not exchange.is_login():
+                    print(f"{exchange}未登录")
+                    continue
                 start_time = time.time()
                 exchange.query_investor_position(instrument_id)
                 while not exchange.is_query_finish(ReqQryInvestorPosition):
