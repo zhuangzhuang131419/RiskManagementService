@@ -41,7 +41,7 @@ class CTPManager:
         try:
             for root, _, files in os.walk("config"):
                 for file_name in files:
-                    if not file_name.endswith('.ini'):
+                    if not file_name.endswith('.json'):
                         continue
                     if not file_name.startswith(env):
                         continue

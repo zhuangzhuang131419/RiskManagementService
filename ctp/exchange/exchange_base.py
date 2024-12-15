@@ -32,6 +32,9 @@ class Exchange(ABC):
     def is_login(self):
         return True if self.trader_user_spi is not None and self.trader_user_spi.login_finish else False
 
+    def is_query_finish(self, query_name: str):
+        return self.trader_user_spi.query_finish[query_name]
+
     @abstractmethod
     def connect_market_data(self):
         pass
