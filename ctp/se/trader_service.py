@@ -216,10 +216,6 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
-        if bIsLast:
-            self.query_finish[ReqQryInvestorPosition] = True
-            print('查询投资者持仓完成')
-
         if pInvestorPosition is None:
             return
 
@@ -242,6 +238,10 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
             self.user_memory_manager.positions[full_symbol].short += int(pInvestorPosition.Position)
             self.user_memory_manager.positions[full_symbol].short_open_volume += int(pInvestorPosition.OpenVolume)
             self.user_memory_manager.positions[full_symbol].short_close_volume += int(pInvestorPosition.CloseVolume)
+
+        if bIsLast:
+            self.query_finish[ReqQryInvestorPosition] = True
+            print('查询投资者持仓完成')
 
     def OnRspOrderAction(self, pInputOrderAction: CThostFtdcInputOrderActionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         if pRspInfo is not None and pRspInfo.ErrorID != 0:

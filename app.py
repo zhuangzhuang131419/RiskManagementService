@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('test.liangchen')
+ctp_manager = CTPManager('prod')
 
 def init_ctp():
     # 初始化
