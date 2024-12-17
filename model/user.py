@@ -46,7 +46,7 @@ class User:
                 self.exchange_config[exchange_type] = exchange_configs
 
         # 内存中心
-        self.user_memory = UserMemoryManager(self.user_name)
+        self.user_memory = UserMemoryManager(self.user_name, self.exchange_config)
         self.market_data_memory = market_data_manager
 
     def get_exchange(self, exchange_type: ExchangeType, investor_id: str):
@@ -156,31 +156,31 @@ class User:
                 break
             print('已发送全部订阅请求')
 
-
-
-
     def query_investor_position(self):
-        # 查询前先清空内存持仓信息
-        self.user_memory.positions = {}
+        self.user_memory.refresh_position()
         for exchange_id, exchange_list in self.exchanges.items():
-            self.query_investor_position_by_exchange(exchange_id, None)
-
-    def query_investor_position_by_exchange(self, exchange_type: ExchangeType, instrument_id: Optional[str], timeout=TIMEOUT) -> bool:
-        print(f'查询投资者{exchange_type.value}持仓')
-        if exchange_type in self.exchanges:
-            exchange_list = self.exchanges[exchange_type]
             for exchange in exchange_list:
-                if not exchange.is_login():
-                    print(f"{exchange}未登录")
-                    continue
-                start_time = time.time()
-                exchange.query_investor_position(instrument_id)
-                while not exchange.is_query_finish(ReqQryInvestorPosition):
-                    if time.time() - start_time > timeout:
-                        logging.error(f'{exchange_type.value} {ReqQryInvestorPosition} 查询超时')
-                        return False
-                    time.sleep(3)
-            return True
+                self.query_investor_position_by_exchange(exchange_id, exchange.config.investor_id, None, 30)
+
+    def query_investor_position_by_exchange(self, exchange_type: ExchangeType, investor_id: str, instrument_id: Optional[str], timeout=TIMEOUT) -> bool:
+        exchange = self.get_exchange(exchange_type, investor_id)
+        if exchange is None:
+            print(f"找不到exchange")
+            return False
+        if not exchange.is_login():
+            print(f"{exchange}未登录")
+            return False
+
+        print(f'查询投资者{exchange.config.investor_id}持仓')
+
+        start_time = time.time()
+        exchange.query_investor_position(instrument_id)
+        while not exchange.is_query_finish(ReqQryInvestorPosition):
+            if time.time() - start_time > timeout:
+                logging.error(f'{exchange_type.value} {ReqQryInvestorPosition} 查询超时')
+                return False
+            time.sleep(3)
+        return True
 
     def query_investor_position_detail(self, exchange_type: ExchangeType, timeout=TIMEOUT) -> bool:
         print(f'查询投资者{exchange_type.value}持仓细节')

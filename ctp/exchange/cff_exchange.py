@@ -173,6 +173,7 @@ class CFFExchange(Exchange, ABC):
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
             print('发送查询持仓成功！')
+            pass
         else:
             print('发送查询持仓失败！')
             judge_ret(ret)

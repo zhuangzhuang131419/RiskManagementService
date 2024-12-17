@@ -189,55 +189,55 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         print(f'OnRtnTrade: OrderRef {pTrade.OrderRef}')
 
         full_symbol = self.market_data_manager.instrument_transform_full_symbol[pTrade.InstrumentID]
+        investor_id = pTrade.InvestorID
         if full_symbol not in self.user_memory_manager.positions:
-            self.user_memory_manager.positions[full_symbol] = Position(pTrade.InstrumentID)
+            self.user_memory_manager.positions[investor_id][full_symbol] = Position(pTrade.InstrumentID)
 
         if pTrade.Direction == "0":
             if pTrade.OffsetFlag == '0':
                 # 买开仓
-                self.user_memory_manager.positions[full_symbol].long += int(pTrade.Volume)
-                self.user_memory_manager.positions[full_symbol].long_open_volume += int(pTrade.Volume)
+                self.user_memory_manager.positions[investor_id][full_symbol].long += int(pTrade.Volume)
+                self.user_memory_manager.positions[investor_id][full_symbol].long_open_volume += int(pTrade.Volume)
             elif pTrade.OffsetFlag == '1':
                 # 买平仓
-                self.user_memory_manager.positions[full_symbol].short -= int(pTrade.Volume)
-                self.user_memory_manager.positions[full_symbol].long_close_volume += int(pTrade.Volume)
+                self.user_memory_manager.positions[investor_id][full_symbol].short -= int(pTrade.Volume)
+                self.user_memory_manager.positions[investor_id][full_symbol].long_close_volume += int(pTrade.Volume)
         elif pTrade.Direction == "1":
             if pTrade.OffsetFlag == '0':
                 # 卖开仓
-                self.user_memory_manager.positions[full_symbol].short += int(pTrade.Volume)
-                self.user_memory_manager.positions[full_symbol].short_open_volume += int(pTrade.Volume)
+                self.user_memory_manager.positions[investor_id][full_symbol].short += int(pTrade.Volume)
+                self.user_memory_manager.positions[investor_id][full_symbol].short_open_volume += int(pTrade.Volume)
             elif pTrade.OffsetFlag == '1':
                 # 卖平仓
-                self.user_memory_manager.positions[full_symbol].long -= int(pTrade.Volume)
-                self.user_memory_manager.positions[full_symbol].short_close_volume += int(pTrade.Volume)
+                self.user_memory_manager.positions[investor_id][full_symbol].long -= int(pTrade.Volume)
+                self.user_memory_manager.positions[investor_id][full_symbol].short_close_volume += int(pTrade.Volume)
         print(f'交易成功后当前持仓:{self.user_memory_manager.print_position()}')
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
             print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
-        if pInvestorPosition is None:
-            return
+        if pInvestorPosition is not None:
+            instrument_id: str = pInvestorPosition.InstrumentID
+            investor_id = pInvestorPosition.InvestorID
+            if instrument_id not in self.market_data_manager.instrument_transform_full_symbol:
+                return
 
-        instrument_id: str = pInvestorPosition.InstrumentID
-        if instrument_id not in self.market_data_manager.instrument_transform_full_symbol:
-            return
+            if self.market_data_manager is None or self.user_memory_manager is None:
+                return
 
-        if self.market_data_manager is None or self.user_memory_manager is None:
-            return
-
-        full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
-        print(f"OnRspQryInvestorPosition full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}, today position: {pInvestorPosition.TodayPosition}")
-        if full_symbol not in self.user_memory_manager.positions:
-            self.user_memory_manager.positions[full_symbol] = Position(instrument_id)
-        if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
-            self.user_memory_manager.positions[full_symbol].long += int(pInvestorPosition.Position)
-            self.user_memory_manager.positions[full_symbol].long_open_volume += int(pInvestorPosition.OpenVolume)
-            self.user_memory_manager.positions[full_symbol].long_close_volume += int(pInvestorPosition.CloseVolume)
-        elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
-            self.user_memory_manager.positions[full_symbol].short += int(pInvestorPosition.Position)
-            self.user_memory_manager.positions[full_symbol].short_open_volume += int(pInvestorPosition.OpenVolume)
-            self.user_memory_manager.positions[full_symbol].short_close_volume += int(pInvestorPosition.CloseVolume)
+            full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
+            print(f"OnRspQryInvestorPosition full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}, today position: {pInvestorPosition.TodayPosition}")
+            if full_symbol not in self.user_memory_manager.positions:
+                self.user_memory_manager.positions[investor_id][full_symbol] = Position(instrument_id)
+            if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
+                self.user_memory_manager.positions[investor_id][full_symbol].long = int(pInvestorPosition.Position)
+                self.user_memory_manager.positions[investor_id][full_symbol].long_open_volume = int(pInvestorPosition.OpenVolume)
+                self.user_memory_manager.positions[investor_id][full_symbol].long_close_volume = int(pInvestorPosition.CloseVolume)
+            elif pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Short:
+                self.user_memory_manager.positions[investor_id][full_symbol].short = int(pInvestorPosition.Position)
+                self.user_memory_manager.positions[investor_id][full_symbol].short_open_volume = int(pInvestorPosition.OpenVolume)
+                self.user_memory_manager.positions[investor_id][full_symbol].short_close_volume = int(pInvestorPosition.CloseVolume)
 
         if bIsLast:
             self.query_finish[ReqQryInvestorPosition] = True

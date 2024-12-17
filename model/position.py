@@ -15,3 +15,17 @@ class Position:
             f"Instrument ID: {self.instrument_id}, Long: {self.long}, Short: {self.short}, 买开: {self.long_open_volume}, 卖开：{self.short_open_volume}, 买平：{self.long_close_volume} 卖平：{self.short_close_volume}"
         )
 
+    def __add__(self, other):
+        """Add two Position objects together."""
+        if not isinstance(other, Position):
+            raise TypeError("Both objects must be of type Position")
+
+        combined = Position(self.instrument_id)
+        combined.long = self.long + other.long
+        combined.short = self.short + other.short
+        combined.long_open_volume = self.long_open_volume + other.long_open_volume
+        combined.short_open_volume = self.short_open_volume + other.short_open_volume
+        combined.long_close_volume = self.long_close_volume + other.long_close_volume
+        combined.short_close_volume = self.short_close_volume + other.short_close_volume
+        return combined
+

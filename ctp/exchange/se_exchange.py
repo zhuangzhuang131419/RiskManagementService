@@ -3,7 +3,7 @@ from abc import ABC
 
 from ctp.se.market_data_service import MarketDataService
 from ctp.se.trader_service import TraderService
-from helper.api import ReqOrderInsert, ReqQryInstrument, ReqQryInvestorPositionDetail, ReqOrderAction
+from helper.api import ReqOrderInsert, ReqQryInstrument, ReqQryInvestorPositionDetail, ReqOrderAction, ReqQryInvestorPosition
 from memory.market_data_manager import MarketDataManager
 from ctp.exchange.exchange_base import Exchange
 from api_se import ThostFtdcApiSOpt
@@ -178,7 +178,7 @@ class SExchange(Exchange, ABC):
                 print('正在订阅{}行情...'.format(str(instrument_ids)))
 
     def query_investor_position(self, instrument_id):
-        self.trader_user_spi.query_finish['ReqQryInvestorPosition'] = False
+        self.trader_user_spi.query_finish[ReqQryInvestorPosition] = False
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionField()
         if instrument_id is not None:
             query_file.InstrumentID = instrument_id

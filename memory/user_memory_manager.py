@@ -1,14 +1,18 @@
-from typing import Dict
+from typing import Dict, List
 
 from helper.helper import filter_index_future, filter_etf_option, filter_index_option
+from model.config.exchange_config import ExchangeConfig
 from model.enum.exchange_type import ExchangeType
 from model.position import Position
 
 
 class UserMemoryManager:
-    def __init__(self, user_name: str):
+    def __init__(self, user_name: str, exchange_configs: Dict[ExchangeType, List[ExchangeConfig]]):
         self.order_ref = 0
-        self.positions: Dict[str, Position]= {}
+        self.exchange_configs = exchange_configs
+        # investor_id -> future_id -> position
+        self.positions: Dict[str, Dict[str, Position]] = {}
+        self.refresh_position()
         self.user = user_name
 
 
@@ -17,20 +21,33 @@ class UserMemoryManager:
         self.order_ref += 1
         return order_ref
 
-    def refresh_se_position(self):
-        # 只保留不符合 filter_etf_option 条件的键值对
-        self.positions = {symbol: value for symbol, value in self.positions.items() if not filter_etf_option(symbol)}
+    def refresh_position(self):
+        self.positions: Dict[str, Dict[str, Position]] = {}
+        for exchange_type, exchange_config in self.exchange_configs.items():
+            for config in exchange_config:
+                self.positions[config.investor_id] = {}
 
-    def refresh_cffex_position(self):
-        # 只保留不符合 filter_index_future 和 filter_index_option 条件的键值对
-        self.positions = {symbol: value for symbol, value in self.positions.items() if not (filter_index_future(symbol) or filter_index_option(symbol))}
+    def get_combined_position(self):
+        """Combine positions for each full_symbol."""
+        combined_positions = {}
+        for investor_id, positions in self.positions.items():
+            for full_symbol, position in positions.items():
+                if full_symbol not in combined_positions:
+                    combined_positions[full_symbol] = position
+                else:
+                    combined_positions[full_symbol] += position
+        return combined_positions
 
     def print_position(self) -> str:
         if not self.positions:
             return "No positions available."
-        return "\n".join(
-            f"{key}: {position}" for key, position in self.positions.items()
-        )
+
+        result = []
+        for investor_id, futures in self.positions.items():
+            for future_id, position in futures.items():
+                result.append(f"{investor_id} ({future_id}): {position}")
+
+        return "\n".join(result)
 
 
 

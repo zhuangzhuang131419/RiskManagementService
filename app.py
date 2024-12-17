@@ -204,6 +204,8 @@ def get_option_greeks():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     resp = OptionGreeksResp(symbol)
+    combined_positions = ctp_manager.current_user.user_memory.get_combined_position()
+
     for strike_price, option_tuple in ctp_manager.market_data_manager.option_market_data[symbol].strike_price_options.items():
         call_delta = option_tuple.call.greeks.delta
         put_delta = option_tuple.put.greeks.delta
@@ -217,15 +219,15 @@ def get_option_greeks():
         dkurt = (option_tuple.call.greeks.dk1 + option_tuple.call.greeks.dk2) / 2
 
         net_position = 0
-        if ctp_manager.current_user is not None and option_tuple.call.full_symbol in ctp_manager.current_user.user_memory.positions:
-            position = ctp_manager.current_user.user_memory.positions[option_tuple.call.full_symbol]
+        if ctp_manager.current_user is not None and option_tuple.call.full_symbol in combined_positions:
+            position = combined_positions[option_tuple.call.full_symbol]
             net_position = position.long - position.short
 
         call_option = OptionGreeksData(call_delta, gamma, vega, call_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position, ask=option_tuple.call.market_data.ask_prices[0], bid=option_tuple.call.market_data.bid_prices[0])
 
         net_position = 0
-        if ctp_manager.current_user is not None and option_tuple.put.full_symbol in ctp_manager.current_user.user_memory.positions:
-            position = ctp_manager.current_user.user_memory.positions[option_tuple.put.full_symbol]
+        if ctp_manager.current_user is not None and option_tuple.put.full_symbol in combined_positions:
+            position = combined_positions[option_tuple.put.full_symbol]
             net_position = position.long - position.short
 
         put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position, ask=option_tuple.put.market_data.ask_prices[0], bid=option_tuple.put.market_data.bid_prices[0])
@@ -421,11 +423,12 @@ def get_position_greeks(symbol: str):
     dkurt = 0
     cash_multiplier = get_cash_multiplier(symbol)
 
+    positions = ctp_manager.current_user.user_memory.get_combined_position()
 
-
-    for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
+    for full_symbol, position in positions.items():
         if not full_symbol.startswith(symbol):
             continue
+
         symbol, option_type, strike_price = parse_option_full_symbol(full_symbol)
         underlying_option = ctp_manager.market_data_manager.option_market_data[symbol].get_option(strike_price, option_type)
         multiple = underlying_option.underlying_multiple * (position.long - position.short)
@@ -470,9 +473,10 @@ def get_cffex_monitor():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     # print(f"get_cffex_monitor symbol:{symbol}")
+    combined_position = ctp_manager.current_user.user_memory.get_combined_position()
 
     result : int = 0
-    for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
+    for full_symbol, position in combined_position.items():
         if full_symbol.startswith(symbol):
             result += position.short_open_volume + position.long_open_volume
     return jsonify(str(result))
@@ -490,7 +494,9 @@ def get_se_monitor():
 
     net_position : int = 0
     total_amount : int = 0
-    for full_symbol, position in ctp_manager.current_user.user_memory.positions.items():
+    combined_position = ctp_manager.current_user.user_memory.get_combined_position()
+
+    for full_symbol, position in combined_position.items():
         if full_symbol.startswith(symbol):
             net_position += abs(position.long - position.short)
             total_amount += position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume
