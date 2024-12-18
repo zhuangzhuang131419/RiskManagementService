@@ -38,11 +38,16 @@ class User:
 
         self.exchanges: Dict[ExchangeType, List[Exchange]] = {}
 
+        # investor_id 具体属于哪个交易所
+        self.investors: Dict[str, ExchangeType] = {}
+
         for exchange_type in ExchangeType:
             if exchange_type.name in self.config:
                 exchange_configs : List[ExchangeConfig] = []
                 for config in self.config[exchange_type.name]:
-                    exchange_configs.append(ExchangeConfig(config))
+                    exchange_config = ExchangeConfig(config)
+                    exchange_configs.append(exchange_config)
+                    self.investors[exchange_config.investor_id] = exchange_type
                 self.exchange_config[exchange_type] = exchange_configs
 
         # 内存中心

@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('prod')
+ctp_manager = CTPManager('dev')
 
 def init_ctp():
     # 初始化
@@ -49,9 +49,9 @@ def init_ctp():
         break
 
     print(f"合约Id对应full symbol: {ctp_manager.market_data_manager.instrument_transform_full_symbol}")
-    # print(f"品类分组:")
-    # for category, group_instrument in ctp_manager.market_data_manager.grouped_instruments.items():
-    #     print(f'{category}: {group_instrument}')
+    print(f"品类分组:")
+    for category, group_instrument in ctp_manager.market_data_manager.grouped_instruments.items():
+        print(f'{category}: {group_instrument}')
     print('当前订阅期货合约数量为：{}'.format(len(ctp_manager.market_data_manager.index_futures_dict)))
     print('当前订阅期货合约月份为：{}'.format(ctp_manager.market_data_manager.index_future_symbol))
 
@@ -384,11 +384,12 @@ def get_greek_summary_by_future_symbol():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
+    print(f"group_instrument: {group_instrument}")
     if group_instrument is not None and group_instrument.future is not None:
         # Convert each data instance to a dictionary and return as JSON
         return jsonify(get_future_position_greeks(group_instrument.future.symbol))
     else:
-        return jsonify(GreeksCashResp().to_dict())
+        return jsonify([GreeksCashResp().to_dict()])
 
 def get_future_position_greeks(symbol: str):
     future = ctp_manager.market_data_manager.index_futures_dict[symbol]
@@ -397,17 +398,21 @@ def get_future_position_greeks(symbol: str):
 
     underlying_price = (future.market_data.bid_prices[0] + future.market_data.ask_prices[0]) / 2
 
-    if symbol not in ctp_manager.current_user.user_memory.positions:
-        return GreeksCashResp(underlying_price=underlying_price).to_dict()
+    print("get_future_position_greeks")
 
-    future_position = ctp_manager.current_user.user_memory.positions[symbol]
-    delta = (future_position.long - future_position.short)
+    result = []
+    for investor_id, positions in ctp_manager.current_user.user_memory.positions.items():
+        if ctp_manager.current_user.investors[investor_id] == ExchangeType.CFFEX:
+            if symbol in positions:
+                future_position = positions[symbol]
+                delta = (future_position.long - future_position.short)
+                delta_cash = delta * cash_multiplier * underlying_price
+                result.append(GreeksCashResp(delta=delta, delta_cash=delta_cash, underlying_price=underlying_price).to_dict())
+            else:
+                result.append(GreeksCashResp(underlying_price=underlying_price).to_dict())
 
-    delta_cash = delta * cash_multiplier * underlying_price
-
-    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, underlying_price=underlying_price)
-    return resp.to_dict()
-
+    print(f"get_future_position_greeks: {result}")
+    return result
 
 
 def get_position_greeks(symbol: str):

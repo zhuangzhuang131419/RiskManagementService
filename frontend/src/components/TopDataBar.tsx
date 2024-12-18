@@ -17,6 +17,7 @@ interface TopDataBarProps {
 const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
 
   const [items, setItems] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
 
   const { data: futureData } = useQuery(
     ['futureGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载
@@ -71,6 +72,25 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       underlying_price: null,
     };
 
+
+    const sumFutureGreeks = (futures: CashGreeksResponse[]) => {
+      const result: CashGreeksResponse = { ...defaultCashGreeks };
+
+      futures.forEach((future) => {
+        result.delta = (result.delta ?? 0) + (future.delta ?? 0);
+        result.delta_cash = (result.delta_cash ?? 0) + (future.delta_cash ?? 0);
+        result.gamma_p_cash = (result.gamma_p_cash ?? 0) + (future.gamma_p_cash ?? 0);
+        result.vega_cash = (result.vega_cash ?? 0) + (future.vega_cash ?? 0);
+        result.db_cash = (result.db_cash ?? 0) + (future.db_cash ?? 0);
+        result.vanna_vs_cash = (result.vanna_vs_cash ?? 0) + (future.vanna_vs_cash ?? 0);
+        result.vanna_sv_cash = (result.vanna_sv_cash ?? 0) + (future.vanna_sv_cash ?? 0);
+        result.charm_cash = (result.charm_cash ?? 0) + (future.charm_cash ?? 0);
+      });
+
+      return result
+
+    }
+
     const sumCashGreeks = (index: CashGreeksResponse, etf: CashGreeksResponse, future: CashGreeksResponse) => {
       const result: CashGreeksResponse = { ...defaultCashGreeks };
 
@@ -87,26 +107,39 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       return result;
     };
 
+
     const combinedData = [
       indexData
         ? { type: "指数期权", ...indexData }
-        : { type: "指数期权", defaultCashGreeks },
+        : { type: "指数期权", ...defaultCashGreeks },
       etfData
         ? { type: "ETF期权", ...etfData }
-        : { type: "ETF期权", defaultCashGreeks },
+        : { type: "ETF期权", ...defaultCashGreeks },
       futureData
         ? { type: "期货", ...futureData }
-        : { type: "期货", defaultCashGreeks },
-      {
-        type: "综合",
-        ...sumCashGreeks(
-          indexData || defaultCashGreeks,
-          etfData || defaultCashGreeks,
-          futureData || defaultCashGreeks
-        )
-      }
+        : { type: "期货", ...defaultCashGreeks },
     ];
-    setItems(combinedData);
+
+    const totalData = {
+      type: "综合",
+      ...sumCashGreeks(
+        indexData || defaultCashGreeks,
+        etfData || defaultCashGreeks,
+        sumFutureGreeks(futureData as CashGreeksResponse[]) || defaultCashGreeks
+        // defaultCashGreeks
+      ),
+    };
+
+    setItems([...combinedData, totalData]);
+    // setGroups([
+    //   {
+    //     key: "group0",
+    //     name: "期货数据",
+    //     startIndex: 2,
+    //     count: 4,
+    //     isCollapsed: true,
+    //   },
+    // ]);
   }, [indexData, etfData, futureData]);
 
   const formatPercentage = (value: number | null): string =>
@@ -201,10 +234,14 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
   return (
     <DetailsList
       items={items}
+      // groups={groups}
       layoutMode={DetailsListLayoutMode.fixedColumns}
       selectionMode={SelectionMode.none}
       columns={columns}
       isHeaderVisible={true}
+    // groupProps={{
+    //   showEmptyGroups: true,
+    // }}
     />
   );
 };
