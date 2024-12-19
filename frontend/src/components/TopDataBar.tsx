@@ -70,11 +70,16 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       vanna_sv_cash: null,
       charm_cash: null,
       underlying_price: null,
+      investor_id: null
     };
 
 
     const sumFutureGreeks = (futures: CashGreeksResponse[]) => {
       const result: CashGreeksResponse = { ...defaultCashGreeks };
+
+      if (!futures || futures.length === 0) {
+        return result;
+      }
 
       futures.forEach((future) => {
         result.delta = (result.delta ?? 0) + (future.delta ?? 0);
@@ -85,6 +90,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
         result.vanna_vs_cash = (result.vanna_vs_cash ?? 0) + (future.vanna_vs_cash ?? 0);
         result.vanna_sv_cash = (result.vanna_sv_cash ?? 0) + (future.vanna_sv_cash ?? 0);
         result.charm_cash = (result.charm_cash ?? 0) + (future.charm_cash ?? 0);
+        result.underlying_price = future.underlying_price ?? 0
       });
 
       return result
@@ -98,7 +104,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       for (const key of Object.keys(result) as Array<keyof CashGreeksResponse>) {
         if (key === "delta") {
           result[key] = (index[key] ?? 0) + (etf[key] ?? 0) / 10 + (future[key] ?? 0) * 3;
-        } else {
+        } else if (key != "investor_id") {
           result[key] = (index[key] ?? 0) + (etf[key] ?? 0) + (future[key] ?? 0);
         }
 
@@ -116,9 +122,17 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
         ? { type: "ETF期权", ...etfData }
         : { type: "ETF期权", ...defaultCashGreeks },
       futureData
-        ? { type: "期货", ...futureData }
-        : { type: "期货", ...defaultCashGreeks },
+        ? { type: "综合期货", ...sumFutureGreeks(futureData as CashGreeksResponse[]) }
+        : { type: "综合期货", ...defaultCashGreeks },
+      ...(futureData
+        ? futureData.map((future) => ({
+          type: "期货",
+          ...future,
+        }))
+        : []),
     ];
+
+    console.log("combine data" + JSON.stringify(combinedData))
 
     const totalData = {
       type: "综合",
@@ -126,20 +140,10 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
         indexData || defaultCashGreeks,
         etfData || defaultCashGreeks,
         sumFutureGreeks(futureData as CashGreeksResponse[]) || defaultCashGreeks
-        // defaultCashGreeks
       ),
     };
 
     setItems([...combinedData, totalData]);
-    // setGroups([
-    //   {
-    //     key: "group0",
-    //     name: "期货数据",
-    //     startIndex: 2,
-    //     count: 4,
-    //     isCollapsed: true,
-    //   },
-    // ]);
   }, [indexData, etfData, futureData]);
 
   const formatPercentage = (value: number | null): string =>
@@ -148,6 +152,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
 
   const columns = [
     { key: 'type', name: '类型', fieldName: 'type', minWidth: 100, maxWidth: 150, isResizable: true },
+    { key: 'investor_id', name: '账户', fieldName: 'investor_id', minWidth: 100, maxWidth: 150, isResizable: true },
     {
       key: 'delta',
       name: 'Delta',
@@ -234,14 +239,10 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
   return (
     <DetailsList
       items={items}
-      // groups={groups}
       layoutMode={DetailsListLayoutMode.fixedColumns}
       selectionMode={SelectionMode.none}
       columns={columns}
       isHeaderVisible={true}
-    // groupProps={{
-    //   showEmptyGroups: true,
-    // }}
     />
   );
 };

@@ -9,8 +9,8 @@
       "Password": "xjh521700",
       "AppID": "client_gtjast_2.0",
       "AuthCode": "20201223GTJAST01",
-      "MarketServerFront": "tcp://114.80.225.76:41213",
-      "TradeServerFront": "tcp://114.80.225.75:41205"
+      "MarketServerFront": "tcp://58.33.43.112:41213",
+      "TradeServerFront": "tcp://58.33.43.112:41205"
     }
   ],
   "SE": [

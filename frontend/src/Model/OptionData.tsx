@@ -37,6 +37,7 @@ export type GreeksResponse = {
 }
 
 export type CashGreeksResponse = {
+    investor_id: string | null,
     delta: number | null,
     delta_cash: number | null,
     gamma_p_cash: number | null,

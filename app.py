@@ -38,7 +38,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('dev')
+ctp_manager = CTPManager('prod')
 
 def init_ctp():
     # 初始化
@@ -372,7 +372,7 @@ def get_greek_summary_by_option_symbol():
 
     print(f"get_greek_summary_by_option_symbol: {symbol}")
     # Convert each data instance to a dictionary and return as JSON
-    return jsonify(get_position_greeks(symbol))
+    return jsonify(get_option_position_greeks(symbol))
 
 @app.route('/api/future/greeks_summary', methods=['GET'])
 def get_greek_summary_by_future_symbol():
@@ -405,17 +405,17 @@ def get_future_position_greeks(symbol: str):
         if ctp_manager.current_user.investors[investor_id] == ExchangeType.CFFEX:
             if symbol in positions:
                 future_position = positions[symbol]
-                delta = (future_position.long - future_position.short)
+                delta = future_position.long - - future_position.short
                 delta_cash = delta * cash_multiplier * underlying_price
-                result.append(GreeksCashResp(delta=delta, delta_cash=delta_cash, underlying_price=underlying_price).to_dict())
+                result.append(GreeksCashResp(investor_id=investor_id, delta=delta, delta_cash=delta_cash, underlying_price=underlying_price).to_dict())
             else:
-                result.append(GreeksCashResp(underlying_price=underlying_price).to_dict())
+                result.append(GreeksCashResp(investor_id=investor_id, underlying_price=underlying_price).to_dict())
 
     print(f"get_future_position_greeks: {result}")
     return result
 
 
-def get_position_greeks(symbol: str):
+def get_option_position_greeks(symbol: str):
     option_series: OptionSeries = ctp_manager.market_data_manager.option_market_data[symbol]
 
     delta = 0
