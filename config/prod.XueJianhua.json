@@ -22,8 +22,8 @@
       "Password": "xjh521700",
       "AppID": "client_Qqbdl_1.0",
       "AuthCode": "20240919XUEJIAN1",
-      "MarketServerFront": "tcp://117.131.61.6:42723",
-      "TradeServerFront": "tcp://117.131.61.6:42715"
+      "MarketServerFront": "tcp://180.168.205.206:42723",
+      "TradeServerFront": "tcp://180.168.205.206:42715"
     }
   ]
 }
