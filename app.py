@@ -389,7 +389,7 @@ def get_greek_summary_by_future_symbol():
         # Convert each data instance to a dictionary and return as JSON
         return jsonify(get_future_position_greeks(group_instrument.future.symbol))
     else:
-        return jsonify([GreeksCashResp().to_dict()])
+        return jsonify([])
 
 def get_future_position_greeks(symbol: str):
     future = ctp_manager.market_data_manager.index_futures_dict[symbol]
