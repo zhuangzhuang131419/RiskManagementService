@@ -480,7 +480,7 @@ def get_cffex_monitor():
 
     result : int = 0
     for full_symbol, position in combined_position.items():
-        if full_symbol.startswith(symbol):
+        if full_symbol.startswith(symbol[:-8]):
             result += position.short_open_volume + position.long_open_volume
     return jsonify(str(result))
 
@@ -500,7 +500,7 @@ def get_se_monitor():
     combined_position = ctp_manager.current_user.user_memory.get_combined_position()
 
     for full_symbol, position in combined_position.items():
-        if full_symbol.startswith(symbol):
+        if full_symbol.startswith(symbol[:-8]):
             net_position += abs(position.long - position.short)
             total_amount += position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume
 
