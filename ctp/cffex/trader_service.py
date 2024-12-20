@@ -216,7 +216,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
             full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
             print(f"OnRspQryInvestorPosition investor: {investor_id} instrument: {instrument_id}, long: {pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}, open volume: {pInvestorPosition.OpenVolume}")
-            if full_symbol not in self.user_memory_manager.positions:
+            if full_symbol not in self.user_memory_manager.positions[investor_id]:
                 self.user_memory_manager.positions[investor_id][full_symbol] = Position(instrument_id)
             if pInvestorPosition.PosiDirection == ThostFtdcApi.THOST_FTDC_PD_Long:
                 self.user_memory_manager.positions[investor_id][full_symbol].long = int(pInvestorPosition.Position)
