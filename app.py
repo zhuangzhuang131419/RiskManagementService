@@ -398,8 +398,6 @@ def get_future_position_greeks(symbol: str):
 
     underlying_price = (future.market_data.bid_prices[0] + future.market_data.ask_prices[0]) / 2
 
-    print("get_future_position_greeks")
-
     result = []
     for investor_id, positions in ctp_manager.current_user.user_memory.positions.items():
         if ctp_manager.current_user.investors[investor_id] == ExchangeType.CFFEX:
@@ -411,7 +409,7 @@ def get_future_position_greeks(symbol: str):
             else:
                 result.append(GreeksCashResp(investor_id=investor_id, underlying_price=underlying_price).to_dict())
 
-    print(f"get_future_position_greeks: {result}")
+    # print(f"get_future_position_greeks: {result}")
     return result
 
 
