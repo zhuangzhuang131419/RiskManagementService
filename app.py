@@ -480,7 +480,7 @@ def get_cffex_monitor():
 
     result : int = 0
     for full_symbol, position in combined_position.items():
-        if full_symbol.startswith(symbol[:-8]):
+        if full_symbol.startswith(symbol):
             result += position.short_open_volume + position.long_open_volume
     return jsonify(str(result))
 
