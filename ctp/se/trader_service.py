@@ -188,6 +188,9 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         print(f'OnRtnTrade: OrderRef {pTrade.OrderRef}')
 
+        if pTrade.InstrumentID not in self.market_data_manager.instrument_transform_full_symbol:
+            return
+
         full_symbol = self.market_data_manager.instrument_transform_full_symbol[pTrade.InstrumentID]
         investor_id = pTrade.InvestorID
         if full_symbol not in self.user_memory_manager.positions[investor_id]:

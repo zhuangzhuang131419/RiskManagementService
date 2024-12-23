@@ -403,7 +403,7 @@ def get_future_position_greeks(symbol: str):
         if ctp_manager.current_user.investors[investor_id] == ExchangeType.CFFEX:
             if symbol in positions:
                 future_position = positions[symbol]
-                delta = future_position.long - - future_position.short
+                delta = future_position.long - future_position.short
                 delta_cash = delta * cash_multiplier * underlying_price
                 result.append(GreeksCashResp(investor_id=investor_id, delta=delta, delta_cash=delta_cash, underlying_price=underlying_price).to_dict())
             else:

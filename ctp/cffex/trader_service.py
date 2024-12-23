@@ -179,6 +179,10 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         investor_id = pTrade.InvestorID
+
+        if pTrade.InstrumentID not in self.market_data_manager.instrument_transform_full_symbol:
+            return
+
         full_symbol = self.market_data_manager.instrument_transform_full_symbol[pTrade.InstrumentID]
         if full_symbol not in self.user_memory_manager.positions[investor_id]:
             self.user_memory_manager.positions[investor_id][full_symbol] = Position(pTrade.InstrumentID)
