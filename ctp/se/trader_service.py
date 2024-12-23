@@ -190,7 +190,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
 
         full_symbol = self.market_data_manager.instrument_transform_full_symbol[pTrade.InstrumentID]
         investor_id = pTrade.InvestorID
-        if full_symbol not in self.user_memory_manager.positions:
+        if full_symbol not in self.user_memory_manager.positions[investor_id]:
             self.user_memory_manager.positions[investor_id][full_symbol] = Position(pTrade.InstrumentID)
 
         if pTrade.Direction == "0":
