@@ -280,7 +280,7 @@ def get_wing_model_by_symbol():
             result.append(generate_wing_model_response(symbol).to_dict())
             return result
         cffex_symbol = symbol
-        print(f"symbol:{symbol}, se symbol:{sh_symbol}, cffex symbol: {cffex_symbol}")
+        # print(f"symbol:{symbol}, se symbol:{sh_symbol}, cffex symbol: {cffex_symbol}")
     else:
         print(f"Invalid {symbol}")
         return jsonify({"error": "Unrecognized option type"}), 400
@@ -319,7 +319,7 @@ def get_all_customized_wing_model_para():
             wing_model_para: WingModelPara = option_series.customized_wing_model_para
             resp[symbol] = wing_model_para
 
-    print(f"get_all_customized_wing_model_para: {resp}")
+    # print(f"get_all_customized_wing_model_para: {resp}")
     return jsonify(resp)
 
 @app.route('/api/option/wing_models', methods=['POST'])
@@ -370,7 +370,7 @@ def get_greek_summary_by_option_symbol():
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    print(f"get_greek_summary_by_option_symbol: {symbol}")
+    # print(f"get_greek_summary_by_option_symbol: {symbol}")
     # Convert each data instance to a dictionary and return as JSON
     return jsonify(get_option_position_greeks(symbol))
 
@@ -384,7 +384,7 @@ def get_greek_summary_by_future_symbol():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
-    print(f"group_instrument: {group_instrument}")
+    # print(f"group_instrument: {group_instrument}")
     if group_instrument is not None and group_instrument.future is not None:
         # Convert each data instance to a dictionary and return as JSON
         return jsonify(get_future_position_greeks(group_instrument.future.symbol))
@@ -493,7 +493,7 @@ def get_se_monitor():
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    print(f"get_se_monitor symbol:{symbol}")
+    # print(f"get_se_monitor symbol:{symbol}")
 
     net_position : int = 0
     total_amount : int = 0

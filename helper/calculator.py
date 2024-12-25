@@ -41,7 +41,7 @@ def calculate_x_distance(S, K, t, r, v, q):
     """
     # 计算价格差异并考虑时间、利率和股息的影响
     x_distance = math.log(K / (S * math.exp(t * (r - q)))) / (v * math.sqrt(t))
-    if x_distance == 0:
+    if is_close(x_distance, 0.0, 8):
         print(f"S = {S}, K={K}, t={t}, r={r}, v={v}, q={q}")
     return x_distance
 
@@ -116,4 +116,5 @@ def is_close(a, b, precision=3):
     return round(a, precision) == round(b, precision)
 
 
-
+if __name__ == '__main__':
+    print(calculate_x_distance(3953.8691403968364, 4000, 0.464, 0.025, 0.2381077893692678, 0))

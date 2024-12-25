@@ -171,8 +171,6 @@ class MarketDataManager:
                     self.calculate_wing_model_para(symbol, remaining_year)
                     self.calculate_greeks(symbol, remaining_year)
 
-            time.sleep(2)
-
     def get_para_by_baseline(self, fitting_para: WingModelPara, se_para: WingModelPara):
         if self.baseline == BaselineType.INDIVIDUAL.value:
             return fitting_para.k1, fitting_para.k2, fitting_para.b
