@@ -1,4 +1,6 @@
+import logging
 import time
+from flask_socketio import SocketIO, emit
 
 import numpy as np
 from typing import Dict, List
@@ -26,6 +28,7 @@ from threading import Thread
 from flask import Flask, jsonify, render_template, send_from_directory, request
 
 app = Flask(__name__, static_folder='./frontend/build')
+socketio = SocketIO(app, logger=False)
 
 # 路由所有到 React 的前端应用
 @app.route('/', defaults={'path': ''})
@@ -38,7 +41,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('prod')
+ctp_manager = CTPManager('dev.xue')
 
 def init_ctp():
     # 初始化

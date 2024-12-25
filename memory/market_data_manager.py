@@ -21,7 +21,7 @@ from select import select
 from helper.calculator import *
 from helper.wing_model import *
 from helper.helper import INTEREST_RATE, DIVIDEND, filter_index_option, filter_etf_option, filter_index_future, \
-    parse_option_full_symbol, HOLIDAYS, count_trading_days, YEAR_TRADING_DAY, inter_daytime
+    parse_option_full_symbol, HOLIDAYS, count_trading_days, YEAR_TRADING_DAY, inter_daytime, red_print
 from model.enum.baseline_type import BaselineType
 from model.instrument.instrument import Instrument
 from model.instrument.option import Option, OptionTuple, ETFOption
@@ -158,18 +158,19 @@ class MarketDataManager:
                 # 计算时间
                 end_date = datetime.datetime.strptime(self.option_market_data[symbol].expired_date, "%Y%m%d").date()
                 day_count = count_trading_days(datetime.datetime.now().date(), end_date, HOLIDAYS)
-                remaining_year = max(round((day_count - 1) / YEAR_TRADING_DAY + inter_daytime(YEAR_TRADING_DAY), 4), 1 / YEAR_TRADING_DAY)
-                # 计算forward价格，获取两侧行权价，标记FW价格无效，loc_index_month_available,标记IS无法取得,loc_index_IS_available
-                self.index_option_imply_forward_price(symbol, remaining_year)
-                if self.option_market_data[symbol].imply_price.future_valid == -1:
-                    self.option_market_data[symbol].atm_volatility = ATMVolatility()
-                    # print(f'{symbol} month tick error')
-                    continue
-                else:
-                    self.calculate_atm_para(symbol, remaining_year)
-                    self.calculate_index_option_month_t_iv(symbol, remaining_year)
-                    self.calculate_wing_model_para(symbol, remaining_year)
-                    self.calculate_greeks(symbol, remaining_year)
+                remaining_year = round((day_count - 1) / YEAR_TRADING_DAY + inter_daytime(YEAR_TRADING_DAY), 4)
+                if remaining_year > 1 / YEAR_TRADING_DAY:
+                    # 计算forward价格，获取两侧行权价，标记FW价格无效，loc_index_month_available,标记IS无法取得,loc_index_IS_available
+                    self.index_option_imply_forward_price(symbol, remaining_year)
+                    if self.option_market_data[symbol].imply_price.future_valid == -1:
+                        self.option_market_data[symbol].atm_volatility = ATMVolatility()
+                    else:
+                        self.calculate_atm_para(symbol, remaining_year)
+                        self.calculate_index_option_month_t_iv(symbol, remaining_year)
+                        self.calculate_wing_model_para(symbol, remaining_year)
+                        self.calculate_greeks(symbol, remaining_year)
+
+
 
     def get_para_by_baseline(self, fitting_para: WingModelPara, se_para: WingModelPara):
         if self.baseline == BaselineType.INDIVIDUAL.value:
@@ -300,8 +301,7 @@ class MarketDataManager:
 
             self.option_market_data[symbol].wing_model_para = wing_model_para
         except LinAlgError:
-            print(f"Singular matrix: x_array: {x_array}, y_array: {y_array}")
-            raise LinAlgError
+            red_print(f"Singular matrix: x_array: {x_array}, y_array: {y_array}")
 
 
     def calculate_atm_para(self, symbol, remaining_year):
@@ -369,7 +369,8 @@ class MarketDataManager:
 
             for i in range(7):
                 atm_volatility.volatility_points[i] = math.exp((i * 0.66 - 1.98) * atm_volatility.atm_volatility_protected * math.sqrt(remaining_year)) * forward_underlying_price
-
+        else:
+            red_print(f"symbol: {symbol} volatility: {atm_volatility.atm_volatility_protected}")
 
         self.option_market_data[symbol].atm_volatility = atm_volatility
 

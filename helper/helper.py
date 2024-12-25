@@ -201,11 +201,12 @@ def print_swing_fields(obj):
 
 
 if __name__ == '__main__':
-    print(f"{inter_daytime(YEAR_TRADING_DAY)}")
-    print(f'2503-P-4400:{filter_index_option("2503-P-4400")}')
-    print(f'2503-P-4400:{filter_index_future("2503-P-4400")}')
-    print(f'2412-C-3800:{filter_index_future("2412-C-3800")}')
-    print(f'2412-C-3800:{filter_index_option("2412-C-3800")}')
-    print(validate_option_id("HO2412-C-3800"))
-    print(f'HO2412-C-3800:{filter_index_option("HO2412-C-3800")}')
-    print(get_cash_multiplier('HO20250919'))
+    # print(f"{inter_daytime(YEAR_TRADING_DAY)}")
+    # print(f'2503-P-4400:{filter_index_option("2503-P-4400")}')
+    # print(f'2503-P-4400:{filter_index_future("2503-P-4400")}')
+    # print(f'2412-C-3800:{filter_index_future("2412-C-3800")}')
+    # print(f'2412-C-3800:{filter_index_option("2412-C-3800")}')
+    # print(validate_option_id("HO2412-C-3800"))
+    # print(f'HO2412-C-3800:{filter_index_option("HO2412-C-3800")}')
+    # print(get_cash_multiplier('HO20250919'))
+    print(count_trading_days(datetime.datetime.now(), datetime.datetime.now(), []))
