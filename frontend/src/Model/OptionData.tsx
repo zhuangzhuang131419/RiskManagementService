@@ -42,6 +42,7 @@ export type CashGreeksResponse = {
     delta_cash: number | null,
     gamma_p_cash: number | null,
     vega_cash: number | null,
+    theta_cash: number | null,
     db_cash: number | null,
     vanna_vs_cash: number | null,
     vanna_sv_cash: number | null,

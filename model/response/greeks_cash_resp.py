@@ -10,7 +10,7 @@ class GreeksCashResp:
     charm_cash: float
     dkurt_cash: float
 
-    def __init__(self, investor_id: str = None, delta: float = 0.0, delta_cash: float = 0.0, gamma_p_cash: float = 0.0, vega_cash: float = 0,
+    def __init__(self, investor_id: str = None, delta: float = 0.0, delta_cash: float = 0.0, gamma_p_cash: float = 0.0, vega_cash: float = 0, theta_cash: float = 0,
                  db_cash: float = 0.0, vanna_vs_cash: float = 0.0, vanna_sv_cash: float = 0.0, charm_cash: float = 0.0, dkurt_cash: float = 0.0, underlying_price: float = 0.0):
         """
         Initializes a GreeksCashResp object with the given values.
@@ -20,6 +20,7 @@ class GreeksCashResp:
         self.delta_cash = delta_cash
         self.gamma_p_cash = gamma_p_cash
         self.vega_cash = vega_cash
+        self.theta_cash = theta_cash
         self.db_cash = db_cash
         self.vanna_vs_cash = vanna_vs_cash
         self.vanna_sv_cash = vanna_sv_cash
@@ -39,6 +40,7 @@ class GreeksCashResp:
             "delta_cash": self.delta_cash,
             "gamma_p_cash": self.gamma_p_cash,
             "vega_cash": self.vega_cash,
+            "theta_cash": self.theta_cash,
             "db_cash": self.db_cash,
             "vanna_vs_cash": self.vanna_vs_cash,
             "vanna_sv_cash": self.vanna_sv_cash,
