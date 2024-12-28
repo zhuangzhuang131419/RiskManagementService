@@ -158,17 +158,15 @@ class MarketDataManager:
                 # 计算时间
                 end_date = datetime.datetime.strptime(self.option_market_data[symbol].expired_date, "%Y%m%d").date()
                 day_count = count_trading_days(datetime.datetime.now().date(), end_date, HOLIDAYS)
-                remaining_year = round((day_count - 1) / YEAR_TRADING_DAY + inter_daytime(YEAR_TRADING_DAY), 4)
-                if remaining_year > 1 / YEAR_TRADING_DAY:
-                    # 计算forward价格，获取两侧行权价，标记FW价格无效，loc_index_month_available,标记IS无法取得,loc_index_IS_available
-                    self.index_option_imply_forward_price(symbol, remaining_year)
-                    if self.option_market_data[symbol].imply_price.future_valid == -1:
-                        self.option_market_data[symbol].atm_volatility = ATMVolatility()
-                    else:
-                        self.calculate_atm_para(symbol, remaining_year)
-                        self.calculate_index_option_month_t_iv(symbol, remaining_year)
-                        self.calculate_wing_model_para(symbol, remaining_year)
-                        self.calculate_greeks(symbol, remaining_year)
+                remaining_year = max(round((day_count - 1) / YEAR_TRADING_DAY + inter_daytime(YEAR_TRADING_DAY), 4), 1 / YEAR_TRADING_DAY)
+                self.index_option_imply_forward_price(symbol, remaining_year)
+                if self.option_market_data[symbol].imply_price.future_valid == -1:
+                    self.option_market_data[symbol].atm_volatility = ATMVolatility()
+                else:
+                    self.calculate_atm_para(symbol, remaining_year)
+                    self.calculate_index_option_month_t_iv(symbol, remaining_year)
+                    self.calculate_wing_model_para(symbol, remaining_year)
+                    self.calculate_greeks(symbol, remaining_year)
 
 
 

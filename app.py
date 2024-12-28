@@ -41,7 +41,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('dev.xue')
+ctp_manager = CTPManager('prod')
 
 def init_ctp():
     # 初始化
@@ -523,6 +523,6 @@ def get_se_monitor():
 if __name__ == "__main__":
     init_ctp()
     Thread(target=main).start()
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True, use_reloader=False, port=5002)
 
 
