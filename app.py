@@ -66,7 +66,6 @@ def init_ctp():
 
 
 def main():
-
     # test_future_instruction("IF2412")
     # test_se_instruction("10007328", 0.0065, 0.0060)
 
