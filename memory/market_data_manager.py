@@ -270,7 +270,8 @@ class MarketDataManager:
         x_array = np.zeros((strike_price_num, 3))
         y_array = np.zeros(strike_price_num)
 
-
+        left = False
+        right = False
 
         for j in range(strike_price_num):
             x_distance = calculate_x_distance(S=underlying_price, K=strike_prices[j], t=remaining_year, r=INTEREST_RATE, v=volatility, q=DIVIDEND)
@@ -280,14 +281,27 @@ class MarketDataManager:
                 x_array[j, 0] = x_distance * x_distance * sample_available
                 x_array[j, 2] = x_distance * sample_available
                 y_array[j] = (sample_volatility - volatility) * sample_available
+                left = left or sample_available
             elif 0 < x_distance <= cut_point:
                 x_array[j, 1] = x_distance * x_distance * sample_available
                 x_array[j, 2] = x_distance * sample_available
                 y_array[j] = (sample_volatility - volatility) * sample_available
+                right = right or sample_available
+
+        if not left or not right:
+            wing_model_para.S = underlying_price
+            wing_model_para.k1 = 0
+            wing_model_para.k2 = 0
+            wing_model_para.b = 0
+            wing_model_para.residual = -1
+            self.option_market_data[symbol].wing_model_para = wing_model_para
+            return
+
 
         # 参数估计
         try:
-            para_array = np.dot(np.dot(np.linalg.inv(np.dot(np.transpose(x_array), x_array)), np.transpose(x_array)),y_array)
+            square_matrix = np.linalg.inv(np.dot(np.transpose(x_array), x_array))
+            para_array = np.dot(np.dot(square_matrix, np.transpose(x_array)),y_array)
             # 残差序列
             residual = y_array - x_array @ para_array
 
@@ -299,7 +313,7 @@ class MarketDataManager:
 
             self.option_market_data[symbol].wing_model_para = wing_model_para
         except LinAlgError:
-            red_print(f"Singular matrix: x_array: {x_array}, y_array: {y_array}")
+            red_print(f"Singular matrix: x_array: {x_array}, y_array: {y_array}, square_matrix: {np.dot(np.transpose(x_array), x_array)}")
 
 
     def calculate_atm_para(self, symbol, remaining_year):
