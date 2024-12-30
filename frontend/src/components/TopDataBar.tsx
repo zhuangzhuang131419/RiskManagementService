@@ -65,6 +65,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       delta_cash: null,
       gamma_p_cash: null,
       vega_cash: null,
+      theta_cash: null,
       db_cash: null,
       vanna_vs_cash: null,
       vanna_sv_cash: null,
@@ -188,6 +189,15 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       maxWidth: 150,
       isResizable: true,
       onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.vega_cash)}</span>,
+    },
+    {
+      key: 'theta_cash',
+      name: 'Theta Cash',
+      fieldName: 'theta_cash',
+      minWidth: 100,
+      maxWidth: 150,
+      isResizable: true,
+      onRender: (item: CashGreeksResponse) => <span>{formatPercentage(item.theta_cash)}</span>,
     },
     {
       key: 'db_cash',

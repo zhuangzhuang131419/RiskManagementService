@@ -66,7 +66,6 @@ def init_ctp():
 
 
 def main():
-
     # test_future_instruction("IF2412")
     # test_se_instruction("10007328", 0.0065, 0.0060)
 
@@ -422,6 +421,7 @@ def get_option_position_greeks(symbol: str):
     delta = 0
     gamma = 0
     vega = 0
+    theta = 0
     db = 0
     charm = 0
     vanna_vs = 0
@@ -441,6 +441,7 @@ def get_option_position_greeks(symbol: str):
         delta += underlying_option.greeks.delta * multiple
         gamma += underlying_option.greeks.gamma * multiple
         vega += underlying_option.greeks.vega * multiple
+        theta += underlying_option.greeks.theta * multiple
         db += underlying_option.greeks.db * multiple
         charm += underlying_option.greeks.charm * multiple
         vanna_vs += underlying_option.greeks.vanna_vs * multiple
@@ -450,13 +451,14 @@ def get_option_position_greeks(symbol: str):
     delta_cash = delta * option_series.wing_model_para.S * cash_multiplier
     gamma_cash = gamma * option_series.wing_model_para.S * cash_multiplier
     vega_cash = vega * cash_multiplier
+    theta_cash = theta * cash_multiplier
     db_cash = db * cash_multiplier
     charm_cash = charm * option_series.wing_model_para.S * cash_multiplier
     vanna_vs_cash = vanna_vs * cash_multiplier
     vanna_sv_cash = vanna_sv * option_series.wing_model_para.S * cash_multiplier
     dkurt_cash = dkurt * cash_multiplier
 
-    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash, underlying_price=option_series.wing_model_para.S)
+    resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, theta_cash=theta_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash, underlying_price=option_series.wing_model_para.S)
 
     return resp.to_dict()
 
