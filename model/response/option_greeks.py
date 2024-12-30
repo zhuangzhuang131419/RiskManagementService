@@ -7,17 +7,17 @@ class OptionGreeksResp(OptionRespBase):
 
 class OptionGreeksData:
     def __init__(self, delta, gamma, vega, theta, vanna_vs, vanna_sv, db, dkurt, position, ask, bid):
-        self.delta = round(delta, 2)
-        self.gamma = round(gamma, 2)
-        self.vega = round(vega, 2)
-        self.theta = round(theta, 2)
-        self.vanna_vs = round(vanna_vs, 2)
-        self.vanna_sv = round(vanna_sv, 2)
-        self.db = round(db, 2)
-        self.dkurt = round(dkurt, 2)
+        self.delta = delta
+        self.gamma = gamma
+        self.vega = vega
+        self.theta = theta
+        self.vanna_vs = vanna_vs
+        self.vanna_sv = vanna_sv
+        self.db = db
+        self.dkurt = dkurt
         self.position = position
-        self.ask = round(ask, 2)
-        self.bid = round(bid, 2)
+        self.ask = ask
+        self.bid = bid
 
     def to_dict(self):
         return {

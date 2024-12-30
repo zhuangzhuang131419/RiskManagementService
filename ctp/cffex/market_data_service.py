@@ -65,8 +65,8 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
                 depth_market_data.time = round(time.time())
                 depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)
                 depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
-                depth_market_data.ask_prices[0] = round(pDepthMarketData.AskPrice1, 2)
-                depth_market_data.bid_prices[0] = round(pDepthMarketData.BidPrice1, 2)
+                depth_market_data.ask_prices[0] = pDepthMarketData.AskPrice1
+                depth_market_data.bid_prices[0] = pDepthMarketData.BidPrice1
 
                 if pDepthMarketData.InstrumentID not in self.market_data_manager.instrument_transform_full_symbol:
                     raise ValueError(f"收到异常行情数据{pDepthMarketData.InstrumentID}")
