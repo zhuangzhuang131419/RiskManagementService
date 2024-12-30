@@ -451,7 +451,7 @@ def get_option_position_greeks(symbol: str):
     gamma_cash = gamma * option_series.wing_model_para.S * cash_multiplier
     vega_cash = vega * cash_multiplier
     db_cash = db * cash_multiplier
-    charm_cash = charm * cash_multiplier
+    charm_cash = charm * option_series.wing_model_para.S * cash_multiplier
     vanna_vs_cash = vanna_vs * cash_multiplier
     vanna_sv_cash = vanna_sv * option_series.wing_model_para.S * cash_multiplier
     dkurt_cash = dkurt * cash_multiplier
