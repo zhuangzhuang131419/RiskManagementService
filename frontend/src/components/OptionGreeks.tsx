@@ -68,7 +68,7 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
     }
 
     const formatPercentage = (value: number | null): string =>
-        value !== null && !isNaN(value) ? `${(value).toFixed(2)}` : '--';
+        value !== null && !isNaN(value) ? `${(value).toFixed(3)}` : '--';
 
     // 设置列
     const columns: IColumn[] = [

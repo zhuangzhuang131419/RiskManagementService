@@ -171,13 +171,14 @@ class MarketDataManager:
 
 
     def get_para_by_baseline(self, fitting_para: WingModelPara, se_para: WingModelPara):
-        if self.baseline == BaselineType.INDIVIDUAL.value:
+        if self.baseline == BaselineType.INDIVIDUAL:
             return fitting_para.k1, fitting_para.k2, fitting_para.b
-        elif self.baseline == BaselineType.AVERAGE.value:
+        elif self.baseline == BaselineType.AVERAGE:
             return (fitting_para.k1 + se_para.k1) / 2, (fitting_para.k2 + se_para.k2) / 2, (fitting_para.b + se_para.b) / 2
         elif self.baseline == BaselineType.SH:
             return se_para.k1, se_para.k2, se_para.b
-        return fitting_para.k1, fitting_para.k2, fitting_para.b
+
+        raise ValueError(f"Invalid baseline: {self.baseline}")
 
 
     def calculate_greeks(self, symbol, remaining_year):
@@ -204,7 +205,10 @@ class MarketDataManager:
             k2 = self.option_market_data[symbol].customized_wing_model_para.k2
             b = self.option_market_data[symbol].customized_wing_model_para.b
 
-        # print(f"k1: {k1}, k2: {k2}, b: {b}")
+        # if symbol == "HO20250117":
+        #     print(f"k1: {self.option_market_data[symbol].wing_model_para.k1}, k2: {self.option_market_data[symbol].wing_model_para.k2}, b: {self.option_market_data[symbol].wing_model_para.b}")
+        #     print(f"k1: {self.option_market_data['51005020250122-C-28000'].wing_model_para.k1}, k2: {self.option_market_data['51005020250122-C-28000'].wing_model_para.k2}, b: {self.option_market_data['51005020250122-C-28000'].wing_model_para.b}")
+        #     print(f"k1: {k1}, k2: {k2}, b: {b}")
 
         for strike_price, option_tuple in self.option_market_data[symbol].strike_price_options.items():
             option_tuple.call.greeks.delta = v_delta('c', underlying_price, strike_price, remaining_year, INTEREST_RATE, volatility, DIVIDEND, k1, k2, b)[0]
