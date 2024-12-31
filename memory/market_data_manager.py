@@ -187,16 +187,20 @@ class MarketDataManager:
 
 
         if self.option_market_data[symbol].customized_wing_model_para.v == 0:
+            expired_month = symbol[-8:][:6]
+            underlying_id = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value
             if filter_etf_option(symbol):
-                k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
+                if self.grouped_instruments[underlying_id + "-" + expired_month].index_option_series is None:
+                    k1, k2, b = self.option_market_data[symbol].wing_model_para.k1, self.option_market_data[symbol].wing_model_para.k2, self.option_market_data[symbol].wing_model_para.b
+                else:
+                    index_symbol = self.grouped_instruments[underlying_id + "-" + expired_month].index_option_series.symbol
+                    k1, k2, b = self.get_para_by_baseline(self.option_market_data[index_symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
             elif filter_index_option(symbol):
-                expired_month = symbol[-8:][:6]
-                underlying_id = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value
-                if self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_series is not None:
+                if self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_series is None:
+                    k1, k2, b = self.option_market_data[symbol].wing_model_para.k1, self.option_market_data[symbol].wing_model_para.k2, self.option_market_data[symbol].wing_model_para.b
+                else:
                     se_symbol = self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_series.symbol
                     k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_symbol].wing_model_para)
-                else:
-                    k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
             else:
                 print(f"calculate_greeks exception: {symbol}")
                 raise ValueError
