@@ -291,9 +291,9 @@ def get_wing_model_by_symbol():
     cffex_response = generate_wing_model_response(cffex_symbol)
 
 
-    if ctp_manager.baseline == BaselineType.INDIVIDUAL:
+    if ctp_manager.market_data_manager.baseline == BaselineType.INDIVIDUAL:
         result.append(sh_response.to_dict() if filter_etf_option(symbol) else cffex_response.to_dict())
-    elif ctp_manager.baseline == BaselineType.AVERAGE:
+    elif ctp_manager.market_data_manager.baseline == BaselineType.AVERAGE:
 
         if sh_response.atm_available and cffex_response.atm_available:
             baseline_resp: WingModelResp = WingModelResp((sh_response.atm_volatility + cffex_response.atm_volatility) / 2,
@@ -304,10 +304,10 @@ def get_wing_model_by_symbol():
             result.append(baseline_resp.to_dict())
         else:
             result.append(generate_wing_model_response(symbol).to_dict())
-    elif ctp_manager.baseline == BaselineType.SH:
+    elif ctp_manager.market_data_manager.baseline == BaselineType.SH:
         result.append(sh_response.to_dict())
     else:
-        print(f"baseline:{ctp_manager.baseline}")
+        print(f"baseline:{ctp_manager.market_data_manager.baseline}")
         return jsonify({"error": "Unrecognized baseline type"}), 400
 
     return jsonify(result)
@@ -346,14 +346,15 @@ def set_customized_wing_model():
 def set_baseline():
     data = request.get_json()
     baseline_type_str: str = data.get('baseline')
-    print(f"set_baseline: {baseline_type_str}")
+
     if not baseline_type_str:
         return jsonify({"error": "Baseline type not provided"}), 400
 
     try:
         # 转换字符串到 BaselineType 枚举
         baseline_type = BaselineType[baseline_type_str.upper()]
-        ctp_manager.baseline = baseline_type  # 更新当前基准类型
+        ctp_manager.market_data_manager.baseline = baseline_type  # 更新当前基准类型
+        print(f"set_baseline: {ctp_manager.market_data_manager.baseline}")
         return jsonify({"message": "Baseline type set successfully", "current_baseline": baseline_type.value}), 200
     except KeyError:
         return jsonify({"error": f"Invalid baseline type: {baseline_type_str}"}), 400
@@ -361,7 +362,7 @@ def set_baseline():
 # 获取当前基准类型的接口
 @app.route('/api/baseline', methods=['GET'])
 def get_baseline():
-    return jsonify(ctp_manager.baseline.name.lower())
+    return jsonify(ctp_manager.market_data_manager.baseline.name.lower())
 
 @app.route('/api/option/greeks_summary', methods=['GET'])
 def get_greek_summary_by_option_symbol():

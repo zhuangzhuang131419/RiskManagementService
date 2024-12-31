@@ -28,8 +28,6 @@ class CTPManager:
     # 普通的users
     users : Dict[str, User] = {}
 
-    baseline : BaselineType = BaselineType.SH
-
     timestamp : time
 
     def __init__(self, env):
