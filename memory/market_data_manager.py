@@ -170,11 +170,21 @@ class MarketDataManager:
 
 
 
-    def get_para_by_baseline(self, fitting_para: WingModelPara, se_para: WingModelPara):
+    def get_se_para_by_baseline(self, index_para: WingModelPara, se_para: WingModelPara):
         if self.baseline == BaselineType.INDIVIDUAL:
-            return fitting_para.k1, fitting_para.k2, fitting_para.b
+            return se_para.k1, se_para.k2, se_para.b
         elif self.baseline == BaselineType.AVERAGE:
-            return (fitting_para.k1 + se_para.k1) / 2, (fitting_para.k2 + se_para.k2) / 2, (fitting_para.b + se_para.b) / 2
+            return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2
+        elif self.baseline == BaselineType.SH:
+            return se_para.k1, se_para.k2, se_para.b
+
+        raise ValueError(f"Invalid baseline: {self.baseline}")
+
+    def get_index_para_by_baseline(self, index_para: WingModelPara, se_para: WingModelPara):
+        if self.baseline == BaselineType.INDIVIDUAL:
+            return index_para.k1, index_para.k2, index_para.b
+        elif self.baseline == BaselineType.AVERAGE:
+            return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2
         elif self.baseline == BaselineType.SH:
             return se_para.k1, se_para.k2, se_para.b
 
@@ -185,22 +195,20 @@ class MarketDataManager:
         underlying_price = (self.option_market_data[symbol].imply_price.imply_s_ask + self.option_market_data[symbol].imply_price.imply_s_bid) / 2
         volatility = self.option_market_data[symbol].atm_volatility.atm_volatility_protected
 
-
         if self.option_market_data[symbol].customized_wing_model_para.v == 0:
-            expired_month = symbol[-8:][:6]
-            underlying_id = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value
+            group_instrument = self.get_group_instrument_by_symbol(symbol)
             if filter_etf_option(symbol):
-                if self.grouped_instruments[underlying_id + "-" + expired_month].index_option_series is None:
+                if group_instrument is None or group_instrument.index_option_series is None:
                     k1, k2, b = self.option_market_data[symbol].wing_model_para.k1, self.option_market_data[symbol].wing_model_para.k2, self.option_market_data[symbol].wing_model_para.b
                 else:
-                    index_symbol = self.grouped_instruments[underlying_id + "-" + expired_month].index_option_series.symbol
-                    k1, k2, b = self.get_para_by_baseline(self.option_market_data[index_symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
+                    index_symbol = group_instrument.index_option_series.symbol
+                    k1, k2, b = self.get_se_para_by_baseline(self.option_market_data[index_symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
             elif filter_index_option(symbol):
-                if self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_series is None:
+                if group_instrument is None or group_instrument.etf_option_series is None:
                     k1, k2, b = self.option_market_data[symbol].wing_model_para.k1, self.option_market_data[symbol].wing_model_para.k2, self.option_market_data[symbol].wing_model_para.b
                 else:
-                    se_symbol = self.grouped_instruments[underlying_id + "-" + expired_month].etf_option_series.symbol
-                    k1, k2, b = self.get_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_symbol].wing_model_para)
+                    se_symbol = group_instrument.etf_option_series.symbol
+                    k1, k2, b = self.get_index_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_symbol].wing_model_para)
             else:
                 print(f"calculate_greeks exception: {symbol}")
                 raise ValueError
@@ -209,10 +217,10 @@ class MarketDataManager:
             k2 = self.option_market_data[symbol].customized_wing_model_para.k2
             b = self.option_market_data[symbol].customized_wing_model_para.b
 
-        if symbol == "HO20250117":
-            print(f"k1: {self.option_market_data[symbol].wing_model_para.k1}, k2: {self.option_market_data[symbol].wing_model_para.k2}, b: {self.option_market_data[symbol].wing_model_para.b}")
-            print(f"k1: {self.option_market_data['51005020250122'].wing_model_para.k1}, k2: {self.option_market_data['51005020250122'].wing_model_para.k2}, b: {self.option_market_data['51005020250122'].wing_model_para.b}")
-            print(f"k1: {k1}, k2: {k2}, b: {b}")
+        # if symbol == "HO20250117" or symbol == "51005020250122":
+        #     print(f"{symbol} k1: {self.option_market_data[symbol].wing_model_para.k1}, k2: {self.option_market_data[symbol].wing_model_para.k2}, b: {self.option_market_data[symbol].wing_model_para.b}")
+        #     # print(f"k1: {self.option_market_data['51005020250122'].wing_model_para.k1}, k2: {self.option_market_data['51005020250122'].wing_model_para.k2}, b: {self.option_market_data['51005020250122'].wing_model_para.b}")
+        #     print(f"{symbol} k1: {k1}, k2: {k2}, b: {b}")
 
         for strike_price, option_tuple in self.option_market_data[symbol].strike_price_options.items():
             option_tuple.call.greeks.delta = v_delta('c', underlying_price, strike_price, remaining_year, INTEREST_RATE, volatility, DIVIDEND, k1, k2, b)[0]
