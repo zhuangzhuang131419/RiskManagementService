@@ -246,24 +246,15 @@ def get_wing_model_by_symbol():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
-    # print(f"get_wing_model_by_symbol: {symbol}")
-
-
-    # if symbol is None or symbol == "":
-    #     return get_all_customized_wing_model_para()
 
     result = [generate_wing_model_response(symbol).to_dict()]
 
-
-    expired_month = symbol[-8:][:6]
-    underlying_id = symbol[:-8]
-
-    if underlying_id not in UNDERLYING_CATEGORY_MAPPING:
+    group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
+    if group_instrument is None:
         # 深交所的
         result.append(generate_wing_model_response(symbol).to_dict())
         return result
-    category = UNDERLYING_CATEGORY_MAPPING[underlying_id].value
-    group_instrument = ctp_manager.market_data_manager.grouped_instruments[category + "-" + expired_month]
+
     sh_symbol: str
     cffex_symbol: str
     if filter_etf_option(symbol):
@@ -310,6 +301,7 @@ def get_wing_model_by_symbol():
         print(f"baseline:{ctp_manager.market_data_manager.baseline}")
         return jsonify({"error": "Unrecognized baseline type"}), 400
 
+    print(result)
     return jsonify(result)
     # return result
 
@@ -332,13 +324,14 @@ def set_customized_wing_model():
     for symbol, value in data.items():
         if ctp_manager.market_data_manager is not None:
             if "v" in value:
-                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.v = value["v"]
+                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.v = float(value["v"])
             if "k1" in value:
-                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k1 = value["k1"]
+                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k1 = float(value["k1"])
             if "k2" in value:
-                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k2 = value["k2"]
+                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k2 = float(value["k2"])
             if "b" in value:
-                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.b = value["b"]
+                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.b = float(value["b"])
+            print(f"{symbol}: {ctp_manager.market_data_manager.option_market_data[symbol]}")
 
     return jsonify({"message": "Customized wing model received"}), 200
 
@@ -468,9 +461,13 @@ def get_option_position_greeks(symbol: str):
 
 def generate_wing_model_response(symbol: str) -> WingModelResp:
     option_series = ctp_manager.market_data_manager.option_market_data[symbol]
-    wing_model_para: WingModelPara = option_series.customized_wing_model_para if option_series.customized_wing_model_para.v != 0 else option_series.wing_model_para
-    atm_volatility: ATMVolatility = option_series.atm_volatility
-    return WingModelResp(atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, atm_volatility.atm_valid)
+
+    if option_series.customized_wing_model_para.v == 0:
+        wing_model_para = option_series.wing_model_para
+        return WingModelResp(option_series.atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, option_series.atm_volatility.atm_valid)
+    else:
+        wing_model_para = option_series.customized_wing_model_para
+        return WingModelResp(wing_model_para.v, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, option_series.atm_volatility.atm_valid)
 
 @app.route('/api/cffex/monitor', methods=['GET'])
 def get_cffex_monitor():
