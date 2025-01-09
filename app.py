@@ -293,7 +293,6 @@ def get_wing_model_by_symbol():
     else:
         return jsonify({"error": "Unrecognized baseline type"}), 400
 
-    print(result)
     return jsonify(result)
     # return result
 
@@ -322,7 +321,6 @@ def set_customized_wing_model():
                 ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k2 = float(value["k2"])
             if "b" in value:
                 ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.b = float(value["b"])
-            print(f"{symbol}: {ctp_manager.market_data_manager.option_market_data[symbol]}")
 
     return jsonify({"message": "Customized wing model received"}), 200
 
