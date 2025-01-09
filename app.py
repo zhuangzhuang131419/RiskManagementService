@@ -141,7 +141,6 @@ def test():
     ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 40)
 
     order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "au2502", Direction.BUY_OPEN, 270, 1)
-    # print(f"order_ref:{order_ref}")
     if order_ref is not None:
         ctp_manager.current_user.order_action(ExchangeType.CFFEX, "au2502", order_ref)
 
@@ -201,7 +200,6 @@ def get_all_future():
 @app.route('/api/option/greeks', methods=['GET'])
 def get_option_greeks():
     symbol = request.args.get('symbol')
-    # print(f"get_cffex_option_greeks: symbol {symbol}")
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
@@ -235,8 +233,6 @@ def get_option_greeks():
         put_option = OptionGreeksData(put_delta, gamma, vega, put_theta, vanna_vs=vanna_vs, vanna_sv=vanna_sv, db=db, dkurt=dkurt, position=net_position, ask=option_tuple.put.market_data.ask_prices[0], bid=option_tuple.put.market_data.bid_prices[0])
         resp.strike_prices[strike_price] = StrikePrices(call_option, put_option)
 
-
-    # print(resp.to_dict())
     return jsonify(resp.to_dict())
 
 
@@ -246,11 +242,6 @@ def get_wing_model_by_symbol():
     symbol: str = request.args.get('symbol')
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
-    # print(f"get_wing_model_by_symbol: {symbol}")
-
-
-    # if symbol is None or symbol == "":
-    #     return get_all_customized_wing_model_para()
 
     result = [generate_wing_model_response(symbol).to_dict()]
 
@@ -274,7 +265,6 @@ def get_wing_model_by_symbol():
             # 处理 cffex_instrument 为 None 的情况
             result.append(generate_wing_model_response(symbol).to_dict())
             return result
-        print(f"symbol:{symbol}, se symbol:{sh_symbol}, cffex symbol: {cffex_symbol}")
     elif filter_index_option(symbol):
         if group_instrument.etf_option_series is not None:
             sh_symbol = group_instrument.etf_option_series.symbol
@@ -282,10 +272,8 @@ def get_wing_model_by_symbol():
             result.append(generate_wing_model_response(symbol).to_dict())
             return result
         cffex_symbol = symbol
-        # print(f"symbol:{symbol}, se symbol:{sh_symbol}, cffex symbol: {cffex_symbol}")
     else:
-        print(f"Invalid {symbol}")
-        return jsonify({"error": "Unrecognized option type"}), 400
+        return jsonify({"error": f"Unrecognized option type {symbol}"}), 400
 
     sh_response = generate_wing_model_response(sh_symbol)
     cffex_response = generate_wing_model_response(cffex_symbol)
@@ -307,7 +295,6 @@ def get_wing_model_by_symbol():
     elif ctp_manager.market_data_manager.baseline == BaselineType.SH:
         result.append(sh_response.to_dict())
     else:
-        print(f"baseline:{ctp_manager.market_data_manager.baseline}")
         return jsonify({"error": "Unrecognized baseline type"}), 400
 
     return jsonify(result)
@@ -321,7 +308,6 @@ def get_all_customized_wing_model_para():
             wing_model_para: WingModelPara = option_series.customized_wing_model_para
             resp[symbol] = wing_model_para
 
-    # print(f"get_all_customized_wing_model_para: {resp}")
     return jsonify(resp)
 
 @app.route('/api/option/wing_models', methods=['POST'])
@@ -354,7 +340,6 @@ def set_baseline():
         # 转换字符串到 BaselineType 枚举
         baseline_type = BaselineType[baseline_type_str.upper()]
         ctp_manager.market_data_manager.baseline = baseline_type  # 更新当前基准类型
-        print(f"set_baseline: {ctp_manager.market_data_manager.baseline}")
         return jsonify({"message": "Baseline type set successfully", "current_baseline": baseline_type.value}), 200
     except KeyError:
         return jsonify({"error": f"Invalid baseline type: {baseline_type_str}"}), 400
@@ -373,7 +358,6 @@ def get_greek_summary_by_option_symbol():
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    # print(f"get_greek_summary_by_option_symbol: {symbol}")
     # Convert each data instance to a dictionary and return as JSON
     return jsonify(get_option_position_greeks(symbol))
 
@@ -387,7 +371,7 @@ def get_greek_summary_by_future_symbol():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
-    # print(f"group_instrument: {group_instrument}")
+
     if group_instrument is not None and group_instrument.future is not None:
         # Convert each data instance to a dictionary and return as JSON
         return jsonify(get_future_position_greeks(group_instrument.future.symbol))
@@ -412,7 +396,6 @@ def get_future_position_greeks(symbol: str):
             else:
                 result.append(GreeksCashResp(investor_id=investor_id, underlying_price=underlying_price).to_dict())
 
-    # print(f"get_future_position_greeks: {result}")
     return result
 
 
@@ -481,7 +464,6 @@ def get_cffex_monitor():
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    # print(f"get_cffex_monitor symbol:{symbol}")
     combined_position = ctp_manager.current_user.user_memory.get_combined_position()
 
     result : int = 0
@@ -499,7 +481,6 @@ def get_se_monitor():
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-    # print(f"get_se_monitor symbol:{symbol}")
 
     net_position : int = 0
     total_amount : int = 0
