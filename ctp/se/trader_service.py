@@ -214,7 +214,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 # 卖平仓
                 self.user_memory_manager.positions[investor_id][full_symbol].long -= int(pTrade.Volume)
                 self.user_memory_manager.positions[investor_id][full_symbol].short_close_volume += int(pTrade.Volume)
-        print(f'交易成功后当前持仓:{self.user_memory_manager.print_position()}')
+        # print(f'交易成功后当前持仓:{self.user_memory_manager.print_position()}')
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
@@ -230,7 +230,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 return
 
             full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
-            print(f"OnRspQryInvestorPosition full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}, today position: {pInvestorPosition.TodayPosition}")
+            # print(f"OnRspQryInvestorPosition full_symbol: {full_symbol}, long: {pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long}, position: {pInvestorPosition.Position}, today position: {pInvestorPosition.TodayPosition}")
             if full_symbol not in self.user_memory_manager.positions[investor_id]:
                 self.user_memory_manager.positions[investor_id][full_symbol] = Position(instrument_id)
             if pInvestorPosition.PosiDirection == ThostFtdcApiSOpt.THOST_FTDC_PD_Long:
