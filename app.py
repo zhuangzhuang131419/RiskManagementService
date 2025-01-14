@@ -66,8 +66,8 @@ def init_ctp():
 
 
 def main():
-    # test_future_instruction("IF2412")
-    # test_se_instruction("10007328", 0.0065, 0.0060)
+    # test_future_instruction("IF2502", "0081500056", 3900, 3800)
+    # test_se_instruction("91013096", "9982100962", 0.08, 0.07)
 
     while True:
         time.sleep(3)
@@ -81,41 +81,41 @@ def test_position():
     ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_CLOSE, 240, 1)
     print(get_se_monitor("HO20250221"))
 
-def test_future_instruction(instrument_id, high, low):
+def test_future_instruction(instrument_id, investor_id, high, low):
     # 卖开
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, instrument_id, Direction.SELL_OPEN, 3900, 1)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.SELL_OPEN, low, 1)
     # # 买开
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, instrument_id, Direction.BUY_OPEN, 4000, 1)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.BUY_OPEN, high, 1)
     # 买平
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, instrument_id, Direction.BUY_CLOSE, 4000, 1)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.BUY_CLOSE, high, 1)
     # # # 卖平
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, instrument_id, Direction.SELL_CLOSE, 3900, 1)
+    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.SELL_CLOSE, low, 1)
 
     # 买撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, instrument_id, Direction.BUY_OPEN, 3900, 1)
-    ctp_manager.current_user.order_action(ExchangeType.CFFEX, instrument_id, order_ref)
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.BUY_OPEN, low, 1)
+    ctp_manager.current_user.order_action(ExchangeType.CFFEX, investor_id, instrument_id, order_ref)
     #
     #卖撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, instrument_id, Direction.SELL_OPEN, 4000, 1)
-    ctp_manager.current_user.order_action(ExchangeType.CFFEX, instrument_id, order_ref)
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.SELL_OPEN, high, 1)
+    ctp_manager.current_user.order_action(ExchangeType.CFFEX, investor_id, instrument_id, order_ref)
 
-def test_se_instruction(instrument_id, high, low):
+def test_se_instruction(instrument_id, investor_id, high, low):
     # 卖开
-    ctp_manager.current_user.insert_order(ExchangeType.SE, instrument_id, Direction.SELL_OPEN, low, 1)
+    ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.SELL_OPEN, low, 1)
     # 买开
-    ctp_manager.current_user.insert_order(ExchangeType.SE, instrument_id, Direction.BUY_OPEN, high, 1)
+    ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.BUY_OPEN, high, 1)
     # 买平
-    ctp_manager.current_user.insert_order(ExchangeType.SE, instrument_id, Direction.BUY_CLOSE, high, 1)
+    ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.BUY_CLOSE, high, 1)
     # 卖平
-    ctp_manager.current_user.insert_order(ExchangeType.SE, instrument_id, Direction.SELL_CLOSE, low, 1)
+    ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.SELL_CLOSE, low, 1)
 
     # 买撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.SE, instrument_id, Direction.BUY_OPEN, low, 1)
-    ctp_manager.current_user.order_action(ExchangeType.SE, instrument_id, order_ref)
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.BUY_OPEN, low, 1)
+    ctp_manager.current_user.order_action(ExchangeType.SE, investor_id, instrument_id, order_ref)
     #
     #卖撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.SE, instrument_id, Direction.SELL_OPEN, high, 1)
-    ctp_manager.current_user.order_action(ExchangeType.SE, instrument_id, order_ref)
+    order_ref = ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.SELL_OPEN, high, 1)
+    ctp_manager.current_user.order_action(ExchangeType.SE, investor_id, instrument_id, order_ref)
 
 def test_instruction():
     # 卖开
