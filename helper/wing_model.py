@@ -2,51 +2,46 @@ import numpy as np
 import py_vollib_vectorized
 
 from helper.calculator import calculate_x_distance
+from helper.helper import red_print
 
 
 class WingModel:
-    def __init__(self, S,K,t,r,v,q,k1,k2,b):
-        xp0 = -4
-        xpc = -2
-        xcc = 2
-        xc0 = 4
+    def __init__(self, S, K, t, r, v, q, k1, k2, b):
+        # 定义关键点
+        xp0, xpc, xcc, xc0 = -4, -2, 2, 4
+
+        # 计算分段函数的参数
         part1p = (2 * k1 * xpc + b) / (2 * (xpc - xp0))
         part2p = -(2 * k1 * xpc + b) / (xpc - xp0)
         part1c = (2 * k2 * xcc + b) / (2 * (xcc - xc0))
         part2c = -(2 * k2 * xcc + b) / (xcc - xc0)
-        sigma_p = k1 * xpc * xpc + b * xpc + v - (part1p * xpc * xpc + part2p * xp0 * xpc)
-        sigma_c = k2 * xcc * xcc + b * xcc + v - (part1c * xcc * xcc + part2c * xc0 * xcc)
 
-        if isinstance(K, np.ndarray) or isinstance(K, list):
-            self.volatility = [0] * len(list(K))
-            for i in range(len(K)):
-                xx = calculate_x_distance(S, K[i], t, r, v, q)
-                if xx < xp0:
-                    self.volatility[i] = part1p * xp0 * xp0 + part2p * xp0 * xp0 + sigma_p
-                elif xx < xpc:
-                    self.volatility[i] = part1p * xx * xx + part2p * xp0 * xx + sigma_p
-                elif xx < 0:
-                    self.volatility[i] = k1 * xx * xx + b * xx + v
-                elif xx < xcc:
-                    self.volatility[i] = k2 * xx * xx + b * xx + v
-                elif xx < xc0:
-                    self.volatility[i] = part1c * xx * xx + part2c * xc0 * xx + sigma_c
-                else:
-                    self.volatility[i] = part1c * xc0 * xc0 + part2c * xc0 * xc0 + sigma_c
+        # 计算边界点的波动率
+        sigma_p = k1 * xpc**2 + b * xpc + v - (part1p * xpc**2 + part2p * xp0 * xpc)
+        sigma_c = k2 * xcc**2 + b * xcc + v - (part1c * xcc**2 + part2c * xc0 * xcc)
+
+        # 计算波动率函数
+        def calculate_volatility(xx):
+            if xx < xp0:
+                return part1p * xp0**2 + part2p * xp0**2 + sigma_p
+            elif xx < xpc:
+                return part1p * xx**2 + part2p * xp0 * xx + sigma_p
+            elif xx < 0:
+                return k1 * xx**2 + b * xx + v
+            elif xx < xcc:
+                return k2 * xx**2 + b * xx + v
+            elif xx < xc0:
+                return part1c * xx**2 + part2c * xc0 * xx + sigma_c
+            else:
+                return part1c * xc0**2 + part2c * xc0**2 + sigma_c
+
+        # 计算 x 距离
+        if isinstance(K, (np.ndarray, list)):
+            xx_array = np.array([calculate_x_distance(S, k, t, r, v, q) for k in K])
+            self.volatility = np.vectorize(calculate_volatility)(xx_array)
         else:
             xx = calculate_x_distance(S, K, t, r, v, q)
-            if xx < xp0:
-                self.volatility = part1p * xp0 * xp0 + part2p * xp0 * xp0 + sigma_p
-            elif xx < xpc:
-                self.volatility = part1p * xx * xx + part2p * xp0 * xx + sigma_p
-            elif xx < 0:
-                self.volatility = k1 * xx * xx + b * xx + v
-            elif xx < xcc:
-                self.volatility = k2 * xx * xx + b * xx + v
-            elif xx < xc0:
-                self.volatility = part1c * xx * xx + part2c * xc0 * xx + sigma_c
-            else:
-                self.volatility = part1c * xc0 * xc0 + part2c * xc0 * xc0 + sigma_c
+            self.volatility = calculate_volatility(xx)
 
 def v_delta(flag, S, K, t, r, v, q, k1, k2, b):
     if t < 1 / 254:
@@ -55,6 +50,15 @@ def v_delta(flag, S, K, t, r, v, q, k1, k2, b):
     model1 = WingModel(S + 1, K, t, r, v, q, k1, k2, b)
     delta = (py_vollib_vectorized.vectorized_black_scholes_merton(flag, S + 1, K, t, r, model1.volatility, q=0, return_as='numpy')
              - py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model0.volatility, q=0, return_as='numpy'))
+
+    if flag == 'c':
+        if delta < 0 or delta > 1:
+            red_print(f"s={S}, K={K}, t = {t}, k1={k1}, k2={k2}, b={b} v={v} v0={model0.volatility} v1={model1.volatility}")
+
+    if flag == 'p':
+        if delta > 0 or delta < -1:
+            red_print(f"s={S}, K={K}, t = {t}, k1={k1}, k2={k2}, b={b} v={v} v0={model0.volatility} v1={model1.volatility}")
+
     return delta
 
 def v_gamma_percent(flag, S, K, t, r, v, q, k1, k2, b):
