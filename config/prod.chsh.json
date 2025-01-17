@@ -1,0 +1,29 @@
+{
+  "Name": "CHSH",
+  "CFFEX": [
+    {
+      "BrokerName": "张江-CTP次席-1-80",
+      "BrokerID": "7090",
+      "UserID": "80533506",
+      "InvestorID": "80533506",
+      "Password": "cs501130",
+      "AppID": "client_gtjacs_2.0",
+      "AuthCode": "20210323CSLHJY01",
+      "MarketServerFront": "tcp://58.33.43.112:41213",
+      "TradeServerFront": "tcp://58.33.43.112:41205"
+    }
+  ],
+  "SE": [
+    {
+      "BrokerName": "华京路-CTPmini-1",
+      "BrokerID": "7070",
+      "UserID": "9980533506",
+      "InvestorID": "9980533506",
+      "Password": "501130",
+      "AppID": "client_gtjacs_2.0",
+      "AuthCode": "20210927CSXO3506",
+      "MarketServerFront": "tcp://180.168.205.206:42723",
+      "TradeServerFront": "tcp://180.168.205.206:42715"
+    }
+  ]
+}

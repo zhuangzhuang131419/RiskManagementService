@@ -1,0 +1,29 @@
+{
+  "Name": "LSHF",
+  "CFFEX": [
+    {
+      "BrokerName": "张江-CTP次席-1-80",
+      "BrokerID": "7090",
+      "UserID": "85334525",
+      "InvestorID": "85334525",
+      "Password": "lsf045366",
+      "AppID": "client_lsfbdl_2.0",
+      "AuthCode": "20250102LISHENGF",
+      "MarketServerFront": "tcp://58.33.43.112:41213",
+      "TradeServerFront": "tcp://58.33.43.112:41205"
+    }
+  ],
+  "SE": [
+    {
+      "BrokerName": "华京路-CTPmini-1",
+      "BrokerID": "7070",
+      "UserID": "9985334525",
+      "InvestorID": "9985334525",
+      "Password": "lsf045366",
+      "AppID": "client_lsfbdl_2.0",
+      "AuthCode": "20250102LISHENGF",
+      "MarketServerFront": "tcp://180.168.205.206:42723",
+      "TradeServerFront": "tcp://180.168.205.206:42715"
+    }
+  ]
+}

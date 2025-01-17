@@ -51,13 +51,13 @@ def v_delta(flag, S, K, t, r, v, q, k1, k2, b):
     delta = (py_vollib_vectorized.vectorized_black_scholes_merton(flag, S + 1, K, t, r, model1.volatility, q=0, return_as='numpy')
              - py_vollib_vectorized.vectorized_black_scholes_merton(flag, S, K, t, r, model0.volatility, q=0, return_as='numpy'))
 
-    if flag == 'c':
-        if delta < 0 or delta > 1:
-            red_print(f"s={S}, K={K}, t = {t}, k1={k1}, k2={k2}, b={b} v={v} v0={model0.volatility} v1={model1.volatility}")
-
-    if flag == 'p':
-        if delta > 0 or delta < -1:
-            red_print(f"s={S}, K={K}, t = {t}, k1={k1}, k2={k2}, b={b} v={v} v0={model0.volatility} v1={model1.volatility}")
+    # if flag == 'c':
+    #     if delta < 0 or delta > 1:
+    #         red_print(f"s={S}, K={K}, t = {t}, k1={k1}, k2={k2}, b={b} v={v} v0={model0.volatility} v1={model1.volatility}")
+    #
+    # if flag == 'p':
+    #     if delta > 0 or delta < -1:
+    #         red_print(f"s={S}, K={K}, t = {t}, k1={k1}, k2={k2}, b={b} v={v} v0={model0.volatility} v1={model1.volatility}")
 
     return delta
 
