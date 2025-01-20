@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChoiceGroup, Stack, IChoiceGroupOption, Dialog, Label, Text } from '@fluentui/react';
+import { ChoiceGroup, Stack, IChoiceGroupOption, Dialog, Label, Text, Pivot, PivotItem, IDropdownOption, Dropdown } from '@fluentui/react';
 import OptionGreeks from './OptionGreeks';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import UserSelector from './UserSelector';
@@ -104,93 +104,122 @@ const TradingDashboard: React.FC = () => {
         }
     );
 
+    const [selectedGreek, setSelectedGreek] = useState<string>('cash_delta');
+
+    // 希腊字母下拉框选项
+    const greekOptions: IDropdownOption[] = [
+        { key: 'cash_delta', text: 'Cash Delta' },
+        { key: 'cash_vega', text: 'Cash Vega' },
+        { key: 'cash_theta', text: 'Cash Theta' },
+        { key: 'cash_GammaP', text: 'Cash GammaP' },
+        { key: 'cash_db', text: 'Cash DB' },
+        { key: 'cash_vannaVS', text: 'Cash VannaVS' },
+        { key: 'cash_vannaSV', text: 'Cash VannaSV' },
+        { key: 'cash_dkurt', text: 'Cash DKurt' },
+    ];
+
     return (
-
-        // 主布局
-        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100vw' } }}>
-            {/* 顶部：账户选择器和数据展示 */}
-            <Stack horizontal styles={{ root: { height: '20%' } }} tokens={{ childrenGap: 20 }}>
-                <Stack.Item>
-                    {selectedUserKey !== null && (
-                        <UserSelector accounts={userItems as User[]} onSelect={setSelectedUserKey} selectedUserKey={selectedUserKey} />
-                    )}
-                    <Text>{clock}</Text>
-                </Stack.Item>
-                <Stack.Item>
-                    <UserInfoTable indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} ></UserInfoTable>
-                </Stack.Item>
-                <Stack.Item>
-                    <TopDataBar indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} />
-                </Stack.Item>
-            </Stack>
-
-
-
-            {/* 中间部分：期权滚动框和期权希腊字母展示 */}
-            <Stack horizontal styles={{ root: { height: '80%' } }} tokens={{ childrenGap: 20 }}>
-                {/* 左侧：ScrollBox */}
-                <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
-                    {!isIndexOptionFetching && (
-                        <Stack styles={{ root: { height: '30%' } }}>
-                            <ScrollBox
-                                items={indexOptionItems as { key: string }[]}
-                                onClick={setSelectedIndexOption}
-                                renderItem={(item) => {
-                                    const prefix = item.key.slice(0, item.key.length - 8);
-                                    const year = item.key.slice(item.key.length - 6, item.key.length - 4);
-                                    const month = item.key.slice(item.key.length - 4, item.key.length - 2);
-                                    return `${prefix}${year}${month}`;
-                                }}
-                                title='Index期权'
-                                selectedItemKey={selectedIndexOption}
-                            />
-                        </Stack>
-                    )}
-                    {!isETFOptionFetching && (
-                        <Stack styles={{ root: { height: '30%' } }}>
-                            <ScrollBox
-                                items={etfOptionItems as { key: string }[]}
-                                onClick={setSelectedETF}
-                                renderItem={(item) => {
-                                    const prefix = item.key.slice(0, item.key.length - 8);
-                                    const year = item.key.slice(item.key.length - 6, item.key.length - 4);
-                                    const month = item.key.slice(item.key.length - 4, item.key.length - 2);
-                                    return `${prefix}-${year}${month}`;
-                                }}
-                                title='ETF期权'
-                                selectedItemKey={selectedETFOption}
-                            />
-                        </Stack>
-                    )}
-                    <Stack styles={{ root: { height: '20%', overflowY: 'auto' } }}>
-                        <BaselineSelector
-                            onSelect={setSelectedBaseline}
-                            selectedBaselineKey={selectedBaseline as string}
-                        />
+        <Pivot>
+            <PivotItem headerText='风控'>
+                <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100vw' } }}>
+                    {/* 顶部：账户选择器和数据展示 */}
+                    <Stack horizontal styles={{ root: { height: '20%' } }} tokens={{ childrenGap: 20 }}>
+                        <Stack.Item>
+                            {selectedUserKey !== null && (
+                                <UserSelector accounts={userItems as User[]} onSelect={setSelectedUserKey} selectedUserKey={selectedUserKey} />
+                            )}
+                            <Text>{clock}</Text>
+                        </Stack.Item>
+                        <Stack.Item>
+                            <UserInfoTable indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} ></UserInfoTable>
+                        </Stack.Item>
+                        <Stack.Item>
+                            <TopDataBar indexSymbol={selectedIndexOption as string} etfSymbol={selectedETFOption as string} />
+                        </Stack.Item>
                     </Stack>
-                    <Stack styles={{ root: { height: '20%', overflowY: 'auto' } }}>
-                        <CustomizedParaDialog></CustomizedParaDialog>
+
+
+
+                    {/* 中间部分：期权滚动框和期权希腊字母展示 */}
+                    <Stack horizontal styles={{ root: { height: '80%' } }} tokens={{ childrenGap: 20 }}>
+                        {/* 左侧：ScrollBox */}
+                        <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: '15%' } }}>
+                            {!isIndexOptionFetching && (
+                                <Stack styles={{ root: { height: '30%' } }}>
+                                    <ScrollBox
+                                        items={indexOptionItems as { key: string }[]}
+                                        onClick={setSelectedIndexOption}
+                                        renderItem={(item) => {
+                                            const prefix = item.key.slice(0, item.key.length - 8);
+                                            const year = item.key.slice(item.key.length - 6, item.key.length - 4);
+                                            const month = item.key.slice(item.key.length - 4, item.key.length - 2);
+                                            return `${prefix}${year}${month}`;
+                                        }}
+                                        title='Index期权'
+                                        selectedItemKey={selectedIndexOption}
+                                    />
+                                </Stack>
+                            )}
+                            {!isETFOptionFetching && (
+                                <Stack styles={{ root: { height: '30%' } }}>
+                                    <ScrollBox
+                                        items={etfOptionItems as { key: string }[]}
+                                        onClick={setSelectedETF}
+                                        renderItem={(item) => {
+                                            const prefix = item.key.slice(0, item.key.length - 8);
+                                            const year = item.key.slice(item.key.length - 6, item.key.length - 4);
+                                            const month = item.key.slice(item.key.length - 4, item.key.length - 2);
+                                            return `${prefix}-${year}${month}`;
+                                        }}
+                                        title='ETF期权'
+                                        selectedItemKey={selectedETFOption}
+                                    />
+                                </Stack>
+                            )}
+                            <Stack styles={{ root: { height: '20%', overflowY: 'auto' } }}>
+                                <BaselineSelector
+                                    onSelect={setSelectedBaseline}
+                                    selectedBaselineKey={selectedBaseline as string}
+                                />
+                            </Stack>
+                            <Stack styles={{ root: { height: '20%', overflowY: 'auto' } }}>
+                                <CustomizedParaDialog></CustomizedParaDialog>
+                            </Stack>
+                        </Stack>
+
+                        {/* 右侧：OptionGreeks */}
+                        <Stack horizontal styles={{ root: { height: '100%', width: '85%' } }} tokens={{ childrenGap: 20 }}>
+                            <Stack tokens={{ childrenGap: 10 }} styles={{ root: { height: '100%', width: '50%' } }}>
+                                <Stack styles={{ root: { height: '20%' } }}>
+                                    <WingModelBar symbol={selectedIndexOption} />
+                                </Stack>
+
+                                <OptionGreeks symbol={selectedIndexOption} />
+                            </Stack>
+                            <Stack tokens={{ childrenGap: 10 }} styles={{ root: { height: '100%', width: '50%' } }}>
+                                <Stack styles={{ root: { height: '20%' } }}>
+                                    <WingModelBar symbol={selectedETFOption} />
+                                </Stack>
+                                <OptionGreeks symbol={selectedETFOption} />
+                            </Stack>
+                        </Stack>
                     </Stack>
                 </Stack>
-
-                {/* 右侧：OptionGreeks */}
-                <Stack horizontal styles={{ root: { height: '100%', width: '85%' } }} tokens={{ childrenGap: 20 }}>
-                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { height: '100%', width: '50%' } }}>
-                        <Stack styles={{ root: { height: '20%' } }}>
-                            <WingModelBar symbol={selectedIndexOption} />
-                        </Stack>
-
-                        <OptionGreeks symbol={selectedIndexOption} />
-                    </Stack>
-                    <Stack tokens={{ childrenGap: 10 }} styles={{ root: { height: '100%', width: '50%' } }}>
-                        <Stack styles={{ root: { height: '20%' } }}>
-                            <WingModelBar symbol={selectedETFOption} />
-                        </Stack>
-                        <OptionGreeks symbol={selectedETFOption} />
-                    </Stack>
+            </PivotItem>
+            <PivotItem headerText='综合'>
+                <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100vw' } }}>
+                    <Dropdown
+                        label="选择希腊字母类型"
+                        options={greekOptions}
+                        selectedKey={selectedGreek}
+                        onChange={(_, option) => setSelectedGreek(option?.key as string)}
+                    />
                 </Stack>
-            </Stack>
-        </Stack>
+            </PivotItem>
+
+        </Pivot >
+
+
     )
 };
 
