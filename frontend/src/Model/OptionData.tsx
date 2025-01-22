@@ -53,15 +53,15 @@ export type CashGreeksResponse = {
 export type CashGreeksTotalResponse = {
     user: string,
     SSE50: { [greek: string]: number } | null,
-    SSE300: { [greek: string]: number } | null,
-    SSE500: { [greek: string]: number } | null,
-    SSE1000: { [greek: string]: number } | null,
+    CSI300: { [greek: string]: number } | null,
+    CSI500: { [greek: string]: number } | null,
+    CSI1000: { [greek: string]: number } | null,
 }
 
 export type MonitorTotalResponse = {
     user: string,
     SSE50: string | null,
-    SSE300: string | null,
-    SSE500: string | null,
-    SSE1000: string | null,
+    CSI300: string | null,
+    CSI500: string | null,
+    CSI1000: string | null,
 }

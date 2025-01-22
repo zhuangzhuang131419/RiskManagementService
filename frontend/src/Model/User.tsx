@@ -18,7 +18,7 @@ export type TopBarData = {
 export type UserGreeks = {
   user: string;
   SSE50: number;
-  SSE300: number;
-  SSE500: number;
-  SSE1000: number;
+  CSI300: number;
+  CSI500: number;
+  CSI1000: number;
 }

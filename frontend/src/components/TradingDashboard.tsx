@@ -128,9 +128,9 @@ const TradingDashboard: React.FC = () => {
             const transformedItems = greeksTotalItems.map((item) => ({
                 user: item.user,
                 SSE50: item.SSE50?.[selectedGreek] ?? 0, // Get value for selectedGreek or default to 0
-                SSE300: item.SSE300?.[selectedGreek] ?? 0,
-                SSE500: item.SSE500?.[selectedGreek] ?? 0,
-                SSE1000: item.SSE1000?.[selectedGreek] ?? 0,
+                CSI300: item.CSI300?.[selectedGreek] ?? 0,
+                CSI500: item.CSI500?.[selectedGreek] ?? 0,
+                CSI1000: item.CSI1000?.[selectedGreek] ?? 0,
             }));
             setGreeksItem(transformedItems);
         }
@@ -151,9 +151,9 @@ const TradingDashboard: React.FC = () => {
     const greekColumns = [
         { key: 'account', name: '账户品种', fieldName: 'user', minWidth: 150 },
         { key: '50_summary', name: '50汇总', fieldName: 'SSE50', minWidth: 150 },
-        { key: '300_summary', name: '300汇总', fieldName: 'SSE300', minWidth: 150 },
-        { key: '500_summary', name: '500汇总', fieldName: 'SSE500', minWidth: 150 },
-        { key: '1000_summary', name: '1000汇总', fieldName: 'SSE1000', minWidth: 150 },
+        { key: '300_summary', name: '300汇总', fieldName: 'CSI300', minWidth: 150 },
+        { key: '500_summary', name: '500汇总', fieldName: 'CSI500', minWidth: 150 },
+        { key: '1000_summary', name: '1000汇总', fieldName: 'CSI1000', minWidth: 150 },
     ];
 
     const { data: monitorTotalItems = [], isFetching: isMonitorTotalFetching } = useQuery(
@@ -173,8 +173,8 @@ const TradingDashboard: React.FC = () => {
     const monitorColumns = [
         { key: 'account', name: '账户品种', fieldName: 'user', minWidth: 150 },
         { key: '50_summary', name: '50汇总', fieldName: 'SSE50', minWidth: 150 },
-        { key: '300_summary', name: '300汇总', fieldName: 'SSE300', minWidth: 150 },
-        { key: '500_summary', name: '500汇总', fieldName: 'SSE500', minWidth: 150 },
+        { key: '300_summary', name: '300汇总', fieldName: 'CSI300', minWidth: 150 },
+        { key: '500_summary', name: '500汇总', fieldName: 'CSI500', minWidth: 150 },
     ];
 
     return (
