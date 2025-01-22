@@ -49,3 +49,19 @@ export type CashGreeksResponse = {
     charm_cash: number | null
     underlying_price: number | null,
 }
+
+export type CashGreeksTotalResponse = {
+    user: string,
+    SSE50: { [greek: string]: number } | null,
+    SSE300: { [greek: string]: number } | null,
+    SSE500: { [greek: string]: number } | null,
+    SSE1000: { [greek: string]: number } | null,
+}
+
+export type MonitorTotalResponse = {
+    user: string,
+    SSE50: string | null,
+    SSE300: string | null,
+    SSE500: string | null,
+    SSE1000: string | null,
+}

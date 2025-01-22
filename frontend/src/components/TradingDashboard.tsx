@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ChoiceGroup, Stack, IChoiceGroupOption, Dialog, Label, Text, Pivot, PivotItem, IDropdownOption, Dropdown } from '@fluentui/react';
+import { ChoiceGroup, Stack, IChoiceGroupOption, Dialog, Label, Text, Pivot, PivotItem, IDropdownOption, Dropdown, DetailsList, DetailsListLayoutMode, SelectionMode } from '@fluentui/react';
 import OptionGreeks from './OptionGreeks';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import UserSelector from './UserSelector';
 import ScrollBox from './ScrollBox';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 import TopDataBar from './TopDataBar';
-import { User, TopBarData } from '../Model/User';
+import { User, TopBarData, UserGreeks } from '../Model/User';
 import { futureDataProvider } from '../DataProvider/FutureDataProvider';
 import { userDataProvider } from '../DataProvider/UserDataProvider';
 import WingModelBar from './WingModelBar';
@@ -104,18 +104,77 @@ const TradingDashboard: React.FC = () => {
         }
     );
 
-    const [selectedGreek, setSelectedGreek] = useState<string>('cash_delta');
+
+    const { data: greeksTotalItems = [], isFetching: isGreeksTotalFetching } = useQuery(
+        ['greeksTotal'],
+        userDataProvider.fetchGreeksTotal,
+        {
+            onSuccess(data) {
+                console.log('fetchGreeksTotal:' + JSON.stringify(data))
+
+            },
+            refetchOnWindowFocus: false,
+            refetchInterval: 1000 * 3,
+        }
+
+    );
+
+    const [selectedGreek, setSelectedGreek] = useState<string>('delta_cash');
+
+    const [greeksItem, setGreeksItem] = useState<UserGreeks[]>([])
+
+    useEffect(() => {
+        if (greeksTotalItems.length > 0) {
+            const transformedItems = greeksTotalItems.map((item) => ({
+                user: item.user,
+                SSE50: item.SSE50?.[selectedGreek] ?? 0, // Get value for selectedGreek or default to 0
+                SSE300: item.SSE300?.[selectedGreek] ?? 0,
+                SSE500: item.SSE500?.[selectedGreek] ?? 0,
+                SSE1000: item.SSE1000?.[selectedGreek] ?? 0,
+            }));
+            setGreeksItem(transformedItems);
+        }
+    }, [selectedGreek, greeksTotalItems]);
 
     // 希腊字母下拉框选项
     const greekOptions: IDropdownOption[] = [
-        { key: 'cash_delta', text: 'Cash Delta' },
-        { key: 'cash_vega', text: 'Cash Vega' },
-        { key: 'cash_theta', text: 'Cash Theta' },
-        { key: 'cash_GammaP', text: 'Cash GammaP' },
-        { key: 'cash_db', text: 'Cash DB' },
-        { key: 'cash_vannaVS', text: 'Cash VannaVS' },
-        { key: 'cash_vannaSV', text: 'Cash VannaSV' },
-        { key: 'cash_dkurt', text: 'Cash DKurt' },
+        { key: 'delta_cash', text: 'Cash Delta' },
+        { key: 'vega_cash', text: 'Cash Vega' },
+        { key: 'theta_cash', text: 'Cash Theta' },
+        { key: 'gamma_p_cash', text: 'Cash GammaP' },
+        { key: 'db_cash', text: 'Cash DB' },
+        { key: 'vanna_vs_cash', text: 'Cash VannaVS' },
+        { key: 'vanna_sv_cash', text: 'Cash VannaSV' },
+        { key: 'dkurt_cash', text: 'Cash DKurt' },
+    ];
+
+    const greekColumns = [
+        { key: 'account', name: '账户品种', fieldName: 'user', minWidth: 150 },
+        { key: '50_summary', name: '50汇总', fieldName: 'SSE50', minWidth: 150 },
+        { key: '300_summary', name: '300汇总', fieldName: 'SSE300', minWidth: 150 },
+        { key: '500_summary', name: '500汇总', fieldName: 'SSE500', minWidth: 150 },
+        { key: '1000_summary', name: '1000汇总', fieldName: 'SSE1000', minWidth: 150 },
+    ];
+
+    const { data: monitorTotalItems = [], isFetching: isMonitorTotalFetching } = useQuery(
+        ['monitorTotal'],
+        userDataProvider.fetchMonitorIndexTotal,
+        {
+            onSuccess(data) {
+                console.log('fetchMonitorIndexTotal:' + JSON.stringify(data))
+
+            },
+            refetchOnWindowFocus: false,
+            refetchInterval: 1000 * 3,
+        }
+
+    );
+
+    const monitorColumns = [
+        { key: 'account', name: '账户品种', fieldName: 'user', minWidth: 150 },
+        { key: '50_summary', name: '50汇总', fieldName: 'SSE50', minWidth: 150 },
+        { key: '300_summary', name: '300汇总', fieldName: 'SSE300', minWidth: 150 },
+        { key: '500_summary', name: '500汇总', fieldName: 'SSE500', minWidth: 150 },
     ];
 
     return (
@@ -208,18 +267,37 @@ const TradingDashboard: React.FC = () => {
             </PivotItem>
             <PivotItem headerText='综合'>
                 <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100vw' } }}>
-                    <Dropdown
-                        label="选择希腊字母类型"
-                        options={greekOptions}
-                        selectedKey={selectedGreek}
-                        onChange={(_, option) => setSelectedGreek(option?.key as string)}
-                    />
+                    <Stack horizontal tokens={{ childrenGap: 20 }} >
+                        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100%', width: '50%' } }}>
+                            <Dropdown
+                                label="选择希腊字母类型"
+                                options={greekOptions}
+                                selectedKey={selectedGreek}
+                                onChange={(_, option) => setSelectedGreek(option?.key as string)}
+                            />
+                            <DetailsList
+                                items={greeksItem}
+                                columns={greekColumns}
+                                layoutMode={DetailsListLayoutMode.justified}
+                                selectionMode={SelectionMode.none}
+                                selectionPreservedOnEmptyClick={true}
+                                compact={true}
+                            />
+                        </Stack>
+                        <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100%', width: '50%' } }}>
+                            <DetailsList
+                                items={monitorTotalItems}
+                                columns={monitorColumns}
+                                layoutMode={DetailsListLayoutMode.justified}
+                                selectionMode={SelectionMode.none}
+                                selectionPreservedOnEmptyClick={true}
+                                compact={true}
+                            />
+                        </Stack>
+                    </Stack>
                 </Stack>
             </PivotItem>
-
         </Pivot >
-
-
     )
 };
 

@@ -10,12 +10,12 @@ from helper.helper import filter_index_option, filter_etf_option, filter_index_f
 from model.ctp_manager import CTPManager
 from model.direction import Direction
 from model.enum.baseline_type import BaselineType
-from model.enum.category import UNDERLYING_CATEGORY_MAPPING
+from model.enum.category import UNDERLYING_CATEGORY_MAPPING, INDEX_OPTION_ETF_OPTION_FUTURE_MAPPING
 from model.enum.exchange_type import ExchangeType
-from model.instrument.option import Option
 from model.instrument.option_series import OptionSeries
-from model.memory.atm_volatility import ATMVolatility
 from model.memory.wing_model_para import WingModelPara
+from model.response.greeks_total_resp import GreeksTotalResp
+from model.response.monitor_total_resp import MonitorTotalResp
 from model.response.option_greeks import OptionGreeksData, OptionGreeksResp
 from model.response.option_resp_base import StrikePrices
 from model.response.greeks_cash_resp import GreeksCashResp
@@ -41,7 +41,7 @@ def serve(path):
         # 否则返回 React 构建后的 index.html
         return send_from_directory(app.static_folder, 'index.html')
 
-ctp_manager = CTPManager('test')
+ctp_manager = CTPManager('dev')
 
 def init_ctp():
     # 初始化
@@ -355,7 +355,7 @@ def get_greek_summary_by_option_symbol():
         return jsonify({"error": f"Symbol invalid"}), 404
 
     # Convert each data instance to a dictionary and return as JSON
-    return jsonify(get_option_position_greeks(symbol))
+    return jsonify(get_option_position_greeks(symbol, ctp_manager.current_user.user_name).to_dict())
 
 @app.route('/api/future/greeks_summary', methods=['GET'])
 def get_greek_summary_by_future_symbol():
@@ -370,32 +370,34 @@ def get_greek_summary_by_future_symbol():
 
     if group_instrument is not None and group_instrument.future is not None:
         # Convert each data instance to a dictionary and return as JSON
-        return jsonify(get_future_position_greeks(group_instrument.future.symbol))
+        return jsonify(position_greeks.to_dict() for position_greeks in get_future_position_greeks(group_instrument.future.symbol, ctp_manager.current_user.user_name))
     else:
         return jsonify([])
 
-def get_future_position_greeks(symbol: str):
+def get_future_position_greeks(symbol: str, user_name: str):
     future = ctp_manager.market_data_manager.index_futures_dict[symbol]
 
     cash_multiplier = get_cash_multiplier(symbol)
 
     underlying_price = (future.market_data.bid_prices[0] + future.market_data.ask_prices[0]) / 2
 
+    user = ctp_manager.users[user_name]
+
     result = []
-    for investor_id, positions in ctp_manager.current_user.user_memory.positions.items():
-        if ctp_manager.current_user.investors[investor_id] == ExchangeType.CFFEX:
+    for investor_id, positions in user.user_memory.positions.items():
+        if user.investors[investor_id] == ExchangeType.CFFEX:
             if symbol in positions:
                 future_position = positions[symbol]
                 delta = future_position.long - future_position.short
                 delta_cash = delta * cash_multiplier * underlying_price
-                result.append(GreeksCashResp(investor_id=investor_id, delta=delta, delta_cash=delta_cash, underlying_price=underlying_price).to_dict())
+                result.append(GreeksCashResp(investor_id=investor_id, delta=delta, delta_cash=delta_cash, underlying_price=underlying_price))
             else:
-                result.append(GreeksCashResp(investor_id=investor_id, underlying_price=underlying_price).to_dict())
+                result.append(GreeksCashResp(investor_id=investor_id, underlying_price=underlying_price))
 
     return result
 
 
-def get_option_position_greeks(symbol: str):
+def get_option_position_greeks(symbol: str, user_name: str):
     option_series: OptionSeries = ctp_manager.market_data_manager.option_market_data[symbol]
 
     delta = 0
@@ -409,7 +411,9 @@ def get_option_position_greeks(symbol: str):
     dkurt = 0
     cash_multiplier = get_cash_multiplier(symbol)
 
-    positions = ctp_manager.current_user.user_memory.get_combined_position()
+    user = ctp_manager.users.get(user_name, ctp_manager.current_user)
+
+    positions = user.user_memory.get_combined_position()
 
     for full_symbol, position in positions.items():
         if not full_symbol.startswith(symbol):
@@ -440,7 +444,7 @@ def get_option_position_greeks(symbol: str):
 
     resp: GreeksCashResp = GreeksCashResp(delta=delta, delta_cash=delta_cash, gamma_p_cash=gamma_cash, vega_cash=vega_cash, theta_cash=theta_cash, db_cash=db_cash, charm_cash=charm_cash, vanna_sv_cash=vanna_sv_cash, vanna_vs_cash=vanna_vs_cash, dkurt_cash=dkurt_cash, underlying_price=option_series.wing_model_para.S)
 
-    return resp.to_dict()
+    return resp
 
 
 
@@ -482,9 +486,13 @@ def get_se_monitor():
         return jsonify({"error": f"Symbol invalid"}), 404
 
 
-    net_position : int = 0
-    total_amount : int = 0
-    combined_position = ctp_manager.current_user.user_memory.get_combined_position()
+    result = calculate_monitor_index(ctp_manager.current_user.user_name, symbol)
+    return jsonify(result)
+
+def calculate_monitor_index(user_name: str, symbol: str):
+    net_position: int = 0
+    total_amount: int = 0
+    combined_position = ctp_manager.users.get(user_name, ctp_manager.current_user).user_memory.get_combined_position()
 
     for full_symbol, position in combined_position.items():
         if full_symbol.startswith(symbol[:-8]):
@@ -495,10 +503,57 @@ def get_se_monitor():
         result = str(net_position) + "#" + str(total_amount)
     else:
         result = str(net_position) + "#" + str(total_amount) + "#" + f"{round((total_amount / net_position) * 100, 2)}%"
-    return jsonify(result)
+
+    return result
 
 
 
+@app.route('/api/greeks/total', methods=['GET'])
+def get_greeks_total():
+    resp = []
+    for user_name, user in ctp_manager.users.items():
+        greeks_total = GreeksTotalResp(user_name)
+        for category, (index_option_prefix_symbol, etf_option_prefix_symbol, future_prefix_symbol) in INDEX_OPTION_ETF_OPTION_FUTURE_MAPPING.items():
+            position_greeks = GreeksCashResp()
+
+            for index_option_symbol in ctp_manager.market_data_manager.index_option_symbol:
+                if index_option_prefix_symbol is not None and index_option_symbol.startswith(index_option_prefix_symbol):
+                    position_greeks += get_option_position_greeks(index_option_symbol, user_name)
+
+            for etf_option_symbol in ctp_manager.market_data_manager.etf_option_symbol:
+                if etf_option_prefix_symbol is not None and etf_option_symbol.startswith(etf_option_prefix_symbol):
+                    position_greeks += get_option_position_greeks(etf_option_symbol, user_name)
+
+            for index_future_symbol in ctp_manager.market_data_manager.index_future_symbol:
+                if future_prefix_symbol is not None and index_future_symbol.startswith(future_prefix_symbol):
+                    for future_greeks in get_future_position_greeks(index_future_symbol, user_name):
+                        position_greeks += future_greeks
+
+            greeks_total.greeks_total_by_category[category] = {
+                "delta_cash": position_greeks.delta_cash,
+                "vega_cash": position_greeks.vega_cash,
+                "theta_cash": position_greeks.theta_cash,
+                "gamma_p_cash": position_greeks.gamma_p_cash,
+                "db_cash": position_greeks.db_cash,
+                "vanna_sv_cash": position_greeks.vanna_sv_cash,
+                "vanna_vs_cash": position_greeks.vanna_vs_cash,
+                "dkurt_cash": position_greeks.dkurt_cash
+            }
+
+        resp.append(greeks_total.to_dict())
+
+    return jsonify(resp)
+
+@app.route('/api/monitor/total', methods=['GET'])
+def get_monitor_total():
+    resp = []
+    for user_name, user in ctp_manager.users.items():
+        monitor_total = MonitorTotalResp(user_name)
+        symbols = ["510050", "510300", "510500"]
+        for symbol in symbols:
+            monitor_total.monitor_total_by_category[UNDERLYING_CATEGORY_MAPPING[symbol]] = calculate_monitor_index(user_name, symbol)
+        resp.append(monitor_total.to_dict())
+    return jsonify(resp)
 
 
 if __name__ == "__main__":

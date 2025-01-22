@@ -1,3 +1,5 @@
+from typing import List
+
 
 class GreeksCashResp:
     delta: float
@@ -47,3 +49,37 @@ class GreeksCashResp:
             "charm_cash": self.charm_cash,
             "underlying_price": self.underlying_price
         }
+
+    def __add__(self, other: 'GreeksCashResp') -> 'GreeksCashResp':
+        """
+        Overloads the + operator to add two GreeksCashResp objects.
+
+        :param other: Another instance of GreeksCashResp
+        :return: A new GreeksCashResp instance with summed values
+        """
+        if not isinstance(other, GreeksCashResp):
+            raise TypeError("The object to add must be an instance of GreeksCashResp")
+
+        return GreeksCashResp(
+            delta=self.delta + other.delta,
+            delta_cash=self.delta_cash + other.delta_cash,
+            gamma_p_cash=self.gamma_p_cash + other.gamma_p_cash,
+            vega_cash=self.vega_cash + other.vega_cash,
+            theta_cash=self.theta_cash + other.theta_cash,
+            db_cash=self.db_cash + other.db_cash,
+            vanna_vs_cash=self.vanna_vs_cash + other.vanna_vs_cash,
+            vanna_sv_cash=self.vanna_sv_cash + other.vanna_sv_cash,
+            charm_cash=self.charm_cash + other.charm_cash,
+            dkurt_cash=self.dkurt_cash + other.dkurt_cash,
+        )
+
+    @classmethod
+    def sum(cls, items: List['GreeksCashResp']) -> 'GreeksCashResp':
+        if not items:
+            return cls()  # Return an empty instance with all values set to None
+
+        result = items[0]
+        for item in items[1:]:
+            result += item
+
+        return result

@@ -24,4 +24,5 @@ UNDERLYING_CATEGORY_MAPPING: Dict[str, Category] = {
     "510500": Category.CSI500,
     "MO": Category.CSI1000,
     "IM": Category.CSI1000,
+    "IC": Category.CSI500
 }

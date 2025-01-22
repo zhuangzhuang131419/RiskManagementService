@@ -14,3 +14,11 @@ export type TopBarData = {
   futureCount: number;       // 期货数量
   cashCombined: number;      // 现金结合
 }
+
+export type UserGreeks = {
+  user: string;
+  SSE50: number;
+  SSE300: number;
+  SSE500: number;
+  SSE1000: number;
+}

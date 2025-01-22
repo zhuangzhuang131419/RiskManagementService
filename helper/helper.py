@@ -25,7 +25,7 @@ CASH_MULTIPLIER = {
 }
 
 # 指数期货的品种列表
-INDEX_FUTURE_PREFIXES = ['IH', 'IF', 'IM']
+INDEX_FUTURE_PREFIXES = ['IH', 'IF', 'IM', 'IC']
 # 指数期权的品种列表
 INDEX_OPTION_PREFIXES = ['HO', 'IO', 'MO']
 # ETF的品种列表

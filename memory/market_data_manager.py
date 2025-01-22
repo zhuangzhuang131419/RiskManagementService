@@ -36,8 +36,8 @@ class MarketDataManager:
     def __init__(self):
         # 期权链
         self.option_market_data: Dict[str, OptionSeries] = {}
-        self.index_option_symbol: List = []
-        self.etf_option_symbol: List = []
+        self.index_option_symbol: List[str] = []
+        self.etf_option_symbol: List[str] = []
 
         # Future
         self.index_futures_dict: Dict[str, Future] = {}

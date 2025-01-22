@@ -1,3 +1,4 @@
+import { CashGreeksTotalResponse, MonitorTotalResponse } from "../Model/OptionData";
 import { User } from "../Model/User";
 
 export interface IUserDataProvider {
@@ -6,9 +7,27 @@ export interface IUserDataProvider {
     fetchBaseline(): Promise<string>;
     setBaseline(baseline: string): Promise<void>;
     fetchClock(): Promise<string>;
+    fetchGreeksTotal(): Promise<CashGreeksTotalResponse[]>;
+    fetchMonitorIndexTotal(): Promise<MonitorTotalResponse[]>
 }
 
 class UserDataProvider implements IUserDataProvider {
+    fetchMonitorIndexTotal = async (): Promise<MonitorTotalResponse[]> => {
+        const response = await fetch('/api/monitor/total');
+        if (!response.ok) {
+            throw new Error('Failed to fetch total monitor');
+        }
+        return response.json();
+    }
+
+    fetchGreeksTotal = async (): Promise<CashGreeksTotalResponse[]> => {
+        const response = await fetch('/api/greeks/total');
+        if (!response.ok) {
+            throw new Error('Failed to fetch total greeks');
+        }
+        return response.json();
+    }
+
     fetchClock = async (): Promise<string> => {
         const response = await fetch('/api/clock');
         if (!response.ok) {
@@ -65,6 +84,8 @@ class UserDataProvider implements IUserDataProvider {
         }
         return response.json();
     }
+
+
 }
 
 export const userDataProvider = new UserDataProvider()
