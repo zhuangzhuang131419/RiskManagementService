@@ -132,6 +132,7 @@ const TradingDashboard: React.FC = () => {
                 CSI500: item.CSI500?.[selectedGreek] ?? 0,
                 CSI1000: item.CSI1000?.[selectedGreek] ?? 0,
             }));
+            console.log(JSON.stringify(transformedItems))
             setGreeksItem(transformedItems);
         }
     }, [selectedGreek, greeksTotalItems]);
@@ -149,11 +150,11 @@ const TradingDashboard: React.FC = () => {
     ];
 
     const greekColumns = [
-        { key: 'account', name: '账户品种', fieldName: 'user', minWidth: 150 },
-        { key: '50_summary', name: '50汇总', fieldName: 'SSE50', minWidth: 150 },
-        { key: '300_summary', name: '300汇总', fieldName: 'CSI300', minWidth: 150 },
-        { key: '500_summary', name: '500汇总', fieldName: 'CSI500', minWidth: 150 },
-        { key: '1000_summary', name: '1000汇总', fieldName: 'CSI1000', minWidth: 150 },
+        { key: 'column0', name: '账户品种', fieldName: 'user', minWidth: 150 },
+        { key: 'column1', name: '50汇总', fieldName: 'SSE50', minWidth: 150 },
+        { key: 'column2', name: '300汇总', fieldName: 'CSI300', minWidth: 150 },
+        { key: 'column3', name: '500汇总', fieldName: 'CSI500', minWidth: 150 },
+        { key: 'column4', name: '1000汇总', fieldName: 'CSI1000', minWidth: 150 },
     ];
 
     const { data: monitorTotalItems = [], isFetching: isMonitorTotalFetching } = useQuery(

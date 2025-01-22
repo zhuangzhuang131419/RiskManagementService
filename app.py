@@ -516,18 +516,21 @@ def get_greeks_total():
         for category, (index_option_prefix_symbol, etf_option_prefix_symbol, future_prefix_symbol) in INDEX_OPTION_ETF_OPTION_FUTURE_MAPPING.items():
             position_greeks = GreeksCashResp()
 
-            for index_option_symbol in ctp_manager.market_data_manager.index_option_symbol:
-                if index_option_prefix_symbol is not None and index_option_symbol.startswith(index_option_prefix_symbol):
-                    position_greeks += get_option_position_greeks(index_option_symbol, user_name)
+            if index_option_prefix_symbol is not None:
+                for index_option_symbol in ctp_manager.market_data_manager.index_option_symbol:
+                    if index_option_symbol.startswith(index_option_prefix_symbol):
+                        position_greeks += get_option_position_greeks(index_option_symbol, user_name)
 
-            for etf_option_symbol in ctp_manager.market_data_manager.etf_option_symbol:
-                if etf_option_prefix_symbol is not None and etf_option_symbol.startswith(etf_option_prefix_symbol):
-                    position_greeks += get_option_position_greeks(etf_option_symbol, user_name)
+            if etf_option_prefix_symbol is not None:
+                for etf_option_symbol in ctp_manager.market_data_manager.etf_option_symbol:
+                    if etf_option_symbol.startswith(etf_option_prefix_symbol):
+                        position_greeks += get_option_position_greeks(etf_option_symbol, user_name)
 
-            for index_future_symbol in ctp_manager.market_data_manager.index_future_symbol:
-                if future_prefix_symbol is not None and index_future_symbol.startswith(future_prefix_symbol):
-                    for future_greeks in get_future_position_greeks(index_future_symbol, user_name):
-                        position_greeks += future_greeks
+            if future_prefix_symbol is not None:
+                for index_future_symbol in ctp_manager.market_data_manager.index_future_symbol:
+                    if index_future_symbol.startswith(future_prefix_symbol):
+                        for future_greeks in get_future_position_greeks(index_future_symbol, user_name):
+                            position_greeks += future_greeks
 
             greeks_total.greeks_total_by_category[category] = {
                 "delta_cash": position_greeks.delta_cash,
