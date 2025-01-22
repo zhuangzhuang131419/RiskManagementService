@@ -73,7 +73,6 @@ class User:
                     if time.time() - start_time > TIMEOUT:
                         print(f'{exchange_type.value} 登录超时')
                         break
-                    time.sleep(3)
                 else:
                     # 若登录成功，记录成功日志
                     print(f'{exchange_type.value} 登录成功')
@@ -127,7 +126,6 @@ class User:
                     if time.time() - start_time > TIMEOUT:
                         print(f'{exchange_type.value} investor_id: {exchange.config.investor_id} 登录超时')
                         break
-                    time.sleep(3)
                 else:
                     # 若登录成功，记录成功日志
                     print(f'{self.user_name} 的 {exchange_type.value} investor_id: {exchange.config.investor_id} 登录成功')
@@ -184,7 +182,6 @@ class User:
             if time.time() - start_time > timeout:
                 logging.error(f'{exchange_type.value} {ReqQryInvestorPosition} 查询超时')
                 return False
-            time.sleep(3)
         return True
 
     def query_investor_position_detail(self, exchange_type: ExchangeType, timeout=TIMEOUT) -> bool:
@@ -201,7 +198,6 @@ class User:
                     if time.time() - start_time > timeout:
                         logging.error(f'{exchange_type.value} {ReqQryInvestorPosition} 查询超时')
                         return False
-                    time.sleep(3)
             return True
 
     def insert_order(self, exchange_type: ExchangeType, investor_id: str, instrument_id: str, direction: Direction, limit_price: float, volume: int, timeout=TIMEOUT) -> Optional[str]:
@@ -222,12 +218,7 @@ class User:
             if time.time() - start_time > timeout:
                 logging.error(f'{exchange} {ReqOrderInsert} 查询超时')
                 return order_ref
-            time.sleep(3)
         return order_ref
-
-
-
-
 
     def order_action(self, exchange_type: ExchangeType, investor_id: str, instrument_id: str, order_ref: str, timeout=TIMEOUT) -> bool:
         print(f'撤单{exchange_type.value}')
@@ -248,7 +239,6 @@ class User:
             if time.time() - start_time > timeout:
                 logging.error(f'{exchange_type.value} {ReqOrderAction} 查询超时')
                 return False
-            time.sleep(3)
         return True
 
 

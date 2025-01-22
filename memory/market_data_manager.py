@@ -164,9 +164,10 @@ class MarketDataManager:
                     self.option_market_data[symbol].atm_volatility = ATMVolatility()
                 else:
                     self.calculate_atm_para(symbol, remaining_year)
-                    self.calculate_index_option_month_t_iv(symbol, remaining_year)
-                    self.calculate_wing_model_para(symbol, remaining_year)
-                    self.calculate_greeks(symbol, remaining_year)
+                    if self.option_market_data[symbol].atm_volatility.atm_volatility_protected > 0:
+                        self.calculate_index_option_month_t_iv(symbol, remaining_year)
+                        self.calculate_wing_model_para(symbol, remaining_year)
+                        self.calculate_greeks(symbol, remaining_year)
 
 
 
@@ -174,7 +175,11 @@ class MarketDataManager:
         if self.baseline == BaselineType.INDIVIDUAL:
             return se_para.k1, se_para.k2, se_para.b
         elif self.baseline == BaselineType.AVERAGE:
-            return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2
+            if index_para.k1 == 0 and index_para.k2 == 0 and index_para.b == 0:
+                red_print("指数基准异常")
+                return se_para.k1, se_para.k2, se_para.b
+            else:
+                return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2
         elif self.baseline == BaselineType.SH:
             return se_para.k1, se_para.k2, se_para.b
 
@@ -184,7 +189,11 @@ class MarketDataManager:
         if self.baseline == BaselineType.INDIVIDUAL:
             return index_para.k1, index_para.k2, index_para.b
         elif self.baseline == BaselineType.AVERAGE:
-            return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2
+            if se_para.k1 == 0 and se_para.k2 == 0 and se_para.b == 0:
+                red_print("上交基准异常")
+                return index_para.k1, index_para.k2, index_para.b
+            else:
+                return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2
         elif self.baseline == BaselineType.SH:
             return se_para.k1, se_para.k2, se_para.b
 
@@ -217,9 +226,10 @@ class MarketDataManager:
             k2 = self.option_market_data[symbol].customized_wing_model_para.k2
             b = self.option_market_data[symbol].customized_wing_model_para.b
 
-        # if symbol == "HO20250117" or symbol == "51005020250122":
+        # if symbol.startswith("IO20250321"):
+        #     print(f"当前基准{self.baseline}")
         #     print(f"{symbol} k1: {self.option_market_data[symbol].wing_model_para.k1}, k2: {self.option_market_data[symbol].wing_model_para.k2}, b: {self.option_market_data[symbol].wing_model_para.b}")
-        #     # print(f"k1: {self.option_market_data['51005020250122'].wing_model_para.k1}, k2: {self.option_market_data['51005020250122'].wing_model_para.k2}, b: {self.option_market_data['51005020250122'].wing_model_para.b}")
+        #     print(f"51005020250326 k1: {self.option_market_data['51005020250326'].wing_model_para.k1}, k2: {self.option_market_data['51005020250326'].wing_model_para.k2}, b: {self.option_market_data['51005020250326'].wing_model_para.b}")
         #     print(f"{symbol} k1: {k1}, k2: {k2}, b: {b}")
 
         for strike_price, option_tuple in self.option_market_data[symbol].strike_price_options.items():
@@ -463,6 +473,7 @@ class MarketDataManager:
         [0]（远期有效性） [1] 远期 ask [2] 远期 bid [3] ask strike [4] bid strike [5]（ATMS有效性），[6] atm ask [7] atm bid [8]（K1 平值左侧第二行权价），9（K2 平值左侧行权价），10（K3 平值右侧行权价），11（K4 平值右侧第二行权价），12（ISask），13（ISbid）
         @para
         """
+
         strike_prices: [] = sorted(list(self.option_market_data[symbol].strike_price_options.keys()))
 
         imply_price = ImplyPrice()

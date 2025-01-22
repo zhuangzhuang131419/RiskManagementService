@@ -1,0 +1,40 @@
+{
+  "Name": "LiangChen",
+  "CFFEX": [
+    {
+      "BrokerName": "simnow模拟7*24小时",
+      "BrokerID": "2071",
+      "UserID": "80037093",
+      "InvestorID": "80037093",
+      "Password": "aa123456",
+      "AppID": "client_bflpopt_2.0",
+      "AuthCode": "20241119BOFULI66",
+      "MarketServerFront": "tcp://112.65.128.130:42213",
+      "TradeServerFront": "tcp://112.65.128.130:42205"
+    },
+    {
+      "BrokerName": "simnow模拟7*24小时",
+      "BrokerID": "2071",
+      "UserID": "0081500056",
+      "InvestorID": "0081500056",
+      "Password": "gtjaqh@123",
+      "AppID": "client_ryydcf_2.0",
+      "AuthCode": "20241118RYYDCF20",
+      "MarketServerFront": "tcp://112.65.128.130:42213",
+      "TradeServerFront": "tcp://112.65.128.130:42205"
+    }
+  ],
+  "SE": [
+    {
+      "BrokerName": "simnow模拟7*24小时",
+      "BrokerID": "7080",
+      "UserID": "9920100027",
+      "InvestorID": "9920100027",
+      "Password": "9920100027",
+      "AppID": "client_bflpopt_2.0",
+      "AuthCode": "20241119BOFULI66",
+      "MarketServerFront": "tcp://112.65.128.130:32723",
+      "TradeServerFront": "tcp://112.65.128.130:32725"
+    }
+  ]
+}

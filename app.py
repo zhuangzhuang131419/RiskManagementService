@@ -370,7 +370,7 @@ def get_greek_summary_by_future_symbol():
 
     if group_instrument is not None and group_instrument.future is not None:
         # Convert each data instance to a dictionary and return as JSON
-        return jsonify(position_greeks.to_dict() for position_greeks in get_future_position_greeks(group_instrument.future.symbol, ctp_manager.current_user.user_name))
+        return jsonify([position_greeks.to_dict() for position_greeks in get_future_position_greeks(group_instrument.future.symbol, ctp_manager.current_user.user_name)])
     else:
         return jsonify([])
 
