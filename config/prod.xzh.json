@@ -1,0 +1,29 @@
+{
+  "Name": "XZH",
+  "CFFEX": [
+    {
+      "BrokerName": "张江-CTP次席-1-80",
+      "BrokerID": "7090",
+      "UserID": "80039277",
+      "InvestorID": "80039277",
+      "Password": "Abc521700",
+      "AppID": "client_gtjaxzh_2.0",
+      "AuthCode": "20211125ZHLHJY01",
+      "MarketServerFront": "tcp://58.33.43.112:41213",
+      "TradeServerFront": "tcp://58.33.43.112:41205"
+    }
+  ],
+  "SE": [
+    {
+      "BrokerName": "华京路-CTPmini-1",
+      "BrokerID": "7070",
+      "UserID": "9980039277",
+      "InvestorID": "9980039277",
+      "Password": "Abc521700",
+      "AppID": "client_gtjaxzh_2.0",
+      "AuthCode": "20211020XXHO9277",
+      "MarketServerFront": "tcp://180.168.205.206:42723",
+      "TradeServerFront": "tcp://180.168.205.206:42715"
+    }
+  ]
+}
