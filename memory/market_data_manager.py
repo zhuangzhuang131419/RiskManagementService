@@ -173,29 +173,29 @@ class MarketDataManager:
 
     def get_se_para_by_baseline(self, index_para: WingModelPara, se_para: WingModelPara):
         if self.baseline == BaselineType.INDIVIDUAL:
-            return se_para.k1, se_para.k2, se_para.b
+            return se_para.k1, se_para.k2, se_para.b, se_para.v
         elif self.baseline == BaselineType.AVERAGE:
             if index_para.k1 == 0 and index_para.k2 == 0 and index_para.b == 0:
                 red_print("指数基准异常")
-                return se_para.k1, se_para.k2, se_para.b
+                return se_para.k1, se_para.k2, se_para.b, se_para.v
             else:
-                return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2
+                return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2, (index_para.v + se_para.v) / 2
         elif self.baseline == BaselineType.SH:
-            return se_para.k1, se_para.k2, se_para.b
+            return se_para.k1, se_para.k2, se_para.b, se_para.v
 
         raise ValueError(f"Invalid baseline: {self.baseline}")
 
     def get_index_para_by_baseline(self, index_para: WingModelPara, se_para: WingModelPara):
         if self.baseline == BaselineType.INDIVIDUAL:
-            return index_para.k1, index_para.k2, index_para.b
+            return index_para.k1, index_para.k2, index_para.b, index_para.v
         elif self.baseline == BaselineType.AVERAGE:
             if se_para.k1 == 0 and se_para.k2 == 0 and se_para.b == 0:
                 red_print("上交基准异常")
-                return index_para.k1, index_para.k2, index_para.b
+                return index_para.k1, index_para.k2, index_para.b, index_para.v
             else:
-                return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2
+                return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2, (index_para.v + se_para.v) / 2
         elif self.baseline == BaselineType.SH:
-            return se_para.k1, se_para.k2, se_para.b
+            return se_para.k1, se_para.k2, se_para.b, se_para.v
 
         raise ValueError(f"Invalid baseline: {self.baseline}")
 
@@ -208,16 +208,16 @@ class MarketDataManager:
             group_instrument = self.get_group_instrument_by_symbol(symbol)
             if filter_etf_option(symbol):
                 if group_instrument is None or group_instrument.index_option_series is None:
-                    k1, k2, b = self.option_market_data[symbol].wing_model_para.k1, self.option_market_data[symbol].wing_model_para.k2, self.option_market_data[symbol].wing_model_para.b
+                    k1, k2, b, volatility = self.option_market_data[symbol].wing_model_para.k1, self.option_market_data[symbol].wing_model_para.k2, self.option_market_data[symbol].wing_model_para.b, volatility
                 else:
                     index_symbol = group_instrument.index_option_series.symbol
-                    k1, k2, b = self.get_se_para_by_baseline(self.option_market_data[index_symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
+                    k1, k2, b, volatility = self.get_se_para_by_baseline(self.option_market_data[index_symbol].wing_model_para, self.option_market_data[symbol].wing_model_para)
             elif filter_index_option(symbol):
                 if group_instrument is None or group_instrument.etf_option_series is None:
-                    k1, k2, b = self.option_market_data[symbol].wing_model_para.k1, self.option_market_data[symbol].wing_model_para.k2, self.option_market_data[symbol].wing_model_para.b
+                    k1, k2, b, volatility = self.option_market_data[symbol].wing_model_para.k1, self.option_market_data[symbol].wing_model_para.k2, self.option_market_data[symbol].wing_model_para.b, volatility
                 else:
                     se_symbol = group_instrument.etf_option_series.symbol
-                    k1, k2, b = self.get_index_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_symbol].wing_model_para)
+                    k1, k2, b, volatility = self.get_index_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_symbol].wing_model_para)
             else:
                 print(f"calculate_greeks exception: {symbol}")
                 raise ValueError
@@ -225,6 +225,7 @@ class MarketDataManager:
             k1 = self.option_market_data[symbol].customized_wing_model_para.k1
             k2 = self.option_market_data[symbol].customized_wing_model_para.k2
             b = self.option_market_data[symbol].customized_wing_model_para.b
+            volatility = self.option_market_data[symbol].customized_wing_model_para.v
 
         # if symbol.startswith("IO20250321"):
         #     print(f"当前基准{self.baseline}")
@@ -287,6 +288,7 @@ class MarketDataManager:
             wing_model_para.k1 = 0
             wing_model_para.k2 = 0
             wing_model_para.b = 0
+            wing_model_para.v = volatility
             wing_model_para.residual = -1
             self.option_market_data[symbol].wing_model_para = wing_model_para
             return
@@ -319,6 +321,7 @@ class MarketDataManager:
             wing_model_para.k1 = 0
             wing_model_para.k2 = 0
             wing_model_para.b = 0
+            wing_model_para.v = volatility
             wing_model_para.residual = -1
             self.option_market_data[symbol].wing_model_para = wing_model_para
             return
@@ -335,6 +338,7 @@ class MarketDataManager:
             wing_model_para.k1 = para_array[0]
             wing_model_para.k2 = para_array[1]
             wing_model_para.b = para_array[2]
+            wing_model_para.v = volatility
             wing_model_para.residual = (residual @ residual) / available_num
 
             self.option_market_data[symbol].wing_model_para = wing_model_para
