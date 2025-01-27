@@ -522,13 +522,13 @@ def get_greeks_total():
             if etf_option_prefix_symbol is not None:
                 for etf_option_symbol in ctp_manager.market_data_manager.etf_option_symbol:
                     if etf_option_symbol.startswith(etf_option_prefix_symbol):
-                        position_greeks += get_option_position_greeks(etf_option_symbol, user_name) * 0.1
+                        position_greeks += get_option_position_greeks(etf_option_symbol, user_name)
 
             if future_prefix_symbol is not None:
                 for index_future_symbol in ctp_manager.market_data_manager.index_future_symbol:
                     if index_future_symbol.startswith(future_prefix_symbol):
                         for future_greeks in get_future_position_greeks(index_future_symbol, user_name):
-                            position_greeks += future_greeks * 3
+                            position_greeks += future_greeks
 
             greeks_total.greeks_total_by_category[category] = {
                 "delta_cash": position_greeks.delta_cash,

@@ -105,7 +105,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
       for (const key of Object.keys(result) as Array<keyof CashGreeksResponse>) {
         if (key === "delta") {
           result[key] = (index[key] ?? 0) + (etf[key] ?? 0) / 10 + (future[key] ?? 0) * 3;
-        } else if (key != "investor_id") {
+        } else if (key !== "investor_id") {
           result[key] = (index[key] ?? 0) + (etf[key] ?? 0) + (future[key] ?? 0);
         }
 
