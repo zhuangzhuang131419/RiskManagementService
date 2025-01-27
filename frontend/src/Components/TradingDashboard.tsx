@@ -150,11 +150,40 @@ const TradingDashboard: React.FC = () => {
     ];
 
     const greekColumns = [
-        { key: 'column0', name: '账户品种', fieldName: 'user', minWidth: 150 },
-        { key: 'column1', name: '50汇总', fieldName: 'SSE50', minWidth: 150 },
-        { key: 'column2', name: '300汇总', fieldName: 'CSI300', minWidth: 150 },
-        { key: 'column3', name: '500汇总', fieldName: 'CSI500', minWidth: 150 },
-        { key: 'column4', name: '1000汇总', fieldName: 'CSI1000', minWidth: 150 },
+        {
+            key: 'column0',
+            name: '账户品种',
+            fieldName: 'user',
+            minWidth: 150,
+        },
+        {
+            key: 'column1',
+            name: '50汇总',
+            fieldName: 'SSE50',
+            minWidth: 150,
+            onRender: (item: UserGreeks) => formatPercentage(item.SSE50),
+        },
+        {
+            key: 'column2',
+            name: '300汇总',
+            fieldName: 'CSI300',
+            minWidth: 150,
+            onRender: (item: UserGreeks) => formatPercentage(item.CSI300),
+        },
+        {
+            key: 'column3',
+            name: '500汇总',
+            fieldName: 'CSI500',
+            minWidth: 150,
+            onRender: (item: UserGreeks) => formatPercentage(item.CSI500),
+        },
+        {
+            key: 'column4',
+            name: '1000汇总',
+            fieldName: 'CSI1000',
+            minWidth: 150,
+            onRender: (item: UserGreeks) => formatPercentage(item.CSI1000),
+        },
     ];
 
     const { data: monitorTotalItems = [], isFetching: isMonitorTotalFetching } = useQuery(
@@ -177,6 +206,9 @@ const TradingDashboard: React.FC = () => {
         { key: '300_summary', name: '300汇总', fieldName: 'CSI300', minWidth: 150 },
         { key: '500_summary', name: '500汇总', fieldName: 'CSI500', minWidth: 150 },
     ];
+
+    const formatPercentage = (value: number | null): string =>
+        value !== null && !isNaN(value) ? `${(value).toFixed(2)}` : '--';
 
     return (
         <Pivot>
@@ -270,12 +302,6 @@ const TradingDashboard: React.FC = () => {
                 <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100vw' } }}>
                     <Stack horizontal tokens={{ childrenGap: 20 }} >
                         <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100%', width: '50%' } }}>
-                            <Dropdown
-                                label="选择希腊字母类型"
-                                options={greekOptions}
-                                selectedKey={selectedGreek}
-                                onChange={(_, option) => setSelectedGreek(option?.key as string)}
-                            />
                             <DetailsList
                                 items={greeksItem}
                                 columns={greekColumns}
@@ -283,6 +309,12 @@ const TradingDashboard: React.FC = () => {
                                 selectionMode={SelectionMode.none}
                                 selectionPreservedOnEmptyClick={true}
                                 compact={true}
+                            />
+                            <Dropdown
+                                label="选择希腊字母类型"
+                                options={greekOptions}
+                                selectedKey={selectedGreek}
+                                onChange={(_, option) => setSelectedGreek(option?.key as string)}
                             />
                         </Stack>
                         <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100%', width: '50%' } }}>
