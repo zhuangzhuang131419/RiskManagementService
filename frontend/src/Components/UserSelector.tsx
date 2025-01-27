@@ -47,6 +47,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({ accounts, onSelect, selecte
         selectedKey={selectedUser}
         options={accountOptions}
         onChange={(event, option) => onUserChange(option?.key as string, option?.text as string)}
+        styles={{ root: { width: "300px" } }}
       />
       {message && (
         <MessageBar messageBarType={message.type}>

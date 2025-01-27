@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 
 class GreeksCashResp:
@@ -49,6 +49,28 @@ class GreeksCashResp:
             "charm_cash": self.charm_cash,
             "underlying_price": self.underlying_price
         }
+
+    def __mul__(self, other: Union[float, int]) -> 'GreeksCashResp':
+        """
+        Overloads the * operator to multiply all numeric fields by a scalar.
+        """
+        if not isinstance(other, (float, int)):
+            raise TypeError("Multiplication is only supported with float or int")
+
+        return GreeksCashResp(
+            delta=self.delta * other,
+            investor_id=self.investor_id,
+            delta_cash=self.delta_cash * other,
+            gamma_p_cash=self.gamma_p_cash * other,
+            vega_cash=self.vega_cash * other,
+            theta_cash=self.theta_cash * other,
+            db_cash=self.db_cash * other,
+            vanna_vs_cash=self.vanna_vs_cash * other,
+            vanna_sv_cash=self.vanna_sv_cash * other,
+            charm_cash=self.charm_cash * other,
+            dkurt_cash=self.dkurt_cash * other,
+            underlying_price=self.underlying_price * other
+        )
 
     def __add__(self, other: 'GreeksCashResp') -> 'GreeksCashResp':
         """

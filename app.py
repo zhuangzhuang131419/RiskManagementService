@@ -64,13 +64,12 @@ def init_ctp():
     print('当前订阅ETF期权合约月份为：{}'.format(ctp_manager.market_data_manager.etf_option_symbol))
 
 
-
 def main():
     # test_future_instruction("IF2502", "0081500056", 3900, 3800)
     # test_se_instruction("91013096", "9982100962", 0.08, 0.07)
 
     while True:
-        time.sleep(3)
+        time.sleep(60)
 
 def test_position():
     print(get_se_monitor("HO20250221"))
@@ -485,17 +484,16 @@ def get_se_monitor():
     if symbol is None or symbol == "":
         return jsonify({"error": f"Symbol invalid"}), 404
 
-
-    result = calculate_monitor_index(ctp_manager.current_user.user_name, symbol)
+    result = calculate_monitor_index(ctp_manager.current_user.user_name, symbol[:-8])
     return jsonify(result)
 
-def calculate_monitor_index(user_name: str, symbol: str):
+def calculate_monitor_index(user_name: str, symbol_prefix: str):
     net_position: int = 0
     total_amount: int = 0
     combined_position = ctp_manager.users.get(user_name, ctp_manager.current_user).user_memory.get_combined_position()
 
     for full_symbol, position in combined_position.items():
-        if full_symbol.startswith(symbol[:-8]):
+        if full_symbol.startswith(symbol_prefix):
             net_position += abs(position.long - position.short)
             total_amount += position.short_open_volume + position.long_open_volume + position.short_close_volume + position.long_close_volume
 
@@ -524,13 +522,13 @@ def get_greeks_total():
             if etf_option_prefix_symbol is not None:
                 for etf_option_symbol in ctp_manager.market_data_manager.etf_option_symbol:
                     if etf_option_symbol.startswith(etf_option_prefix_symbol):
-                        position_greeks += get_option_position_greeks(etf_option_symbol, user_name)
+                        position_greeks += get_option_position_greeks(etf_option_symbol, user_name) * 0.1
 
             if future_prefix_symbol is not None:
                 for index_future_symbol in ctp_manager.market_data_manager.index_future_symbol:
                     if index_future_symbol.startswith(future_prefix_symbol):
                         for future_greeks in get_future_position_greeks(index_future_symbol, user_name):
-                            position_greeks += future_greeks
+                            position_greeks += future_greeks * 3
 
             greeks_total.greeks_total_by_category[category] = {
                 "delta_cash": position_greeks.delta_cash,
@@ -552,9 +550,9 @@ def get_monitor_total():
     resp = []
     for user_name, user in ctp_manager.users.items():
         monitor_total = MonitorTotalResp(user_name)
-        symbols = ["510050", "510300", "510500"]
-        for symbol in symbols:
-            monitor_total.monitor_total_by_category[UNDERLYING_CATEGORY_MAPPING[symbol]] = calculate_monitor_index(user_name, symbol)
+        symbol_prefixes = ["510050", "510300", "510500"]
+        for symbol_prefix in symbol_prefixes:
+            monitor_total.monitor_total_by_category[UNDERLYING_CATEGORY_MAPPING[symbol_prefix]] = calculate_monitor_index(user_name, symbol_prefix)
         resp.append(monitor_total.to_dict())
     return jsonify(resp)
 

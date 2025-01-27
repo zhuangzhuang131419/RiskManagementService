@@ -19,8 +19,8 @@ const UserInfoTable: React.FC<UserInfoTableProps> = ({ indexSymbol, etfSymbol })
     // Define the columns for the table
     const columns: IColumn[] = [
         { key: 'column1', name: '账户类型', fieldName: 'accountType', minWidth: 100, maxWidth: 150, isRowHeader: true },
-        { key: 'column2', name: '权益', fieldName: 'equity', minWidth: 150, maxWidth: 200 },
-        { key: 'column3', name: '可用资金', fieldName: 'availableFunds', minWidth: 150, maxWidth: 200 },
+        // { key: 'column2', name: '权益', fieldName: 'equity', minWidth: 150, maxWidth: 200 },
+        // { key: 'column3', name: '可用资金', fieldName: 'availableFunds', minWidth: 150, maxWidth: 200 },
         { key: 'column4', name: '风险度', fieldName: 'riskLevel', minWidth: 100, maxWidth: 150 },
     ];
 

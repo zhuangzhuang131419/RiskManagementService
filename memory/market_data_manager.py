@@ -47,7 +47,7 @@ class MarketDataManager:
 
         # 把来自交易所的instrument_id 映射到我们自己的id
         self.instrument_transform_full_symbol: Dict[str, str] = {}
-        self.baseline = BaselineType.SH
+        self.baseline = BaselineType.INDIVIDUAL
 
         # 根据 INDEX_OPTION_ETF_OPTION_FUTURE_MAPPING 中的每个类别（例如 SSE50、CSI300、CSI500）以及到期月份来唯一标识 grouped_instruments 的每一组。
         # category-expired_month
