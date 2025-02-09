@@ -24,6 +24,7 @@ const stackStyles = {
 
 document.body.style.overflow = 'hidden';
 document.documentElement.style.overflow = 'hidden';
+document.title = "风控"
 
 const TradingDashboard: React.FC = () => {
 

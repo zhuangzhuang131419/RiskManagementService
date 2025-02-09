@@ -1,4 +1,3 @@
-import logging
 import time
 from flask_socketio import SocketIO, emit
 
@@ -26,9 +25,10 @@ np.set_printoptions(suppress=True)
 from threading import Thread
 
 from flask import Flask, jsonify, render_template, send_from_directory, request
+from engineio.async_drivers import threading
 
 app = Flask(__name__, static_folder='./frontend/build')
-socketio = SocketIO(app, logger=False)
+socketio = SocketIO(app, logger=False, async_mode='threading')
 
 # 路由所有到 React 的前端应用
 @app.route('/', defaults={'path': ''})
