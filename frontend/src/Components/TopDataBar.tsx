@@ -15,7 +15,6 @@ interface TopDataBarProps {
 const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
 
   const [items, setItems] = useState<any[]>([]);
-  const [groups, setGroups] = useState<any[]>([]);
 
   const { data: futureData } = useQuery(
     ['futureGreeks', indexSymbol],  // symbol 作为查询的 key，symbol 变化时会重新加载

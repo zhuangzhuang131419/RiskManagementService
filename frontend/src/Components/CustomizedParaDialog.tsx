@@ -27,7 +27,7 @@ const CustomizedParaDialog: React.FC<CustomizedParaDialogProps> = ({ style }) =>
 
     const [notification, setNotification] = useState<{ message: string; type: MessageBarType } | null>(null);
 
-    const { data, isLoading, error, refetch } = useQuery(
+    const { isLoading, error, refetch } = useQuery(
         'wingModelData',
         optionDataProvider.fetchWingModelPara,
         {

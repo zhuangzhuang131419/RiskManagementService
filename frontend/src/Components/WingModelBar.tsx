@@ -13,7 +13,7 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
 
   const [items, setItems] = useState<WingModelData[]>([]);
 
-  const { data: wingModel, error, isLoading } = useQuery(
+  const { error, isLoading } = useQuery(
     ['wingModel', symbol],
     () => optionDataProvider.fetchWingModelParaBySymbol(symbol as string),
     {

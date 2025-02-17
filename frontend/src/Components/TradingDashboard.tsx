@@ -24,7 +24,7 @@ const TradingDashboard: React.FC = () => {
     const [selectedBaseline, setSelectedBaseline] = useState<string>();
     const [clock, setClock] = useState<string>();
 
-    const { data: baseline } = useQuery<string>(
+    useQuery<string>(
         ['baseline'],
         userDataProvider.fetchBaseline,
         {
@@ -37,7 +37,7 @@ const TradingDashboard: React.FC = () => {
         }
     );
 
-    const { data: userItems = [], isFetching: isUserFetching } = useQuery<User[]>(
+    const { data: userItems = [] } = useQuery<User[]>(
         ['users'],
         userDataProvider.fetchUsers,
         {
@@ -52,7 +52,7 @@ const TradingDashboard: React.FC = () => {
 
     const [selectedUserKey, setSelectedUserKey] = useState<string | null>(null);
 
-    const { data } = useQuery(
+    useQuery(
         ['clock'],
         userDataProvider.fetchClock,
         {
@@ -96,7 +96,7 @@ const TradingDashboard: React.FC = () => {
     );
 
 
-    const { data: greeksTotalItems = [], isFetching: isGreeksTotalFetching } = useQuery(
+    const { data: greeksTotalItems = [] } = useQuery(
         ['greeksTotal'],
         userDataProvider.fetchGreeksTotal,
         {
@@ -177,7 +177,7 @@ const TradingDashboard: React.FC = () => {
         },
     ];
 
-    const { data: monitorTotalItems = [], isFetching: isMonitorTotalFetching } = useQuery(
+    const { data: monitorTotalItems = [] } = useQuery(
         ['monitorTotal'],
         userDataProvider.fetchMonitorIndexTotal,
         {

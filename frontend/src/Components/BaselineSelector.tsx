@@ -21,7 +21,7 @@ const BaselineSelector: React.FC<BaselineSelectorProps> = ({ onSelect, selectedB
   // 保存当前选中的基准类型
   const [selectedBaseline, setSelectedBaseline] = useState<string>(selectedBaselineKey);
 
-  const { data, isFetching } = useQuery(
+  const { isFetching } = useQuery(
     ['baseline'],
     userDataProvider.fetchBaseline,
     {
