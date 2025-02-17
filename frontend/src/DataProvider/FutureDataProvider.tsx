@@ -1,5 +1,3 @@
-import { GreeksResponse } from "../Model/OptionData";
-
 export interface IFutureDataProvider {
     fetchFutureSymbols(): Promise<string[]>;
 }

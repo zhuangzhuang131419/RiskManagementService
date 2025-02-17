@@ -1,26 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { ChoiceGroup, Stack, IChoiceGroupOption, Dialog, Label, Text, Pivot, PivotItem, IDropdownOption, Dropdown, DetailsList, DetailsListLayoutMode, SelectionMode } from '@fluentui/react';
+import { Stack, Text, Pivot, PivotItem, IDropdownOption, Dropdown, DetailsList, DetailsListLayoutMode, SelectionMode } from '@fluentui/react';
 import OptionGreeks from './OptionGreeks';
-import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
+import { useQuery } from 'react-query';
 import UserSelector from './UserSelector';
 import ScrollBox from './ScrollBox';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 import TopDataBar from './TopDataBar';
-import { User, TopBarData, UserGreeks } from '../Model/User';
-import { futureDataProvider } from '../DataProvider/FutureDataProvider';
+import { User, UserGreeks } from '../Model/User';
 import { userDataProvider } from '../DataProvider/UserDataProvider';
 import WingModelBar from './WingModelBar';
-import { WingModelData } from '../Model/OptionData';
 import BaselineSelector from './BaselineSelector';
 import CustomizedParaDialog from './CustomizedParaDialog';
 import UserInfoTable from './UserInfoTable';
-
-const stackStyles = {
-    root: {
-        width: '100%',
-        marginTop: '20px',
-    },
-};
 
 document.body.style.overflow = 'hidden';
 document.documentElement.style.overflow = 'hidden';
@@ -29,7 +20,6 @@ document.title = "风控"
 const TradingDashboard: React.FC = () => {
 
     const [selectedIndexOption, setSelectedIndexOption] = useState<string | null>(null);
-    const [selectedFuture, setSelectedFuture] = useState<string | null>(null);
     const [selectedETFOption, setSelectedETF] = useState<string | null>(null);
     const [selectedBaseline, setSelectedBaseline] = useState<string>();
     const [clock, setClock] = useState<string>();

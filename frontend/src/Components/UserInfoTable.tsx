@@ -60,7 +60,7 @@ const UserInfoTable: React.FC<UserInfoTableProps> = ({ indexSymbol, etfSymbol })
         console.log("useEffect" + JSON.stringify(updatedItems))
 
         setItems(updatedItems); // Set the updated array
-    }, [indexRiskLevel]);
+    }, [indexRiskLevel, items]);
 
     useEffect(() => {
         const updatedItems = items.map((item) =>
@@ -70,7 +70,7 @@ const UserInfoTable: React.FC<UserInfoTableProps> = ({ indexSymbol, etfSymbol })
         );
 
         setItems(updatedItems); // Set the updated array
-    }, [etfRiskLevel]);
+    }, [etfRiskLevel, items]);
 
 
 

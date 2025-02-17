@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from 'react-query';
-import { Stack, DetailsList, IColumn, Text, SelectionMode, IDetailsListStyles } from '@fluentui/react';
+import { DetailsList, IColumn, Text, SelectionMode, IDetailsListStyles } from '@fluentui/react';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 
 interface OptionGreeksProps {
@@ -72,126 +72,126 @@ const OptionGreeks: React.FC<OptionGreeksProps> = ({ symbol }) => {
 
     // 设置列
     const columns: IColumn[] = [
-        { 
-            key: 'strikePrice', 
-            name: '行权价', 
-            fieldName: 'strikePrice', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'strikePrice',
+            name: '行权价',
+            fieldName: 'strikePrice',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
         },
-        { 
-            key: 'callPosition', 
-            name: 'Call持仓', 
-            fieldName: 'callPosition', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'callPosition',
+            name: 'Call持仓',
+            fieldName: 'callPosition',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
         },
-        { 
-            key: 'putPosition', 
-            name: 'Put持仓', 
-            fieldName: 'putPosition', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'putPosition',
+            name: 'Put持仓',
+            fieldName: 'putPosition',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
         },
-        { 
-            key: 'callDelta', 
-            name: 'Delta.C', 
-            fieldName: 'callDelta', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'callDelta',
+            name: 'Delta.C',
+            fieldName: 'callDelta',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.callDelta)}</span>
         },
-        { 
-            key: 'putDelta', 
-            name: 'Delta.P', 
-            fieldName: 'putDelta', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'putDelta',
+            name: 'Delta.P',
+            fieldName: 'putDelta',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.putDelta)}</span>
         },
-        { 
-            key: 'vega', 
-            name: 'Vega', 
-            fieldName: 'callVega', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'vega',
+            name: 'Vega',
+            fieldName: 'callVega',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.callVega)}</span>
         },
-        { 
-            key: 'callTheta', 
-            name: 'Theta.C', 
-            fieldName: 'callTheta', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'callTheta',
+            name: 'Theta.C',
+            fieldName: 'callTheta',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.callTheta)}</span>
         },
-        { 
-            key: 'putTheta', 
-            name: 'Theta.P', 
-            fieldName: 'putTheta', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'putTheta',
+            name: 'Theta.P',
+            fieldName: 'putTheta',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.putTheta)}</span>
         },
-        { 
-            key: 'db', 
-            name: 'db', 
-            fieldName: 'callDb', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'db',
+            name: 'db',
+            fieldName: 'callDb',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.callDb)}</span>
         },
-        { 
-            key: 'dkurt', 
-            name: 'dkurt', 
-            fieldName: 'callDkurt', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'dkurt',
+            name: 'dkurt',
+            fieldName: 'callDkurt',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.callDkurt)}</span>
         },
-        { 
-            key: 'callbid', 
-            name: '买一价.C', 
-            fieldName: 'callBid', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'callbid',
+            name: '买一价.C',
+            fieldName: 'callBid',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.callBid)}</span>
         },
-        { 
-            key: 'callask', 
-            name: '卖一价.C', 
-            fieldName: 'callAsk', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'callask',
+            name: '卖一价.C',
+            fieldName: 'callAsk',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.callAsk)}</span>
         },
-        { 
-            key: 'putbid', 
-            name: '买一价.P', 
-            fieldName: 'putBid', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'putbid',
+            name: '买一价.P',
+            fieldName: 'putBid',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.putBid)}</span>
         },
-        { 
-            key: 'putask', 
-            name: '卖一价.P', 
-            fieldName: 'putAsk', 
-            minWidth: 50, 
-            maxWidth: 80, 
+        {
+            key: 'putask',
+            name: '卖一价.P',
+            fieldName: 'putAsk',
+            minWidth: 50,
+            maxWidth: 80,
             isResizable: true,
             onRender: (item) => <span>{formatPercentage(item.putAsk)}</span>
         },

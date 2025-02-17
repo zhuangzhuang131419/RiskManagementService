@@ -1,9 +1,8 @@
-import { Callout, DefaultButton, DetailsList, SelectionMode, Stack, Text, Toggle } from '@fluentui/react';
+import { DetailsList, SelectionMode, Text } from '@fluentui/react';
 import { WingModelData } from '../Model/OptionData';
 import { useQuery } from 'react-query';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
-import React, { useState, useEffect } from 'react';
-import CustomizedModel from './CustomizedParaDialog';
+import React, { useState } from 'react';
 
 interface WingModelProps {
   symbol: string | null;

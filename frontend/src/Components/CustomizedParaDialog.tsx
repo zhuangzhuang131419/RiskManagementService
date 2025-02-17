@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { TextField, Stack, Panel, DefaultButton, PrimaryButton, ScrollablePane, DetailsList, DetailsListLayoutMode, SelectionMode, IColumn, PanelType, MessageBarType, MessageBar, values } from '@fluentui/react';
+import React, { useState } from 'react';
+import { TextField, Stack, Panel, DefaultButton, PrimaryButton, DetailsList, DetailsListLayoutMode, SelectionMode, IColumn, PanelType, MessageBarType, MessageBar } from '@fluentui/react';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
-import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from 'react-query';
+import { useQuery } from 'react-query';
 import { WingModelData } from '../Model/OptionData';
 
 interface CustomizedParaDialogProps {

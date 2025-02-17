@@ -1,7 +1,7 @@
-import { Dropdown, IDropdownOption } from "@fluentui/react";
+import { Dropdown } from "@fluentui/react";
 import { useQuery } from "react-query";
 import { userDataProvider } from "../DataProvider/UserDataProvider";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 

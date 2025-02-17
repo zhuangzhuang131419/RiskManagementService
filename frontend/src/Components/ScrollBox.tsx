@@ -1,5 +1,5 @@
-import { DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, DetailsRow, IDetailsRowStyles, Selection, DetailsHeader, IRenderFunction, IDetailsHeaderProps, IDetailsListStyles, mergeStyleSets } from '@fluentui/react';
-import React, { useEffect, useState } from 'react';
+import { DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, Selection, IDetailsListStyles } from '@fluentui/react';
+import { useEffect, useState } from 'react';
 
 // 定义 ScrollBox 的通用 Props
 interface ScrollBoxProps<T> {

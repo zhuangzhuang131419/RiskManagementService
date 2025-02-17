@@ -1,6 +1,4 @@
-import { DetailsList, DetailsListLayoutMode, SelectionMode, Stack, Text } from '@fluentui/react';
-import { TopBarData } from '../Model/User';
-import { isVisible } from '@testing-library/user-event/dist/utils';
+import { DetailsList, DetailsListLayoutMode, SelectionMode } from '@fluentui/react';
 import { useQuery } from 'react-query';
 import { optionDataProvider } from '../DataProvider/OptionDataProvider';
 import { CashGreeksResponse } from '../Model/OptionData';
