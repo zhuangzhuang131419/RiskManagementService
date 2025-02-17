@@ -30,6 +30,9 @@ class CTPManager:
 
     timestamp : time
 
+    white_list = ["client_ryydcf_2.0", "client_gtjaxxq_2.0", "client_gtjast_2.0", "client_Qqbdl_1.0",
+                  "client_gtjaxzh_2.0", "client_zyfp_2.0", "client_bflpopt_2.0", "client_ryydcf_2.0"]
+
     def __init__(self, env):
         if not os.path.exists(self.CONFIG_FILE_PATH):
             os.makedirs(self.CONFIG_FILE_PATH)
@@ -89,10 +92,21 @@ class CTPManager:
             self.market_data_user.init_market_memory()
             self.market_data_user.subscribe_market_data()
 
+    def check_white_list(self):
+        print("检查白名单")
+        for exchange_type, exchanges in self.market_data_user.exchange_config.items():
+            if any(exchange.app_id not in self.white_list for exchange in exchanges):
+                red_print(f"未在白名单: {[exchange.app_id for exchange in exchanges]}")
+                return False
+        print("检查白名单通过")
+        return True
+
     def init_user(self, user_config_path):
         try:
             # 随机挑选一个连接行情
             self.market_data_user = User(user_config_path[0], self.market_data_manager)
+            if not self.check_white_list():
+                return
 
             # 先获取行情
             self.connect_market_data()
