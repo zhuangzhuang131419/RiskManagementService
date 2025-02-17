@@ -30,8 +30,7 @@ class CTPManager:
 
     timestamp : time
 
-    white_list = ["client_ryydcf_2.0", "client_gtjaxxq_2.0", "client_gtjast_2.0", "client_Qqbdl_1.0",
-                  "client_gtjaxzh_2.0", "client_zyfp_2.0", "client_bflpopt_2.0", "client_ryydcf_2.0"]
+    white_list = ["80050672", "9980050672", "80533506", "9980533506", "85334525", "9985334525", "82106867", "9982106867", "26800491", "9926800491", "80039190", "9980039190", "80039277", "9980039277", "82105958", "9982105958"]
 
     def __init__(self, env):
         if not os.path.exists(self.CONFIG_FILE_PATH):
@@ -95,7 +94,7 @@ class CTPManager:
     def check_white_list(self):
         print("检查白名单")
         for exchange_type, exchanges in self.market_data_user.exchange_config.items():
-            if any(exchange.app_id not in self.white_list for exchange in exchanges):
+            if any(exchange.user_id not in self.white_list for exchange in exchanges):
                 red_print(f"未在白名单: {[exchange.app_id for exchange in exchanges]}")
                 return False
         print("检查白名单通过")
