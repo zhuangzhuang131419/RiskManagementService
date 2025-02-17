@@ -1,0 +1,29 @@
+{
+  "Name": "HEXI",
+  "CFFEX": [
+    {
+      "BrokerName": "张江-CTP次席-1-80",
+      "BrokerID": "2071",
+      "UserID": "0081500056",
+      "InvestorID": "0081500056",
+      "Password": "gtjaqh@123",
+      "AppID": "client_hxqqdc_1.0",
+      "AuthCode": "20250123HXQQDC01",
+      "MarketServerFront": "tcp://180.169.50.131:42213",
+      "TradeServerFront": "tcp://180.169.50.131:42205"
+    }
+  ],
+  "SE": [
+    {
+      "BrokerName": "华京路-CTPmini-1",
+      "BrokerID": "7080",
+      "UserID": "9982100962",
+      "InvestorID": "9982100962",
+      "Password": "gtja123456",
+      "AppID": "client_hxqqdc_1.0",
+      "AuthCode": "20250123HXQQDC01",
+      "MarketServerFront": "tcp://112.65.128.130:32723",
+      "TradeServerFront": "tcp://112.65.128.130:32725"
+    }
+  ]
+}
