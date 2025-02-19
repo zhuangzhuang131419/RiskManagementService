@@ -1,5 +1,5 @@
 import { DetailsList, DetailsListLayoutMode, IColumn, SelectionMode, Selection, IDetailsListStyles } from '@fluentui/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // 定义 ScrollBox 的通用 Props
 interface ScrollBoxProps<T> {
@@ -28,28 +28,31 @@ const ScrollBox = <T extends { key: string }>({ items, onClick, renderItem, titl
     },
   ];
 
+  const selectionRef = useRef(
+    new Selection({
+      onSelectionChanged: () => {
+        const selectedItems = selection.getSelection();
+        if (selectedItems.length > 0) {
+          const selectedItem = selectedItems[0] as T;
+          onClick(selectedItem.key);
+          setSelectedItem(selectedItem.key)
+        }
+        else {
+          onClick(null);
+          setSelectedItem(null)
+        }
+      },
+    })
+  );
+  const selection = selectionRef.current;
+
   useEffect(() => {
     const index = items.findIndex((item) => item.key === selectedItem);
     if (index >= 0) {
       selection.setIndexSelected(index, true, false);
       setSelectedItem(selectedItem); // 更新本地 `selectedItem` 状态
     }
-  }, [selectedItem])
-
-  const selection = new Selection({
-    onSelectionChanged: () => {
-      const selectedItems = selection.getSelection();
-      if (selectedItems.length > 0) {
-        const selectedItem = selectedItems[0] as T;
-        onClick(selectedItem.key);
-        setSelectedItem(selectedItem.key)
-      }
-      else {
-        onClick(null);
-        setSelectedItem(null)
-      }
-    },
-  });
+  }, [selectedItem, selection, items])
 
   const gridStyles: Partial<IDetailsListStyles> = {
     root: {
