@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main  # 你可以改成你的主分支名
-      - chzheng/npm
   pull_request:
   release:
     types: [created]  # 触发条件：创建一个 Release 时
