@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main  # 你可以改成你的主分支名
+      - chzheng/npm
   pull_request:
   release:
     types: [created]  # 触发条件：创建一个 Release 时
@@ -26,6 +27,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # 安装项目依赖
           pip install pyinstaller  # 安装 PyInstaller
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"  # ✅ 你可以根据需要修改 Node.js 版本
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm install  # ✅ 先安装依赖
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm run build  # ✅ 构建前端
 
       - name: Build Executable
         run: pyinstaller --name=风控 --add-data "config;config" --add-data "frontend/build;frontend/build" --console app.py
