@@ -1,4 +1,3 @@
-import copy
 from typing import Dict
 
 from api_cffex import ThostFtdcApi
@@ -8,12 +7,11 @@ from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLogi
     CThostFtdcRspAuthenticateField, CThostFtdcSettlementInfoConfirmField, THOST_FTDC_OST_Unknown, \
     THOST_FTDC_OST_NoTradeQueueing, THOST_FTDC_OST_Canceled, THOST_FTDC_OST_AllTraded, \
     THOST_FTDC_OST_PartTradedQueueing, CThostFtdcInputOrderActionField
-from helper.api import ReqQryInvestorPosition, ReqQryInvestorPositionDetail, RspOrderInsert, ReqOrderInsert, ReqOrderAction
-from helper.helper import *
-from memory.market_data_manager import MarketDataManager
+from utils.api import ReqQryInvestorPosition, ReqQryInvestorPositionDetail, RspOrderInsert, ReqOrderInsert, ReqOrderAction
+from utils.helper import *
+from ctp.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
-from model.enum.exchange_type import ExchangeType
 from model.instrument.future import Future
 from model.instrument.option import IndexOption
 from model.order_info import OrderInfo

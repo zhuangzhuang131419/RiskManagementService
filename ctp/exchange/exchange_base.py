@@ -1,10 +1,9 @@
 import os
 from abc import ABC, abstractmethod
-from statistics import pstdev
 
 from typing import Optional
 
-from memory.market_data_manager import MarketDataManager
+from ctp.market_data_manager import MarketDataManager
 from model.config.exchange_config import ExchangeConfig
 from model.direction import Direction
 

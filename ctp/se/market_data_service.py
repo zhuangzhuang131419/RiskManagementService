@@ -1,14 +1,12 @@
-import copy
 import time
 
 from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, CThostFtdcDepthMarketDataField
-from helper.helper import *
+from utils.helper import *
 from queue import Queue
 
-from memory.market_data_manager import MarketDataManager
-from model.instrument.option import Option, ETFOption
-from model.memory.market_data import MarketData, DepthMarketData
+from ctp.market_data_manager import MarketDataManager
+from model.memory.market_data import DepthMarketData
 
 
 class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):

@@ -1,12 +1,12 @@
 import time
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 
 import numpy as np
-from typing import Dict, List
+from typing import Dict
 
-from helper.helper import filter_index_option, filter_etf_option, filter_index_future, get_cash_multiplier, \
+from utils.helper import filter_index_option, filter_etf_option, get_cash_multiplier, \
     parse_option_full_symbol
-from model.ctp_manager import CTPManager
+from ctp.ctp_manager import CTPManager
 from model.direction import Direction
 from model.enum.baseline_type import BaselineType
 from model.enum.category import UNDERLYING_CATEGORY_MAPPING, INDEX_OPTION_ETF_OPTION_FUTURE_MAPPING
@@ -25,7 +25,6 @@ np.set_printoptions(suppress=True)
 from threading import Thread
 
 from flask import Flask, jsonify, render_template, send_from_directory, request
-from engineio.async_drivers import threading
 
 app = Flask(__name__, static_folder='./frontend/build')
 socketio = SocketIO(app, logger=False, async_mode='threading')

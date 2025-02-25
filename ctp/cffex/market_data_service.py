@@ -1,12 +1,10 @@
-import copy
 import time
 
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, CThostFtdcDepthMarketDataField
-from helper.helper import *
-from queue import Queue
+from utils.helper import *
 
-from memory.market_data_manager import MarketDataManager
+from ctp.market_data_manager import MarketDataManager
 from model.memory.market_data import DepthMarketData
 
 

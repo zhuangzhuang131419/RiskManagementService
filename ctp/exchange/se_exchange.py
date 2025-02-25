@@ -3,14 +3,13 @@ from abc import ABC
 
 from ctp.se.market_data_service import MarketDataService
 from ctp.se.trader_service import TraderService
-from helper.api import ReqOrderInsert, ReqQryInstrument, ReqQryInvestorPositionDetail, ReqOrderAction, ReqQryInvestorPosition
-from memory.market_data_manager import MarketDataManager
+from utils.api import ReqOrderInsert, ReqQryInstrument, ReqQryInvestorPositionDetail, ReqOrderAction, ReqQryInvestorPosition
+from ctp.market_data_manager import MarketDataManager
 from ctp.exchange.exchange_base import Exchange
 from api_se import ThostFtdcApiSOpt
-from helper.helper import judge_ret
+from utils.helper import judge_ret
 from memory.user_memory_manager import UserMemoryManager
 from model.direction import Direction
-from model.order_info import OrderInfo
 
 
 class SExchange(Exchange, ABC):

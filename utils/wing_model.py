@@ -1,8 +1,8 @@
 import numpy as np
 import py_vollib_vectorized
 
-from helper.calculator import calculate_x_distance
-from helper.helper import red_print
+from utils.calculator import calculate_x_distance
+from utils.helper import red_print
 
 
 class WingModel:

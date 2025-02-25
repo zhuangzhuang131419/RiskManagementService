@@ -1,16 +1,11 @@
 import os.path
 import time
-import logging
-from queue import Queue
-from threading import Thread, Lock
+from threading import Thread
 from typing import Dict
 
-from memory.market_data_manager import MarketDataManager
-from model.config.exchange_config import ExchangeConfig
-from model.enum.baseline_type import BaselineType
-from model.memory.market_data import DepthMarketData
+from ctp.market_data_manager import MarketDataManager
 from model.user import User
-from helper.helper import *
+from utils.helper import *
 
 
 class CTPManager:

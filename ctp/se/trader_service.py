@@ -3,13 +3,12 @@ from api_se import ThostFtdcApiSOpt
 from api_se.ThostFtdcApiSOpt import CThostFtdcOrderField, CThostFtdcRspAuthenticateField, CThostFtdcRspInfoField, \
     CThostFtdcInstrumentField, CThostFtdcInputOrderField, CThostFtdcTradeField, CThostFtdcSettlementInfoConfirmField, CThostFtdcInvestorPositionField, CThostFtdcInvestorPositionDetailField, CThostFtdcInputOrderActionField, THOST_FTDC_OST_Unknown, THOST_FTDC_OST_NoTradeQueueing, \
     THOST_FTDC_OST_AllTraded, THOST_FTDC_OST_Canceled, THOST_FTDC_OST_PartTradedQueueing
-from helper.api import ReqQryInvestorPosition, ReqQryInvestorPositionDetail, ReqQryInstrument, ReqOrderInsert, ReqOrderAction
-from helper.helper import *
-from memory.market_data_manager import MarketDataManager
+from utils.api import ReqQryInvestorPosition, ReqQryInvestorPositionDetail, ReqQryInstrument, ReqOrderInsert, ReqOrderAction
+from utils.helper import *
+from ctp.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
-from model.enum.exchange_type import ExchangeType
 from model.instrument.instrument import Instrument
-from model.instrument.option import Option, ETFOption
+from model.instrument.option import ETFOption
 from model.order_info import OrderInfo
 from model.position import Position
 

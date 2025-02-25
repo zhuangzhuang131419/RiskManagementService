@@ -3,16 +3,15 @@ from abc import ABC
 
 from ctp.cffex.market_data_service import MarketDataService
 from ctp.cffex.trader_service import TraderService
-from helper.api import ReqQryInstrument, ReqQryInvestorPosition, ReqOrderInsert, ReqQryInvestorPositionDetail, ReqOrderAction
-from memory.market_data_manager import MarketDataManager
+from utils.api import ReqQryInstrument, ReqQryInvestorPosition, ReqOrderInsert, ReqQryInvestorPositionDetail, ReqOrderAction
+from ctp.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
 from ctp.exchange.exchange_base import Exchange
 from api_cffex import ThostFtdcApi
-from helper.helper import judge_ret, filter_index_future
+from utils.helper import judge_ret, filter_index_future
 from model.direction import Direction
 from model.enum.exchange_type import ExchangeType
-from model.order_info import OrderInfo
 
 
 class CFFExchange(Exchange, ABC):
