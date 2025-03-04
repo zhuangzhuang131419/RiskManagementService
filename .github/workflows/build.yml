@@ -50,3 +50,4 @@ jobs:
         with:
           name: 风控
           path: dist/  # 打包后的文件夹
+          retention-days: 5  # 5 天后自动删除
