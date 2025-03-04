@@ -71,7 +71,7 @@ def main():
         for symbol, option_series in ctp_manager.market_data_manager.option_market_data.items():
             ctp_manager.market_log_manager.record_option_log(option_series)
             ctp_manager.market_log_manager.record_wing_para(option_series)
-        time.sleep(60)
+        time.sleep(300)
 
 def test_position():
     print(get_se_monitor("HO20250221"))
