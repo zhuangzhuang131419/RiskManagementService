@@ -134,8 +134,7 @@ class User:
 
     def init_market_memory(self):
         for exchange_id, exchange_list in self.exchanges.items():
-            for exchange in exchange_list:
-                exchange.init_market_data(self.market_data_memory)
+            exchange_list[0].init_market_data(self.market_data_memory)
 
     # 批量订阅
     def subscribe_market_data(self):
