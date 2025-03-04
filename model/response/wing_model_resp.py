@@ -1,4 +1,4 @@
-from model.memory.atm_volatility import ATMVolatility
+from model.memory.atm_volatility import ATMPram
 
 
 class WingModelResp:

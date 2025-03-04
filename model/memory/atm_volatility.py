@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class ATMVolatility:
+class ATMPram:
     """
     该结构储存了计算中心波动率过程中的重要信息与最终结果。
     """

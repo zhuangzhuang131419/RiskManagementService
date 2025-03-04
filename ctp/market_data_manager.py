@@ -19,14 +19,15 @@ from typing import Dict, Tuple, List, Optional
 from select import select
 
 from utils.calculator import *
+from utils.logger import Logger
 from utils.wing_model import *
 from utils.helper import INTEREST_RATE, DIVIDEND, filter_index_option, filter_etf_option, filter_index_future, \
-    parse_option_full_symbol, HOLIDAYS, count_trading_days, YEAR_TRADING_DAY, inter_daytime, red_print
+    parse_option_full_symbol, HOLIDAYS, count_trading_days, YEAR_TRADING_DAY, inter_daytime
 from model.enum.baseline_type import BaselineType
 from model.instrument.instrument import Instrument
 from model.instrument.option import Option, OptionTuple, ETFOption
 from model.instrument.option_series import OptionSeries
-from model.memory.atm_volatility import ATMVolatility
+from model.memory.atm_volatility import ATMPram
 from model.memory.imply_price import ImplyPrice
 from model.memory.wing_model_para import WingModelPara
 
@@ -55,6 +56,8 @@ class MarketDataManager:
 
         # 同步时钟
         self.clock: str = time.strftime('%H:%M:%S', time.localtime(time.time()))
+
+        self.logger = Logger(__name__).logger
 
     def refresh(self):
         # Option
@@ -111,11 +114,11 @@ class MarketDataManager:
 
         if len(index_set) > 0:
             self.index_option_symbol = sorted(list(index_set))
-            print(f"添加指数期权：{self.index_option_symbol}")
+            self.logger.info(f"添加指数期权：{self.index_option_symbol}")
 
         if len(etf_set) > 0:
             self.etf_option_symbol = sorted(list(etf_set))
-            print(f"添加ETF期权{self.etf_option_symbol}")
+            self.logger.info(f"添加ETF期权{self.etf_option_symbol}")
 
         # 初始化 OptionSeries
         for symbol, options_list in option_series_dict.items():
@@ -132,7 +135,7 @@ class MarketDataManager:
     def get_instrument(self, instrument_id: str) -> Instrument:
 
         if instrument_id not in self.instrument_transform_full_symbol:
-            print(f"invalid instrument_id:{instrument_id}")
+            self.logger.error(f"invalid instrument_id:{instrument_id}")
         else:
             full_symbol = self.instrument_transform_full_symbol[instrument_id]
             if filter_index_future(instrument_id):
@@ -161,7 +164,7 @@ class MarketDataManager:
                 remaining_year = max(round((day_count - 1) / YEAR_TRADING_DAY + inter_daytime(YEAR_TRADING_DAY), 4), 1 / YEAR_TRADING_DAY)
                 self.index_option_imply_forward_price(symbol, remaining_year)
                 if self.option_market_data[symbol].imply_price.future_valid == -1:
-                    self.option_market_data[symbol].atm_volatility = ATMVolatility()
+                    self.option_market_data[symbol].atm_volatility = ATMPram()
                 else:
                     self.calculate_atm_para(symbol, remaining_year)
                     if self.option_market_data[symbol].atm_volatility.atm_volatility_protected > 0:
@@ -176,7 +179,7 @@ class MarketDataManager:
             return se_para.k1, se_para.k2, se_para.b, se_para.v
         elif self.baseline == BaselineType.AVERAGE:
             if index_para.k1 == 0 and index_para.k2 == 0 and index_para.b == 0:
-                red_print("指数基准异常")
+                self.logger.error("指数基准异常")
                 return se_para.k1, se_para.k2, se_para.b, se_para.v
             else:
                 return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2, (index_para.v + se_para.v) / 2
@@ -190,7 +193,7 @@ class MarketDataManager:
             return index_para.k1, index_para.k2, index_para.b, index_para.v
         elif self.baseline == BaselineType.AVERAGE:
             if se_para.k1 == 0 and se_para.k2 == 0 and se_para.b == 0:
-                red_print("上交基准异常")
+                self.logger.error("上交基准异常")
                 return index_para.k1, index_para.k2, index_para.b, index_para.v
             else:
                 return (index_para.k1 + se_para.k1) / 2, (index_para.k2 + se_para.k2) / 2, (index_para.b + se_para.b) / 2, (index_para.v + se_para.v) / 2
@@ -219,7 +222,7 @@ class MarketDataManager:
                     se_symbol = group_instrument.etf_option_series.symbol
                     k1, k2, b, volatility = self.get_index_para_by_baseline(self.option_market_data[symbol].wing_model_para, self.option_market_data[se_symbol].wing_model_para)
             else:
-                print(f"calculate_greeks exception: {symbol}")
+                self.logger.error(f"calculate_greeks exception: {symbol}")
                 raise ValueError
         else:
             k1 = self.option_market_data[symbol].customized_wing_model_para.k1
@@ -343,7 +346,7 @@ class MarketDataManager:
 
             self.option_market_data[symbol].wing_model_para = wing_model_para
         except LinAlgError:
-            red_print(f"Singular matrix: x_array: {x_array}, y_array: {y_array}, square_matrix: {np.dot(np.transpose(x_array), x_array)}")
+            return
 
 
     def calculate_atm_para(self, symbol, remaining_year):
@@ -360,7 +363,7 @@ class MarketDataManager:
 
         forward_underlying_price = underlying_price * math.exp(remaining_year * (INTEREST_RATE - DIVIDEND))
 
-        atm_volatility = ATMVolatility()
+        atm_para = ATMPram()
 
         # 判断离平值期权最近的
         if k2_strike != -1 and k3_strike != -1:
@@ -381,40 +384,40 @@ class MarketDataManager:
 
             # 左右行权价计算的波动率无效
             if volatility_dict[k2_strike][0] != -1 and volatility_dict[k2_strike][1] != -1 and volatility_dict[k3_strike][0] != -1 and volatility_dict[k3_strike][1] != -1:
-                atm_volatility.atm_valid = True
+                atm_para.atm_valid = True
                 # 对于K1 K4 行权价只计算call 或者 put
-                atm_volatility.k1_volatility = volatility_dict[k1_strike][1] # put
-                atm_volatility.k2_volatility = (volatility_dict[k2_strike][0] + volatility_dict[k2_strike][1]) / 2
-                atm_volatility.k3_volatility = (volatility_dict[k3_strike][0] + volatility_dict[k3_strike][1]) / 2
-                atm_volatility.k4_volatility = volatility_dict[k4_strike][0] # call
+                atm_para.k1_volatility = volatility_dict[k1_strike][1] # put
+                atm_para.k2_volatility = (volatility_dict[k2_strike][0] + volatility_dict[k2_strike][1]) / 2
+                atm_para.k3_volatility = (volatility_dict[k3_strike][0] + volatility_dict[k3_strike][1]) / 2
+                atm_para.k4_volatility = volatility_dict[k4_strike][0] # call
 
-                volatility = [atm_volatility.k1_volatility, atm_volatility.k2_volatility, atm_volatility.k3_volatility, atm_volatility.k4_volatility]
+                volatility = [atm_para.k1_volatility, atm_para.k2_volatility, atm_para.k3_volatility, atm_para.k4_volatility]
 
-                if atm_volatility.k1_volatility != -1 and atm_volatility.k4_volatility == -1:
+                if atm_para.k1_volatility != -1 and atm_para.k4_volatility == -1:
                     # 左中有效 右无效
-                    atm_volatility.atm_volatility_protected = estimate_atm_volatility(np.array([k1_strike, k2_strike, k3_strike]), np.array(volatility[0:3]), forward_underlying_price)
-                if atm_volatility.k1_volatility == -1 and atm_volatility.k4_volatility != -1:
+                    atm_para.atm_volatility_protected = estimate_atm_volatility(np.array([k1_strike, k2_strike, k3_strike]), np.array(volatility[0:3]), forward_underlying_price)
+                if atm_para.k1_volatility == -1 and atm_para.k4_volatility != -1:
                     # 左无效 右中有效
-                    atm_volatility.atm_volatility_protected = estimate_atm_volatility(np.array([k2_strike, k3_strike, k4_strike]), np.array(volatility[1:]), forward_underlying_price)
-                if atm_volatility.k1_volatility != -1 and atm_volatility.k4_volatility != -1:
+                    atm_para.atm_volatility_protected = estimate_atm_volatility(np.array([k2_strike, k3_strike, k4_strike]), np.array(volatility[1:]), forward_underlying_price)
+                if atm_para.k1_volatility != -1 and atm_para.k4_volatility != -1:
                     # 全部有效
-                    atm_volatility.atm_volatility_protected = (estimate_atm_volatility(np.array([k1_strike, k2_strike, k3_strike]), np.array(volatility[0:3]),forward_underlying_price) +
+                    atm_para.atm_volatility_protected = (estimate_atm_volatility(np.array([k1_strike, k2_strike, k3_strike]), np.array(volatility[0:3]),forward_underlying_price) +
                                                                estimate_atm_volatility(np.array([k2_strike, k3_strike, k4_strike]), np.array(volatility[1:]),forward_underlying_price)) / 2
-                if atm_volatility.k1_volatility == -1 and atm_volatility.k4_volatility == -1:
+                if atm_para.k1_volatility == -1 and atm_para.k4_volatility == -1:
                     # 仅中间有效
-                    atm_volatility.atm_volatility_protected = self.option_market_data[symbol].atm_volatility.atm_volatility_protected
+                    atm_para.atm_volatility_protected = self.option_market_data[symbol].atm_volatility.atm_volatility_protected
 
         # 如果波动率自始至终都是0或者-1，则平值波动率参数全为-1
-        if atm_volatility.atm_volatility_protected > 0:
-            atm_volatility.atm_gamma = calculate_gamma('c', underlying_price, forward_underlying_price, remaining_year, INTEREST_RATE, atm_volatility.atm_volatility_protected, DIVIDEND)
-            atm_volatility.atm_vega = calculate_vega('c', underlying_price, forward_underlying_price, remaining_year, INTEREST_RATE, atm_volatility.atm_volatility_protected, DIVIDEND)
+        if atm_para.atm_volatility_protected > 0:
+            atm_para.atm_gamma = calculate_gamma('c', underlying_price, forward_underlying_price, remaining_year, INTEREST_RATE, atm_para.atm_volatility_protected, DIVIDEND)
+            atm_para.atm_vega = calculate_vega('c', underlying_price, forward_underlying_price, remaining_year, INTEREST_RATE, atm_para.atm_volatility_protected, DIVIDEND)
 
             for i in range(7):
-                atm_volatility.volatility_points[i] = math.exp((i * 0.66 - 1.98) * atm_volatility.atm_volatility_protected * math.sqrt(remaining_year)) * forward_underlying_price
+                atm_para.volatility_points[i] = math.exp((i * 0.66 - 1.98) * atm_para.atm_volatility_protected * math.sqrt(remaining_year)) * forward_underlying_price
         else:
-            red_print(f"symbol: {symbol} volatility: {atm_volatility.atm_volatility_protected}")
+            self.logger.warning(f"symbol: {symbol} volatility: {atm_para.atm_volatility_protected}")
 
-        self.option_market_data[symbol].atm_volatility = atm_volatility
+        self.option_market_data[symbol].atm_volatility = atm_para
 
     def calculate_index_option_month_t_iv(self, symbol, remaining_year):
         # 对应标的物的远期价格

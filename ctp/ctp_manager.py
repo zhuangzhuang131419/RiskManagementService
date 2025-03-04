@@ -39,6 +39,8 @@ class CTPManager:
         if not os.path.exists(self.CONFIG_FILE_PATH):
             os.makedirs(self.CONFIG_FILE_PATH)
 
+        self.logger = Logger(__name__).logger
+
         user_config_path = []
 
         try:
@@ -50,7 +52,7 @@ class CTPManager:
                         continue
                     user_config_path.append(os.path.join(root, file_name))
         except Exception as e:
-            print(f"初始化用户时出现错误: {e}")
+            self.logger.error(f"初始化用户时出现错误: {e}")
 
 
 
@@ -81,12 +83,12 @@ class CTPManager:
             # 计算需要等待的时间（秒）
             wait_time = (target_time - now).total_seconds()
 
-            print(f"距离下一次执行还有 {wait_time} 秒")
+            self.logger.info(f"距离下一次执行还有 {wait_time} 秒")
 
             # 等待直到目标时间
             time.sleep(wait_time)
 
-            print(f"执行daily job")
+            self.logger.info(f"执行daily job")
 
             # 执行 daily_job
             self.market_data_manager.refresh()
@@ -95,12 +97,12 @@ class CTPManager:
             self.market_data_user.subscribe_market_data()
 
     def check_white_list(self):
-        print("检查白名单")
+        self.logger.info("检查白名单")
         for exchange_type, exchanges in self.market_data_user.exchange_config.items():
             if any(exchange.user_id not in self.white_list for exchange in exchanges):
-                red_print(f"未在白名单: {[exchange.app_id for exchange in exchanges]}")
+                self.logger.error(f"未在白名单: {[exchange.app_id for exchange in exchanges]}")
                 return False
-        print("检查白名单通过")
+        self.logger.info("检查白名单通过")
         return True
 
     def init_user(self, user_config_path):
@@ -113,43 +115,43 @@ class CTPManager:
             # 先获取行情
             self.connect_market_data()
             self.users[self.market_data_user.user_name] = self.market_data_user
-            print(f"用户 {self.market_data_user.user_name} 初始化完成")
+            self.logger.info(f"用户 {self.market_data_user.user_name} 初始化完成")
         except Exception as e:
-            print(f"初始化行情用户失败: {e}")
+            self.logger.error(f"初始化行情用户失败: {e}")
             raise
 
-        print('-------------------------行情连接完毕----------------------------')
+        self.logger.info('-------------------------行情连接完毕----------------------------')
 
 
         for config_path in user_config_path[1:]:
             user = User(config_path, self.market_data_manager)
             self.users[user.user_name] = user
-            print(f"用户 {user.user_name} 初始化完成")
+            self.logger.info(f"用户 {user.user_name} 初始化完成")
             user.init_exchange(self.CONFIG_FILE_PATH)
             user.connect_trade()
 
-        print("------------------------用户连接完毕-----------------------------")
+        self.logger.info("------------------------用户连接完毕-----------------------------")
 
     def connect_market_data(self):
         """
         连接行情中心
         """
-        print('连接行情中心')
+        self.logger.info('连接行情中心')
         self.market_data_user.init_exchange(self.CONFIG_FILE_PATH)
         self.market_data_user.connect_master_data()
         self.market_data_user.query_instrument()
         self.market_data_user.init_market_memory()
         self.market_data_user.subscribe_market_data()
-        print('行情初始化结束')
+        self.logger.info('行情初始化结束')
 
     def switch_to_user(self, user_name: str) -> bool:
         self.current_user = self.users.get(user_name, None)
         if self.current_user is not None:
-            print(f"当前用户切换为：{user_name}")
-            print(f"当前持仓信息：{self.current_user.user_memory.print_position()}")
+            self.logger.info(f"当前用户切换为：{user_name}")
+            self.logger.info(f"当前持仓信息：{self.current_user.user_memory.print_position()}")
             return True
         else:
-            print(f"未找到用户：{user_name}")
+            self.logger.error(f"未找到用户：{user_name}")
             return False
 
 

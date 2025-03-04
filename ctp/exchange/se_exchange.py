@@ -10,17 +10,19 @@ from api_se import ThostFtdcApiSOpt
 from utils.helper import judge_ret
 from memory.user_memory_manager import UserMemoryManager
 from model.direction import Direction
+from utils.logger import Logger
 
 
 class SExchange(Exchange, ABC):
     def __init__(self, config, config_file_path, user_memory_manager: UserMemoryManager, market_data_manager: MarketDataManager):
         super().__init__(config, config_file_path)
-        print(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
         self.user_memory_manager = user_memory_manager
         self.market_data_manager = market_data_manager
+        self.logger = Logger(__name__).logger
+        self.logger.info(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
 
     def connect_market_data(self):
-        print(f"连接深交行情中心")
+        self.logger.info(f"连接深交行情中心")
         # 创建API实例
         self.market_data_user_api = ThostFtdcApiSOpt.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
@@ -32,7 +34,7 @@ class SExchange(Exchange, ABC):
         self.market_data_user_api.Init()
 
     def connect_trader(self):
-        print(f"连接深交交易中心")
+        self.logger.info(f"连接深交交易中心")
         self.trader_user_api = ThostFtdcApiSOpt.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
         self.trader_user_spi = TraderService(self.trader_user_api, self.config, self.market_data_manager, self.user_memory_manager)
 
@@ -52,14 +54,14 @@ class SExchange(Exchange, ABC):
         query_file = ThostFtdcApiSOpt.CThostFtdcQryInstrumentField()
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
         if ret == 0:
-            print('发送查询合约成功！')
+            self.logger.info('发送查询合约成功！')
         else:
-            print('发送查询合约失败！')
+            self.logger.error('发送查询合约失败！')
             judge_ret(ret)
             while ret != 0:
                 query_file = ThostFtdcApiSOpt.CThostFtdcQryInstrumentField()
                 ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
-                print('正在查询合约...')
+                self.logger.info('正在查询合约...')
                 time.sleep(5)
         time.sleep(1)
 
@@ -78,9 +80,9 @@ class SExchange(Exchange, ABC):
         ret = self.trader_user_api.ReqOrderAction(order_action_field, 0)
 
         if ret == 0:
-            print(f'发送撤单请求成功！{order_action_field.OrderRef}')
+            self.logger.info(f'发送撤单请求成功！{order_action_field.OrderRef}')
         else:
-            print('发送撤单请求失败！')
+            self.logger.error('发送撤单请求失败！')
             judge_ret(ret)
 
     def insert_order(self, instrument_id: str, direction: Direction, limit_price: float, volume: int) -> str:
@@ -112,7 +114,7 @@ class SExchange(Exchange, ABC):
         if direction in direction_mapping:
             order_field.Direction, order_field.CombOffsetFlag = direction_mapping[direction]
         else:
-            print('下单委托类型错误！停止下单！')
+            self.logger.error('下单委托类型错误！停止下单！')
             raise KeyError
 
         # 普通限价单默认参数
@@ -140,9 +142,9 @@ class SExchange(Exchange, ABC):
         ret = self.trader_user_api.ReqOrderInsert(order_field, 0)
 
         if ret == 0:
-            print(f'发送下单{order_field.OrderRef}请求成功！')
+            self.logger.info(f'发送下单{order_field.OrderRef}请求成功！')
         else:
-            print('发送下单请求失败！')
+            self.logger.error('发送下单请求失败！')
             judge_ret(ret)
         return order_field.OrderRef
 

@@ -1,22 +1,21 @@
 import datetime
 from model.enum.category import UNDERLYING_CATEGORY_MAPPING
 from model.enum.option_type import OptionType
-from model.instrument.option import validate_option_id
+from utils.logger import Logger
 
+
+logger = Logger(__name__).logger
 
 # 判断发送请求失败原因
 def judge_ret(ret):
     if ret == -1:
-        print('失败原因：网络连接失败')
+        logger.error('失败原因：网络连接失败')
     elif ret == -2:
-        print('失败原因：表示未处理请求超过许可数')
+        logger.error('失败原因：表示未处理请求超过许可数')
     elif ret == -3:
-        print('失败原因：表示每秒发送请求数超过许可数')
+        logger.error('失败原因：表示每秒发送请求数超过许可数')
     else:
-        print('失败原因：未知。\nret：{}'.format(ret))
-
-def red_print(content):
-    print(f'\033[0;0;31m{content}\033[0m')
+        logger.error('失败原因：未知。\nret：{}'.format(ret))
 
 CASH_MULTIPLIER = {
     'HO': 100,
@@ -191,19 +190,6 @@ def print_struct_fields(obj, indent=0):
             print_struct_fields(item, indent + 1)
     else:
         print(f"{spacing}{obj}")
-
-def print_swing_fields(obj):
-    attributes = dir(obj)
-
-    # 打印所有非私有字段
-    for attr in attributes:
-        if not attr.startswith('_'):  # 跳过内部属性
-            try:
-                value = getattr(obj, attr)
-                print(f"{attr}: {value}")
-            except AttributeError:
-                print(f"{attr}: Cannot access this attribute")
-
 
 
 

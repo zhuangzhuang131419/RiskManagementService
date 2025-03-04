@@ -7,7 +7,8 @@ from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLogi
     CThostFtdcRspAuthenticateField, CThostFtdcSettlementInfoConfirmField, THOST_FTDC_OST_Unknown, \
     THOST_FTDC_OST_NoTradeQueueing, THOST_FTDC_OST_Canceled, THOST_FTDC_OST_AllTraded, \
     THOST_FTDC_OST_PartTradedQueueing, CThostFtdcInputOrderActionField
-from utils.api import ReqQryInvestorPosition, ReqQryInvestorPositionDetail, RspOrderInsert, ReqOrderInsert, ReqOrderAction
+from utils.api import ReqQryInvestorPosition, ReqQryInvestorPositionDetail, RspOrderInsert, ReqOrderInsert, \
+    ReqOrderAction, ReqQryInstrument
 from utils.helper import *
 from ctp.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
@@ -37,10 +38,11 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         self.query_finish: Dict[str, bool] = {}
         self.market_data_manager = market_data_manager
         self.user_memory_manager = user_memory_manager
+        self.logger = Logger(__name__).logger
 
 
     def OnFrontConnected(self):
-        print("开始建立交易连接")
+        self.logger.info("开始建立交易连接")
         auth_field = ThostFtdcApi.CThostFtdcReqAuthenticateField()
 
 
@@ -52,16 +54,16 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         ret = self.trader_user_api.ReqAuthenticate(auth_field, 0)
         if ret == 0:
-            print('发送穿透式认证请求成功！')
+            self.logger.info('发送穿透式认证请求成功！')
         else:
-            print('发送穿透式认证请求失败！')
+            self.logger.error('发送穿透式认证请求失败！')
             judge_ret(ret)
 
     def OnRspAuthenticate(self, pRspAuthenticateField: CThostFtdcRspAuthenticateField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo.ErrorID != 0 and pRspInfo is not None:
-            print('穿透式认证失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+            self.logger.error('穿透式认证失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
-            print('穿透式认证成功！')
+            self.logger.info('穿透式认证成功！')
 
             # 发送登录请求
             login_field = ThostFtdcApi.CThostFtdcReqUserLoginField()
@@ -71,17 +73,17 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
             ret = self.trader_user_api.ReqUserLogin(login_field, 0)
             if ret == 0:
-                print('发送登录交易账户成功！')
+                self.logger.info('发送登录交易账户成功！')
             else:
-                print('发送登录交易账户失败！')
+                self.logger.error('发送登录交易账户失败！')
                 judge_ret(ret)
 
 
     def OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo.ErrorID != 0 and pRspInfo is not None:
-            print('登录交易账户失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+            self.logger.error('登录交易账户失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
-            print('登录交易账户成功！')
+            self.logger.info('登录交易账户成功！')
 
             # 保存数据用于下单
             self.front_id = pRspUserLogin.FrontID
@@ -96,16 +98,16 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
             confirm_field.InvestorID = self.config.investor_id
             ret = self.trader_user_api.ReqSettlementInfoConfirm(confirm_field, 0)
             if ret == 0:
-                print('发送结算单确认请求成功！')
+                self.logger.info('发送结算单确认请求成功！')
             else:
-                print('发送结算单确认请求失败！')
+                self.logger.error('发送结算单确认请求失败！')
                 judge_ret(ret)
 
     def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: CThostFtdcSettlementInfoConfirmField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
-            print('结算单确认失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+            self.logger.error('结算单确认失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
-            print('结算单确认成功！')
+            self.logger.info('结算单确认成功！')
             self.login_finish = True
 
 
@@ -114,7 +116,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
     # https://documentation.help/CTP-API-cn/ONRSPQRYINSTRUMENT.html
     def OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
-            print('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+            self.logger.error('请求查询合约失败\nf错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
         # print(f"InstrumentID: {pInstrument.InstrumentID}, VolumeMultiple: {pInstrument.VolumeMultiple}")
 
@@ -126,17 +128,17 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
                 future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
                 self.subscribe_instrument[future.id] = future
         if bIsLast:
-            self.query_finish['ReqQryInstrument'] = True
-            print('查询合约完成')
+            self.query_finish[ReqQryInstrument] = True
+            self.logger.info('查询合约完成')
 
 
 
 
     def OnRspOrderInsert(self, pInputOrder: CThostFtdcInputOrderField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
-            print('下单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+            self.logger.error('下单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
-            print('下单成功, 风控通过')
+            self.logger.info('下单成功, 风控通过')
 
         if bIsLast:
             self.query_finish[RspOrderInsert] = True
@@ -145,35 +147,35 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         try:
             # 报单已提交
             if pOrder.OrderStatus == THOST_FTDC_OST_Unknown:
-                print('中金报单已提交')
+                self.logger.info('中金报单已提交')
             # 未成交
             elif pOrder.OrderStatus == THOST_FTDC_OST_NoTradeQueueing:
-                print('中金未成交')
+                self.logger.info('中金未成交')
             # 全部成交
             elif pOrder.OrderStatus == THOST_FTDC_OST_AllTraded:
-                print('中金全部成交')
+                self.logger.info('中金全部成交')
                 self.query_finish[ReqOrderInsert] = True
             # 撤单
             elif pOrder.OrderStatus == THOST_FTDC_OST_Canceled:
                 self.query_finish[ReqOrderInsert] = True
                 # 被动撤单
                 if pOrder.OrderSubmitStatus == '4':
-                    print('中金被动撤单')
-                    print(pOrder.StatusMsg)
+                    self.logger.info('中金被动撤单')
+                    self.logger.info(pOrder.StatusMsg)
                 else:
                     self.query_finish[ReqOrderAction] = True
-                    print('撤单完成')
-                    print(pOrder.StatusMsg)
+                    self.logger.info('撤单完成')
+                    self.logger.info(pOrder.StatusMsg)
             # 部分成交，还在队列中
             elif pOrder.OrderStatus == THOST_FTDC_OST_PartTradedQueueing:
-                print('中金部分成交，还在队列中')
+                self.logger.info('中金部分成交，还在队列中')
                 self.query_finish[ReqOrderInsert] = True
             else:
-                print("OnRtnOrder")
-                print("OrderStatus=", pOrder.OrderStatus)
-                print("StatusMsg=", pOrder.StatusMsg)
+                self.logger.info("OnRtnOrder")
+                self.logger.info("OrderStatus=", pOrder.OrderStatus)
+                self.logger.info("StatusMsg=", pOrder.StatusMsg)
         except Exception as e:
-            red_print(e)
+            self.logger.error(e)
 
     def OnRtnTrade(self, pTrade: CThostFtdcTradeField) -> "void":
         investor_id = pTrade.InvestorID
@@ -207,7 +209,7 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
-            print('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+            self.logger.error('查询投资者持仓失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
         if pInvestorPosition is not None:
             instrument_id: str = pInvestorPosition.InstrumentID
@@ -231,30 +233,27 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
 
         if bIsLast:
             self.query_finish[ReqQryInvestorPosition] = True
-            print('查询投资者持仓完成')
+            self.logger.info('查询投资者持仓完成')
 
     # 请求查询投资者持仓明细响应，当执行ReqQryInvestorPositionDetail后，该方法被调用。
     # https://documentation.help/CTP-API-cn/ONRSPQRYINVESTORPOSITIONDETAIL.html
     def OnRspQryInvestorPositionDetail(self, pInvestorPositionDetail: CThostFtdcInvestorPositionDetailField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool) -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
-            print('查询投资者持仓明细失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
+            self.logger.error('查询投资者持仓明细失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
-        print(
+        self.logger.info(
             f"投资者：{pInvestorPositionDetail.InvestorID} instrument: {pInvestorPositionDetail.InstrumentID} exchange_id: {pInvestorPositionDetail.ExchangeID} open price: {pInvestorPositionDetail.OpenPrice}, open date: {pInvestorPositionDetail.OpenDate}, volume: {pInvestorPositionDetail.Volume}, direction: {pInvestorPositionDetail.Direction}")
 
         if bIsLast:
             self.query_finish[ReqQryInvestorPositionDetail] = True
-            print('查询投资者持仓明细完成')
+            self.logger.info('查询投资者持仓明细完成')
 
     def OnRspOrderAction(self, pInputOrderAction: CThostFtdcInputOrderActionField, pRspInfo: "CThostFtdcRspInfoField", nRequestID: "int", bIsLast: "bool") -> "void":
         if pRspInfo is not None and pRspInfo.ErrorID != 0:
-            print('撤单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
-
-        print('OnRspOrderAction')
+            self.logger.error('撤单失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
 
         if bIsLast:
             self.query_finish[ReqOrderAction] = True
-            print('撤单完成')
 
 
 

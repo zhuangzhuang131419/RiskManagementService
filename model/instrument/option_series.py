@@ -6,7 +6,7 @@ from typing import Dict, TypeVar, Generic
 from utils.helper import count_trading_days, HOLIDAYS, YEAR_TRADING_DAY
 from model.enum.option_type import OptionType
 from model.instrument.option import Option, OptionTuple
-from model.memory.atm_volatility import ATMVolatility
+from model.memory.atm_volatility import ATMPram
 from model.memory.imply_price import ImplyPrice
 from model.memory.wing_model_para import WingModelPara
 
@@ -36,7 +36,7 @@ class OptionSeries:
 
         # 数据结构
         self.imply_price = ImplyPrice()
-        self.atm_volatility = ATMVolatility()
+        self.atm_volatility = ATMPram()
         self.wing_model_para = WingModelPara()
         self.customized_wing_model_para = WingModelPara()
 
