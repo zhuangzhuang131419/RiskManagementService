@@ -4,6 +4,7 @@ from threading import Thread
 from typing import Dict
 
 from ctp.market_data_manager import MarketDataManager
+from infra.option_log_manager import OptionLogManager
 from model.user import User
 from utils.helper import *
 from utils.logger import Logger
@@ -19,6 +20,9 @@ class CTPManager:
 
     # 行情内存
     market_data_manager: MarketDataManager = MarketDataManager()
+
+    # 数据库
+    market_log_manager: OptionLogManager = OptionLogManager(market_data_manager.instrument_transform_full_symbol,'database/')
 
     # 普通的users
     users: Dict[str, User] = {}
