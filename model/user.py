@@ -69,7 +69,7 @@ class User:
             for exchange in exchange_list:
                 exchange.connect_market_data()
                 exchange.connect_trader()
-                while not exchange.is_login():
+                while not exchange.is_market_login():
                     if time.time() - start_time > TIMEOUT:
                         self.logger.error(f'{exchange_type.value} 登录超时')
                         break
@@ -85,10 +85,10 @@ class User:
         for exchange_type, exchange_list in self.exchanges.items():
             # 查询exchange type下面exchange list的一个就可以了
             for exchange in exchange_list:
-                if not exchange.is_login():
+                if not exchange.is_trade_login():
                     continue
                 exchange.query_instrument()
-                while not exchange.is_query_finish(ReqQryInstrument):
+                while not exchange.is_trade_query_finish(ReqQryInstrument):
                     time.sleep(3)
                 self.logger.info(f"{self.user_name} 的 {exchange_type.value} 合约查询完成")
                 break
@@ -122,7 +122,7 @@ class User:
             for exchange in exchange_list:
                 start_time = time.time()
                 exchange.connect_trader()
-                while not self.is_login(exchange_type):
+                while not exchange.is_trade_login():
                     if time.time() - start_time > TIMEOUT:
                         self.logger.error(f'{exchange_type.value} investor_id: {exchange.config.investor_id} 登录超时')
                         break
@@ -134,12 +134,8 @@ class User:
 
     def init_market_memory(self):
         for exchange_id, exchange_list in self.exchanges.items():
-            exchange_list[0].init_market_data(self.market_data_memory)
-
-
-    def is_login(self, exchange_type: ExchangeType) -> bool:
-        exchange_list = self.exchanges[exchange_type]
-        return all(exchange.is_login() for exchange in exchange_list)
+            for exchange in exchange_list:
+                exchange.init_market_data(self.market_data_memory)
 
     # 批量订阅
     def subscribe_market_data(self):
@@ -147,7 +143,7 @@ class User:
 
         for exchange_id, exchange_list in self.exchanges.items():
             for exchange in exchange_list:
-                if not exchange.is_login():
+                if not exchange.is_market_login():
                     continue
                 instrument_ids = list(exchange.trader_user_spi.subscribe_instrument.keys())
                 # 将 instrument_ids 分成每组 100 个
@@ -169,7 +165,7 @@ class User:
         if exchange is None:
             self.logger.error(f"找不到exchange")
             return False
-        if not exchange.is_login():
+        if not exchange.is_trade_login():
             self.logger.error(f"{exchange}未登录")
             return False
 
@@ -177,7 +173,7 @@ class User:
 
         start_time = time.time()
         exchange.query_investor_position(instrument_id)
-        while not exchange.is_query_finish(ReqQryInvestorPosition):
+        while not exchange.is_trade_query_finish(ReqQryInvestorPosition):
             if time.time() - start_time > timeout:
                 self.logger.error(f'{exchange_type.value} {ReqQryInvestorPosition} 查询超时')
                 return False
@@ -187,13 +183,13 @@ class User:
         self.logger.info(f'查询投资者{exchange_type.value}持仓细节')
         if exchange_type in self.exchanges:
             exchange_list = self.exchanges[exchange_type]
-            if not self.is_login(exchange_type):
+            if not all(exchange.is_trade_login() for exchange in exchange_list):
                 return False
 
             for exchange in exchange_list:
                 start_time = time.time()
                 exchange.query_investor_position_detail()
-                while not exchange.is_query_finish(ReqQryInvestorPosition):
+                while not exchange.is_trade_query_finish(ReqQryInvestorPosition):
                     if time.time() - start_time > timeout:
                         self.logger.error(f'{exchange_type.value} {ReqQryInvestorPosition} 查询超时')
                         return False
@@ -207,17 +203,11 @@ class User:
             self.logger.error(f"找不到exchange")
             return None
 
-        if not exchange.is_login():
+        if not exchange.is_trade_login():
             self.logger.error(f"{exchange}未登录")
             return None
 
-        start_time = time.time()
-        order_ref = exchange.insert_order(instrument_id, direction, limit_price, volume)
-        while not exchange.is_query_finish(ReqOrderInsert):
-            if time.time() - start_time > timeout:
-                self.logger.error(f'{exchange} {ReqOrderInsert} 查询超时')
-                return order_ref
-        return order_ref
+        return exchange.insert_order(instrument_id, direction, limit_price, volume)
 
     def order_action(self, exchange_type: ExchangeType, investor_id: str, instrument_id: str, order_ref: str, timeout=TIMEOUT) -> bool:
         self.logger.info(f'撤单{exchange_type.value}')
@@ -228,16 +218,11 @@ class User:
             self.logger.error(f"找不到exchange")
             return False
 
-        if not exchange.is_login():
+        if not exchange.is_trade_login():
             self.logger.error(f"{exchange}未登录")
             return False
 
-        start_time = time.time()
         exchange.order_action(instrument_id, order_ref)
-        while not exchange.is_query_finish(ReqOrderAction):
-            if time.time() - start_time > timeout:
-                self.logger.error(f'{exchange_type.value} {ReqOrderAction} 查询超时')
-                return False
         return True
 
 

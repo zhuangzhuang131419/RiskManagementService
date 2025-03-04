@@ -6,24 +6,22 @@ from typing import Dict
 from ctp.market_data_manager import MarketDataManager
 from model.user import User
 from utils.helper import *
+from utils.logger import Logger
 
 
 class CTPManager:
-
     CONFIG_FILE_PATH = 'con_file'
 
-    current_user : User = None
+    current_user: User = None
 
     # 用作获取行情数据
-    market_data_user : User = None
+    market_data_user: User = None
 
     # 行情内存
     market_data_manager: MarketDataManager = MarketDataManager()
 
     # 普通的users
-    users : Dict[str, User] = {}
-
-    timestamp : time
+    users: Dict[str, User] = {}
 
     white_list = ["80050672", "9980050672",
                   "80533506", "9980533506",
@@ -32,8 +30,9 @@ class CTPManager:
                   "26800491", "9926800491",
                   "80039190", "9980039190",
                   "80039277", "9980039277",
-                  "82105958", "9982105958",
-                  "0081500056", "9982100962"]
+                  "80037093", "0081500056", "9920100027",
+                  "82107898", "9982107898",
+                  "82105958", "9982105958"]
 
     def __init__(self, env):
         if not os.path.exists(self.CONFIG_FILE_PATH):
@@ -54,11 +53,8 @@ class CTPManager:
         except Exception as e:
             self.logger.error(f"初始化用户时出现错误: {e}")
 
-
-
         # 连接各个user
         self.init_user(user_config_path)
-
 
         # 查询持仓
         self.query_position()
@@ -68,6 +64,7 @@ class CTPManager:
 
     def query_position(self):
         for user in self.users.values():
+            self.logger.info(f"查询{user.user_name}持仓")
             user.query_investor_position()
 
     def run_daily_job(self):
@@ -94,7 +91,6 @@ class CTPManager:
             self.market_data_manager.refresh()
             self.market_data_user.query_instrument()
             self.market_data_user.init_market_memory()
-            self.market_data_user.subscribe_market_data()
 
     def check_white_list(self):
         self.logger.info("检查白名单")
@@ -122,7 +118,6 @@ class CTPManager:
 
         self.logger.info('-------------------------行情连接完毕----------------------------')
 
-
         for config_path in user_config_path[1:]:
             user = User(config_path, self.market_data_manager)
             self.users[user.user_name] = user
@@ -141,8 +136,6 @@ class CTPManager:
         self.market_data_user.connect_master_data()
         self.market_data_user.query_instrument()
         self.market_data_user.init_market_memory()
-        self.market_data_user.subscribe_market_data()
-        self.logger.info('行情初始化结束')
 
     def switch_to_user(self, user_name: str) -> bool:
         self.current_user = self.users.get(user_name, None)
@@ -161,4 +154,3 @@ class CTPManager:
 
 
 
-    

@@ -24,9 +24,6 @@ class CFFExchange(Exchange, ABC):
         self.logger = Logger(__name__).logger
         self.logger.info(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
 
-    def is_login(self):
-        return True if self.trader_user_spi is not None and self.trader_user_spi.login_finish else False
-
     def connect_market_data(self):
         self.logger.info("连接中金行情中心")
         # 创建API实例

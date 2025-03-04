@@ -28,11 +28,17 @@ class Exchange(ABC):
         if not os.path.exists(config_file_path):
             os.makedirs(config_file_path)
 
-    def is_login(self):
+    def is_trade_login(self):
         return True if self.trader_user_spi is not None and self.trader_user_spi.login_finish else False
 
-    def is_query_finish(self, query_name: str):
+    def is_market_login(self):
+        return True if self.market_data_user_spi is not None and self.market_data_user_spi.login_finish else False
+
+    def is_trade_query_finish(self, query_name: str):
         return self.trader_user_spi.query_finish[query_name]
+
+    def is_market_query_finish(self, query_name: str):
+        return self.market_data_user_spi.query_finish[query_name]
 
     @abstractmethod
     def connect_market_data(self):

@@ -1,7 +1,9 @@
 import time
+from typing import Dict
 
 from api_cffex import ThostFtdcApi
 from api_cffex.ThostFtdcApi import CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, CThostFtdcDepthMarketDataField
+from utils.api import SubscribeMarketData
 from utils.helper import *
 
 from ctp.market_data_manager import MarketDataManager
@@ -14,6 +16,8 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
         self.market_data_user_api = market_data_user_api
         self.config = account_config
         self.market_data_manager : MarketDataManager = market_data_manager
+        self.login_finish = False
+        self.query_finish: Dict[str, bool] = {}
         self.logger = Logger(__name__).logger
 
 
@@ -21,7 +25,6 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
     # 当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用
     def OnFrontConnected(self):
         self.logger.info("开始建立行情连接")
-
 
         login_field = ThostFtdcApi.CThostFtdcReqUserLoginField()
 
@@ -43,11 +46,18 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
             self.logger.error('行情连接失败\n错误信息为：{}\n错误代码为：{}'.format(pRspInfo.ErrorMsg, pRspInfo.ErrorID))
         else:
             self.logger.info('行情账户登录成功！')
+            self.login_finish = True
 
     # SubscribeMarketData
     def OnRspSubMarketData(self, pSpecificInstrument, pRspInfo, nRequestID, bIsLast):
         if pRspInfo.ErrorID != 0:
             self.logger.error(f"订阅行情失败，合约: {pSpecificInstrument.InstrumentID}, 错误信息: {pRspInfo.ErrorMsg}")
+
+        self.logger.info(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
+
+        if bIsLast:
+            self.query_finish[SubscribeMarketData] = True
+
 
     # 深度行情通知
     def OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField) -> "void":
