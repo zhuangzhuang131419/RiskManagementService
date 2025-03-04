@@ -156,14 +156,14 @@ class SExchange(Exchange, ABC):
         # query_file.BrokerID = self.config.broker_id
         ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
         if ret == 0:
-            print('发送查询持仓明细成功！')
+            self.logger.info('发送查询持仓明细成功！')
         else:
-            print('发送查询持仓明细失败！')
+            self.logger.error('发送查询持仓明细失败！')
             judge_ret(ret)
             while ret != 0:
                 query_file = ThostFtdcApiSOpt.CThostFtdcQryInvestorPositionDetailField()
                 ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
-                print('正在查询持仓明细...')
+                self.logger.info('正在查询持仓明细...')
                 time.sleep(5)
         time.sleep(1)
 
@@ -172,11 +172,12 @@ class SExchange(Exchange, ABC):
         if ret == 0:
             pass
         else:
-            print('发送订阅{}合约请求失败！'.format(str(instrument_ids)))
+            self.logger.error('发送订阅{}合约请求失败！'.format(str(instrument_ids)))
             judge_ret(ret)
             while ret != 0:
                 ret = self.market_data_user_api.mduserapi.SubscribeMarketData(instrument_ids)
-                print('正在订阅{}行情...'.format(str(instrument_ids)))
+                self.logger.info('正在订阅{}行情...'.format(str(instrument_ids)))
+                time.sleep(5)
 
     def query_investor_position(self, instrument_id):
         self.trader_user_spi.query_finish[ReqQryInvestorPosition] = False
@@ -185,10 +186,9 @@ class SExchange(Exchange, ABC):
             query_file.InstrumentID = instrument_id
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
-            print(f"发送查询投资者持仓请求成功")
-            pass
+            self.logger.info(f"发送查询投资者持仓请求成功")
         else:
-            print(f"发送查询投资者持仓请求失败")
+            self.logger.error(f"发送查询投资者持仓请求失败")
             judge_ret(ret)
 
     def init_market_data(self, market_data_manager: MarketDataManager):

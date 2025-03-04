@@ -6,6 +6,9 @@ import pandas as pd
 import py_vollib_vectorized
 
 from utils.helper import INTEREST_RATE
+from utils.logger import Logger
+
+logger = Logger(__name__).logger
 
 
 # put call parity
@@ -42,7 +45,7 @@ def calculate_x_distance(S, K, t, r, v, q):
     # 计算价格差异并考虑时间、利率和股息的影响
     x_distance = math.log(K / (S * math.exp(t * (r - q)))) / (v * math.sqrt(t))
     if is_close(x_distance, 0.0, 8):
-        print(f"S = {S}, K={K}, t={t}, r={r}, v={v}, q={q}")
+        logger.error(f"S = {S}, K={K}, t={t}, r={r}, v={v}, q={q}")
     return x_distance
 
 
@@ -74,7 +77,7 @@ def calculate_imply_volatility(option_type, underlying_price, strike_price, rema
             return -1
     except Exception as e:
         # 捕获任何异常并返回 None
-        print(f"Error calculating implied volatility: {e}\n price = {option_price}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n flag = {option_type}")
+        logger.error(f"Error calculating implied volatility: {e}\n price = {option_price}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n flag = {option_type}")
         return -1
 
 def calculate_delta(option_type: str, underlying_price: float, strike_price, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
@@ -82,21 +85,21 @@ def calculate_delta(option_type: str, underlying_price: float, strike_price, rem
         delta = py_vollib_vectorized.vectorized_delta(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='array')[0]
         return delta
     except Exception as e:
-        print(f"Error calculating delta: {e}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n flag = {option_type}")
+        logger.error(f"Error calculating delta: {e}\n S = {underlying_price}\n K = {strike_price}\n t = {remaining_year}\n r = {interest_rate}\n flag = {option_type}")
 
 def calculate_gamma(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
     try:
         gamma = py_vollib_vectorized.vectorized_gamma(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='array')[0]
         return gamma
     except Exception as e:
-        print(f"Error calculating gamma: {e}")
+        logger.error(f"Error calculating gamma: {e}")
 
 def calculate_vega(option_type: str, underlying_price: float, strike_price: float, remaining_year: float, interest_rate: float, volatility: float, dividend_rate: float):
     try:
         vega = py_vollib_vectorized.vectorized_vega(flag=option_type, S=underlying_price, K=strike_price, t=remaining_year, r=interest_rate, sigma=volatility, q=dividend_rate, model='black_scholes_merton', return_as='array')[0]
         return vega
     except Exception as e:
-        print(f"Error calculating vega: {e}")
+        logger.error(f"Error calculating vega: {e}")
 
 #当K<0,or,t<0时返回nan，nan与任何数对比都会返回false，k=时严重错误，k取值使得option价格小于实值额度时，返回0，所以用>0做赛选可以避免除0/0以外的所有错误
 def estimate_atm_volatility(strike_price_list: np.ndarray, volatility_list: np.ndarray, price: float):

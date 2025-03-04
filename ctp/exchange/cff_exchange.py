@@ -12,21 +12,23 @@ from api_cffex import ThostFtdcApi
 from utils.helper import judge_ret, filter_index_future
 from model.direction import Direction
 from model.enum.exchange_type import ExchangeType
+from utils.logger import Logger
 
 
 class CFFExchange(Exchange, ABC):
     def __init__(self, config: ExchangeConfig, config_file_path: str, user_memory_manager: UserMemoryManager, market_data_manager: MarketDataManager):
         super().__init__(config, config_file_path)
         self.type = ExchangeType.CFFEX
-        print(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
         self.user_memory_manager = user_memory_manager
         self.market_data_manager = market_data_manager
+        self.logger = Logger(__name__).logger
+        self.logger.info(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
 
     def is_login(self):
         return True if self.trader_user_spi is not None and self.trader_user_spi.login_finish else False
 
     def connect_market_data(self):
-        print("连接中金行情中心")
+        self.logger.info("连接中金行情中心")
         # 创建API实例
         self.market_data_user_api = ThostFtdcApi.CThostFtdcMdApi_CreateFtdcMdApi(self.config_file_path)
         # 创建spi实例
@@ -38,7 +40,7 @@ class CFFExchange(Exchange, ABC):
         self.market_data_user_api.Init()
 
     def connect_trader(self):
-        print(f"连接中金交易中心")
+        self.logger.info(f"连接中金交易中心")
         self.trader_user_api = ThostFtdcApi.CThostFtdcTraderApi_CreateFtdcTraderApi(self.config_file_path)
         self.trader_user_spi = TraderService(self.trader_user_api, self.config, self.market_data_manager, self.user_memory_manager)
         self.trader_user_api.RegisterSpi(self.trader_user_spi)
@@ -67,9 +69,9 @@ class CFFExchange(Exchange, ABC):
         ret = self.trader_user_api.ReqOrderAction(order_action_field, 0)
 
         if ret == 0:
-            print(f'发送撤单请求成功！{order_action_field.OrderRef}')
+            self.logger.info(f'发送撤单请求成功！{order_action_field.OrderRef}')
         else:
-            print('发送撤单请求失败！')
+            self.logger.error('发送撤单请求失败！')
             judge_ret(ret)
 
 
@@ -102,7 +104,7 @@ class CFFExchange(Exchange, ABC):
         if direction in direction_mapping:
             order_field.Direction, order_field.CombOffsetFlag = direction_mapping[direction]
         else:
-            print('下单委托类型错误！停止下单！')
+            self.logger.error('下单委托类型错误！停止下单！')
             raise ValueError
 
         # 普通限价单默认参数
@@ -128,9 +130,9 @@ class CFFExchange(Exchange, ABC):
         ret = self.trader_user_api.ReqOrderInsert(order_field, 0)
 
         if ret == 0:
-            print(f'发送下单{order_field.OrderRef}请求成功！')
+            self.logger.info(f'发送下单{order_field.OrderRef}请求成功！')
         else:
-            print('发送下单请求失败！')
+            self.logger.error('发送下单请求失败！')
             judge_ret(ret)
         return order_field.OrderRef
 
@@ -141,27 +143,26 @@ class CFFExchange(Exchange, ABC):
         query_file.ExchangeID = self.type.name
         ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
         if ret == 0:
-            print('发送查询合约成功！')
+            self.logger.info('发送查询合约成功！')
         else:
-            print('发送查询合约失败！')
+            self.logger.error('发送查询合约失败！')
             judge_ret(ret)
             while ret != 0:
                 query_file = ThostFtdcApi.CThostFtdcQryInstrumentField()
                 ret = self.trader_user_api.ReqQryInstrument(query_file, 0)
-                print('正在查询合约...')
+                self.logger.info('正在查询合约...')
                 time.sleep(5)
-        time.sleep(1)
 
     def subscribe_market_data(self, instrument_ids):
         ret = self.market_data_user_api.SubscribeMarketData(instrument_ids)
         if ret == 0:
             pass
         else:
-            print('发送订阅{}合约请求失败！'.format(str(instrument_ids)))
+            self.logger.error('发送订阅{}合约请求失败！'.format(str(instrument_ids)))
             judge_ret(ret)
             while ret != 0:
                 ret = self.market_data_user_api.mduserapi.SubscribeMarketData(instrument_ids)
-                print('正在订阅{}行情...'.format(str(instrument_ids)))
+                self.logger.info('正在订阅{}行情...'.format(str(instrument_ids)))
 
 
     def query_investor_position(self, instrument_id):
@@ -171,14 +172,14 @@ class CFFExchange(Exchange, ABC):
             query_file.InstrumentID = instrument_id
         ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
         if ret == 0:
-            print('发送查询持仓成功！')
+            self.logger.info('发送查询持仓成功！')
             pass
         else:
-            print('发送查询持仓失败！')
+            self.logger.error('发送查询持仓失败！')
             judge_ret(ret)
             while ret != 0:
                 ret = self.trader_user_api.ReqQryInvestorPosition(query_file, 0)
-                print('正在查询持仓...')
+                self.logger.info('正在查询持仓...')
                 time.sleep(5)
 
     # 查看持仓明细
@@ -188,16 +189,15 @@ class CFFExchange(Exchange, ABC):
         # query_file.BrokerID = self.config.broker_id
         ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
         if ret == 0:
-            print('发送查询持仓明细成功！')
+            self.logger.info('发送查询持仓明细成功！')
         else:
-            print('发送查询持仓明细失败！')
+            self.logger.error('发送查询持仓明细失败！')
             judge_ret(ret)
             while ret != 0:
                 query_file = ThostFtdcApi.CThostFtdcQryInvestorPositionDetailField()
                 ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
-                print('正在查询持仓明细...')
+                self.logger.info('正在查询持仓明细...')
                 time.sleep(5)
-        time.sleep(1)
 
     def init_market_data(self, market_data_manager: MarketDataManager):
         subscribe_future = []
