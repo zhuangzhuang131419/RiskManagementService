@@ -3,7 +3,8 @@ from abc import ABC
 
 from ctp.cffex.market_data_service import MarketDataService
 from ctp.cffex.trader_service import TraderService
-from utils.api import ReqQryInstrument, ReqQryInvestorPosition, ReqOrderInsert, ReqQryInvestorPositionDetail, ReqOrderAction
+from utils.api import ReqQryInstrument, ReqQryInvestorPosition, ReqOrderInsert, ReqQryInvestorPositionDetail, \
+    ReqOrderAction, SubscribeMarketData
 from ctp.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
@@ -19,8 +20,8 @@ class CFFExchange(Exchange, ABC):
     def __init__(self, config: ExchangeConfig, config_file_path: str, user_memory_manager: UserMemoryManager, market_data_manager: MarketDataManager):
         super().__init__(config, config_file_path)
         self.type = ExchangeType.CFFEX
-        self.user_memory_manager = user_memory_manager
-        self.market_data_manager = market_data_manager
+        self.user_memory_manager: UserMemoryManager = user_memory_manager
+        self.market_data_manager: MarketDataManager = market_data_manager
         self.logger = Logger(__name__).logger
         self.logger.info(f'CTP API 版本: {ThostFtdcApi.CThostFtdcTraderApi_GetApiVersion()}')
 
@@ -151,6 +152,7 @@ class CFFExchange(Exchange, ABC):
                 time.sleep(5)
 
     def subscribe_market_data(self, instrument_ids):
+        self.market_data_user_spi.query_finish[SubscribeMarketData] = False
         ret = self.market_data_user_api.SubscribeMarketData(instrument_ids)
         if ret == 0:
             pass
@@ -195,16 +197,4 @@ class CFFExchange(Exchange, ABC):
                 ret = self.trader_user_api.ReqQryInvestorPositionDetail(query_file, 0)
                 self.logger.info('正在查询持仓明细...')
                 time.sleep(5)
-
-    def init_market_data(self, market_data_manager: MarketDataManager):
-        subscribe_future = []
-        subscribe_option = []
-        for instrument_id, instrument in self.trader_user_spi.subscribe_instrument.items():
-            if filter_index_future(instrument_id):
-                subscribe_future.append(instrument)
-            else:
-                subscribe_option.append(instrument)
-
-        market_data_manager.add_index_future(subscribe_future)
-        market_data_manager.add_options(subscribe_option)
 

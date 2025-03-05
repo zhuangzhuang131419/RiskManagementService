@@ -68,10 +68,11 @@ def main():
     # test_se_instruction("91013096", "9982100962", 0.08, 0.07)
 
     while True:
+        time.sleep(30)
         for symbol, option_series in ctp_manager.market_data_manager.option_market_data.items():
             ctp_manager.market_log_manager.record_option_log(option_series)
             ctp_manager.market_log_manager.record_wing_para(option_series)
-        time.sleep(300)
+        time.sleep(30)
 
 def test_position():
     print(get_se_monitor("HO20250221"))

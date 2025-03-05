@@ -33,7 +33,6 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config: ExchangeConfig = config
-        self.subscribe_instrument = {}
         self.login_finish = False
         self.query_finish: Dict[str, bool] = {}
         self.market_data_manager = market_data_manager
@@ -123,10 +122,10 @@ class TraderService(ThostFtdcApi.CThostFtdcTraderSpi):
         if pInstrument is not None:
             if filter_index_option(pInstrument.InstrumentID):
                 option = IndexOption(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingMultiple)
-                self.subscribe_instrument[option.id] = option
+                self.market_data_manager.options_to_subscribe.append(option)
             elif filter_index_future(pInstrument.InstrumentID):
                 future = Future(pInstrument.InstrumentID, pInstrument.ExpireDate, pInstrument.ExchangeID, pInstrument.UnderlyingInstrID)
-                self.subscribe_instrument[future.id] = future
+                self.market_data_manager.future_to_subscribe.append(future)
         if bIsLast:
             self.query_finish[ReqQryInstrument] = True
             self.logger.info('查询合约完成')

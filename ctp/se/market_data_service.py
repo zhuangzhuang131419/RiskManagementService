@@ -53,7 +53,7 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
         if pRspInfo.ErrorID != 0:
             self.logger.error(f"订阅行情失败，合约: {pSpecificInstrument.InstrumentID}, 错误信息: {pRspInfo.ErrorMsg}")
 
-        self.logger.info(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
+        # self.logger.info(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
 
         if bIsLast:
             self.query_finish[SubscribeMarketData] = True

@@ -31,7 +31,6 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
         super().__init__()
         self.trader_user_api = trader_user_api
         self.config = config
-        self.subscribe_instrument: Dict[str, Instrument] = {}
         self.login_finish = False
         self.query_finish: Dict[str, bool] = {}
         self.market_data_manager = market_data_manager
@@ -123,7 +122,7 @@ class TraderService(ThostFtdcApiSOpt.CThostFtdcTraderSpi):
                 option_type = 'C' if int(pInstrument.OptionsType) == 1 else 'P'
                 # print(f"InstrumentID: {pInstrument.InstrumentID}, VolumeMultiple: {pInstrument.VolumeMultiple}")
                 o = ETFOption(pInstrument.InstrumentID, pInstrument.ExpireDate, option_type, int(pInstrument.StrikePrice * 10000), pInstrument.ExchangeID, pInstrument.UnderlyingInstrID, pInstrument.VolumeMultiple / 10000)
-                self.subscribe_instrument[o.id] = o
+                self.market_data_manager.options_to_subscribe.append(o)
 
         if bIsLast:
             self.query_finish[ReqQryInstrument] = True

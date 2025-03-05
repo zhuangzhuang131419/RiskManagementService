@@ -2,6 +2,7 @@ import threading
 import time
 from queue import Queue
 
+import numpy as np
 from numpy.linalg import LinAlgError
 from unicodedata import category
 
@@ -57,6 +58,9 @@ class MarketDataManager:
         # 同步时钟
         self.clock: str = time.strftime('%H:%M:%S', time.localtime(time.time()))
 
+        self.options_to_subscribe: List[Option] = []
+        self.future_to_subscribe: List[Future] = []
+
         self.logger = Logger(__name__).logger
 
     def refresh(self):
@@ -72,7 +76,9 @@ class MarketDataManager:
         self.instrument_transform_full_symbol: Dict[str, str] = {}
         self.grouped_instruments: Dict[str, GroupedInstrument] = {}
 
-
+    def init_market_memory(self):
+        self.add_options(self.options_to_subscribe)
+        self.add_index_future(self.future_to_subscribe)
 
     def add_index_future(self, index_futures: List[Future]):
         """
@@ -113,12 +119,12 @@ class MarketDataManager:
                 etf_set.add(option.symbol)
 
         if len(index_set) > 0:
-            self.index_option_symbol = sorted(list(index_set))
-            self.logger.info(f"添加指数期权：{self.index_option_symbol}")
+            self.index_option_symbol = sorted(list(set(self.index_option_symbol) | index_set))
+            self.logger.info(f"添加指数期权链：{self.index_option_symbol}")
 
         if len(etf_set) > 0:
-            self.etf_option_symbol = sorted(list(etf_set))
-            self.logger.info(f"添加ETF期权{self.etf_option_symbol}")
+            self.etf_option_symbol = sorted(list(set(self.etf_option_symbol) | etf_set))
+            self.logger.info(f"添加ETF期权链：{self.etf_option_symbol}")
 
         # 初始化 OptionSeries
         for symbol, options_list in option_series_dict.items():
@@ -171,8 +177,6 @@ class MarketDataManager:
                         self.calculate_index_option_month_t_iv(symbol, remaining_year)
                         self.calculate_wing_model_para(symbol, remaining_year)
                         self.calculate_greeks(symbol, remaining_year)
-
-
 
     def get_se_para_by_baseline(self, index_para: WingModelPara, se_para: WingModelPara):
         if self.baseline == BaselineType.INDIVIDUAL:
@@ -331,9 +335,16 @@ class MarketDataManager:
 
 
         # 参数估计
+        para_array = np.zeros(3)
         try:
             square_matrix = np.linalg.inv(np.dot(np.transpose(x_array), x_array))
             para_array = np.dot(np.dot(square_matrix, np.transpose(x_array)),y_array)
+
+        except LinAlgError:
+            square_matrix = np.linalg.pinv(np.dot(np.transpose(x_array), x_array))
+            para_array = np.dot(np.dot(square_matrix, np.transpose(x_array)), y_array)
+
+        finally:
             # 残差序列
             residual = y_array - x_array @ para_array
 
@@ -345,8 +356,10 @@ class MarketDataManager:
             wing_model_para.residual = (residual @ residual) / available_num
 
             self.option_market_data[symbol].wing_model_para = wing_model_para
-        except LinAlgError:
-            return
+
+
+
+
 
 
     def calculate_atm_para(self, symbol, remaining_year):

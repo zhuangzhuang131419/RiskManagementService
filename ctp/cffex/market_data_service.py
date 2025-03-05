@@ -53,7 +53,7 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
         if pRspInfo.ErrorID != 0:
             self.logger.error(f"订阅行情失败，合约: {pSpecificInstrument.InstrumentID}, 错误信息: {pRspInfo.ErrorMsg}")
 
-        self.logger.info(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
+        # self.logger.info(f"订阅合约 {pSpecificInstrument.InstrumentID} 成功")
 
         if bIsLast:
             self.query_finish[SubscribeMarketData] = True
@@ -64,7 +64,7 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
         if self.market_data_manager is not None:
             if pDepthMarketData.InstrumentID in self.market_data_manager.instrument_transform_full_symbol:
 
-                # if pDepthMarketData.InstrumentID == "HO2502-C-2400":
+                # if pDepthMarketData.InstrumentID == "HO2503-C-2400":
                 #     print(f"ask_price: {pDepthMarketData.AskPrice1} ask_volume: {pDepthMarketData.AskVolume1}")
 
                 # if pDepthMarketData.InstrumentID == "IF2502":

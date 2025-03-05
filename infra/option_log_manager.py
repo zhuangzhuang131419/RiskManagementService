@@ -7,6 +7,7 @@ from openpyxl.reader.excel import load_workbook
 from model.enum.option_type import OptionType
 from model.instrument.option import ETFOption
 from model.instrument.option_series import OptionSeries
+from utils.logger import Logger
 
 
 class OptionLogManager:
@@ -16,6 +17,7 @@ class OptionLogManager:
         os.makedirs(self.base_dir, exist_ok=True)  # 创建根目录
         self.option_series : Dict[str, OptionSeries] = {}
         self.instrument_transform_full_symbol = instrument_transform_full_symbol
+        self.logger = Logger(__name__).logger
 
     def read_data_from_company(self, file_path: str) -> pd.DataFrame:
         """
@@ -25,7 +27,7 @@ class OptionLogManager:
         :return: 数据的 DataFrame
         """
 
-        print(f"read_data_from_company:{file_path}")
+        self.logger.info(f"read_data_from_company:{file_path}")
 
         # 读取数据文件，指定列名
         column_names = [
@@ -77,7 +79,6 @@ class OptionLogManager:
 
     def record_wing_para(self, option_series: OptionSeries):
         symbol = option_series.symbol
-        print(f"record {symbol} option series wing para log.")
         # 目录和文件路径
         underlying_folder = os.path.join(self.base_dir, symbol[:-8])
         os.makedirs(underlying_folder, exist_ok=True)  # 确保目录存在
@@ -98,8 +99,6 @@ class OptionLogManager:
             'v',
         ])
 
-        print(record_data)
-
         sheet_name = "General"
         if os.path.exists(file_path):
             wb = load_workbook(file_path)
@@ -119,11 +118,11 @@ class OptionLogManager:
             with pd.ExcelWriter(file_path, engine="openpyxl", mode="w") as writer:
                 df_new.to_excel(writer, sheet_name=sheet_name, index=False)
 
-        print(f"记录完成: {file_path} -> {sheet_name} Sheet")
+        self.logger.info(f"记录完成: {file_path} -> {sheet_name} Sheet")
 
     def record_option_log(self, option_series: OptionSeries):
         symbol = option_series.symbol
-        print(f"record {symbol} option series log.")
+        self.logger.info(f"record {symbol} option series log.")
         # 目录和文件路径
         underlying_folder = os.path.join(self.base_dir, symbol[:-8])
         os.makedirs(underlying_folder, exist_ok=True)  # 确保目录存在
@@ -174,7 +173,7 @@ class OptionLogManager:
             with pd.ExcelWriter(file_path, engine="openpyxl", mode="w") as writer:
                 df_new.to_excel(writer, sheet_name=sheet_name, index=False)
 
-        print(f"记录完成: {file_path} -> {sheet_name} Sheet")
+        self.logger.info(f"记录完成: {file_path} -> {sheet_name} Sheet")
 
 
 if __name__ == '__main__':

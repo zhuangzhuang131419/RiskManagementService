@@ -5,6 +5,8 @@ from typing import Dict
 
 from ctp.market_data_manager import MarketDataManager
 from infra.option_log_manager import OptionLogManager
+from model.enum.exchange_type import ExchangeType
+from model.instrument.future import Future
 from model.user import User
 from utils.helper import *
 from utils.logger import Logger
@@ -95,6 +97,7 @@ class CTPManager:
             self.market_data_manager.refresh()
             self.market_data_user.query_instrument()
             self.market_data_user.init_market_memory()
+            self.market_data_user.subscribe_all_market_data()
 
     def check_white_list(self):
         self.logger.info("检查白名单")
@@ -140,6 +143,8 @@ class CTPManager:
         self.market_data_user.connect_master_data()
         self.market_data_user.query_instrument()
         self.market_data_user.init_market_memory()
+        self.market_data_user.subscribe_all_market_data()
+        self.logger.info('行情中心连接完毕')
 
     def switch_to_user(self, user_name: str) -> bool:
         self.current_user = self.users.get(user_name, None)

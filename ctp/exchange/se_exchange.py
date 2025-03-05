@@ -3,7 +3,8 @@ from abc import ABC
 
 from ctp.se.market_data_service import MarketDataService
 from ctp.se.trader_service import TraderService
-from utils.api import ReqOrderInsert, ReqQryInstrument, ReqQryInvestorPositionDetail, ReqOrderAction, ReqQryInvestorPosition
+from utils.api import ReqOrderInsert, ReqQryInstrument, ReqQryInvestorPositionDetail, ReqOrderAction, \
+    ReqQryInvestorPosition, SubscribeMarketData
 from ctp.market_data_manager import MarketDataManager
 from ctp.exchange.exchange_base import Exchange
 from api_se import ThostFtdcApiSOpt
@@ -16,8 +17,8 @@ from utils.logger import Logger
 class SExchange(Exchange, ABC):
     def __init__(self, config, config_file_path, user_memory_manager: UserMemoryManager, market_data_manager: MarketDataManager):
         super().__init__(config, config_file_path)
-        self.user_memory_manager = user_memory_manager
-        self.market_data_manager = market_data_manager
+        self.user_memory_manager: UserMemoryManager = user_memory_manager
+        self.market_data_manager: MarketDataManager = market_data_manager
         self.logger = Logger(__name__).logger
         self.logger.info(f'CTP API 版本: {ThostFtdcApiSOpt.CThostFtdcTraderApi_GetApiVersion()}')
 
@@ -168,6 +169,7 @@ class SExchange(Exchange, ABC):
         time.sleep(1)
 
     def subscribe_market_data(self, instrument_ids):
+        self.market_data_user_spi.query_finish[SubscribeMarketData] = False
         ret = self.market_data_user_api.SubscribeMarketData(instrument_ids)
         if ret == 0:
             pass
@@ -190,7 +192,3 @@ class SExchange(Exchange, ABC):
         else:
             self.logger.error(f"发送查询投资者持仓请求失败")
             judge_ret(ret)
-
-    def init_market_data(self, market_data_manager: MarketDataManager):
-        subscribe_option = list(self.trader_user_spi.subscribe_instrument.values())
-        market_data_manager.add_options(subscribe_option)

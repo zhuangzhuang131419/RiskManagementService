@@ -71,7 +71,3 @@ class Exchange(ABC):
     @abstractmethod
     def query_investor_position_detail(self):
         pass
-
-    @abstractmethod
-    def init_market_data(self, market_data_manager: MarketDataManager):
-        pass

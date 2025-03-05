@@ -2,8 +2,8 @@ import json
 import time
 from uuid import uuid4
 
-from utils.api import ReqQryInvestorPosition, ReqOrderInsert, ReqOrderAction, ReqQryInstrument
-from utils.helper import TIMEOUT
+from utils.api import ReqQryInvestorPosition, ReqOrderInsert, ReqOrderAction, ReqQryInstrument, SubscribeMarketData
+from utils.helper import TIMEOUT, filter_index_future, filter_index_option, filter_etf_option
 from ctp.market_data_manager import MarketDataManager
 from memory.user_memory_manager import UserMemoryManager
 from model.config.exchange_config import ExchangeConfig
@@ -52,7 +52,8 @@ class User:
 
         # 内存中心
         self.user_memory = UserMemoryManager(self.user_name, self.exchange_config)
-        self.market_data_memory = market_data_manager
+        self.market_data_manager: MarketDataManager = market_data_manager
+        self.market_exchange: Dict[ExchangeType, Exchange] = {}
 
     def get_exchange(self, exchange_type: ExchangeType, investor_id: str):
         if exchange_type in self.exchanges:
@@ -69,29 +70,35 @@ class User:
             for exchange in exchange_list:
                 exchange.connect_market_data()
                 exchange.connect_trader()
-                while not exchange.is_market_login():
+                while not exchange.is_market_login() or not exchange.is_trade_login():
                     if time.time() - start_time > TIMEOUT:
                         self.logger.error(f'{exchange_type.value} 登录超时')
                         break
                 else:
                     # 若登录成功，记录成功日志
-                    self.logger.info(f'{exchange_type.value} 登录成功')
+                    self.logger.info(f'{exchange_type.value} 行情用户登录成功')
+                    self.market_exchange[exchange_type] = exchange
                     continue
 
                 self.logger.info(f"跳过未成功连接的交易所：{exchange_type.value}")
 
 
-    def query_instrument(self):
+    def query_instrument(self, timeout=TIMEOUT):
         for exchange_type, exchange_list in self.exchanges.items():
             # 查询exchange type下面exchange list的一个就可以了
             for exchange in exchange_list:
                 if not exchange.is_trade_login():
+                    self.logger.error(f'{exchange.config.investor_id} 登录超时')
                     continue
+                start_time = time.time()
                 exchange.query_instrument()
+
                 while not exchange.is_trade_query_finish(ReqQryInstrument):
-                    time.sleep(3)
-                self.logger.info(f"{self.user_name} 的 {exchange_type.value} 合约查询完成")
-                break
+                    if time.time() - start_time > timeout:
+                        self.logger.error(f'{exchange_type.value} {ReqQryInstrument} 查询超时')
+                    time.sleep(1)
+                else:
+                    self.logger.info(f"{self.user_name} 的 {exchange_type.value} 合约查询完成")
 
 
     def init_exchange(self, config_file_root: str):
@@ -101,9 +108,9 @@ class User:
                 for config in configs:
                     path = f"{config_file_root}/{self.user_name}/{exchange_type.name}/{config.investor_id}/"
                     if exchange_type == ExchangeType.CFFEX:
-                        exchange_list.append(CFFExchange(config, path, self.user_memory, self.market_data_memory))
+                        exchange_list.append(CFFExchange(config, path, self.user_memory, self.market_data_manager))
                     elif exchange_type == ExchangeType.SE:
-                        exchange_list.append(SExchange(config, path, self.user_memory, self.market_data_memory))
+                        exchange_list.append(SExchange(config, path, self.user_memory, self.market_data_manager))
                     else:
                         self.logger.error(f"未知的交易所类型: {exchange_type.value}")
 
@@ -128,35 +135,75 @@ class User:
                         break
                 else:
                     # 若登录成功，记录成功日志
-                    self.logger.info(f'{self.user_name} 的 {exchange_type.value} investor_id: {exchange.config.investor_id} 登录成功')
+                    self.logger.info(f'{self.user_name} 的 {exchange_type.value} investor_id: {exchange.config.investor_id} 交易登录成功')
                     continue
                 self.logger.warning(f"跳过未成功连接的交易所：{self.user_name}的{exchange_type.value} investor_id: {exchange.config.investor_id}")
 
     def init_market_memory(self):
-        for exchange_id, exchange_list in self.exchanges.items():
-            exchange_list[0].init_market_data(self.market_data_memory)
+        self.market_data_manager.init_market_memory()
 
-    # 批量订阅
-    def subscribe_market_data(self):
-        self.logger.info('开始订阅行情')
+    def subscribe_all_market_data(self):
+        self.subscribe_market_data([option.id for option in self.market_data_manager.options_to_subscribe] + [future.id for future in self.market_data_manager.future_to_subscribe])
 
-        for exchange_id, exchange_list in self.exchanges.items():
-            for exchange in exchange_list:
-                if not exchange.is_market_login():
-                    continue
-                instrument_ids = list(exchange.trader_user_spi.subscribe_instrument.keys())
-                # 将 instrument_ids 分成每组 100 个
-                batch_size = 100
-                for i in range(0, len(instrument_ids), batch_size):
-                    batch = instrument_ids[i:i + batch_size]  # 每组 100 个
-                    exchange.subscribe_market_data(batch)  # 订阅每组的数据
-                break
-            self.logger.info('已发送全部订阅请求')
+    def subscribe_market_data(self, instrument_ids: List[str]):
+        self.logger.info(f"subscribe_market_data： {instrument_ids}")
+        cffex_instruments = []
+        se_instruments = []
+        for instrument_id in instrument_ids:
+            if instrument_id in self.market_data_manager.instrument_transform_full_symbol:
+                full_symbol = self.market_data_manager.instrument_transform_full_symbol[instrument_id]
+                if filter_index_future(full_symbol) or filter_index_option(full_symbol):
+                    cffex_instruments.append(instrument_id)
+                elif filter_etf_option(full_symbol):
+                    se_instruments.append(instrument_id)
+            else:
+                self.logger.error(f"Invalid instrument: {instrument_id}")
+
+        ret_cffex = True
+        ret_se = True
+
+        if len(cffex_instruments) > 0:
+            self.logger.info(f"cffex_instruments： {cffex_instruments}")
+            ret_cffex = self.subscribe_market_data_by_exchange(ExchangeType.CFFEX, cffex_instruments)
+        if len(se_instruments) > 0:
+            self.logger.info(f"se_instruments： {se_instruments}")
+            ret_se = self.subscribe_market_data_by_exchange(ExchangeType.SE, se_instruments)
+
+        return ret_cffex and ret_se
+
+    def subscribe_market_data_by_exchange(self, exchange_type: ExchangeType, instrument_ids: List[str], timeout=TIMEOUT):
+        if exchange_type not in self.market_exchange:
+            self.logger.error(f"Invalid exchange type {exchange_type} {self.market_exchange}")
+            return False
+
+        if not self.market_exchange[exchange_type].is_market_login():
+            self.logger.error(f"未登录 subscribe_market_data_by_exchange")
+            return False
+
+        exchange = self.market_exchange[exchange_type]
+
+        # 将 instrument_ids 分成每组 100 个
+        batch_size = 100
+        for i in range(0, len(instrument_ids), batch_size):
+            batch = instrument_ids[i:i + batch_size]  # 每组 100 个
+            start_time = time.time()
+            exchange.subscribe_market_data(batch)  # 订阅每组的数据
+            while not exchange.is_market_query_finish(SubscribeMarketData):
+                if time.time() - start_time > timeout:
+                    self.logger.error(f'{exchange_type.value} {SubscribeMarketData} 查询超时')
+                    break
+                time.sleep(1)
+
+        self.logger.info(f'{exchange_type} 已发送全部订阅请求')
+        return True
 
     def query_investor_position(self):
         self.user_memory.refresh_position()
         for exchange_id, exchange_list in self.exchanges.items():
             for exchange in exchange_list:
+                if not exchange.is_trade_login():
+                    self.logger.error(f"{exchange}未登录")
+                    continue
                 self.query_investor_position_by_exchange(exchange_id, exchange.config.investor_id, None, 30)
 
     def query_investor_position_by_exchange(self, exchange_type: ExchangeType, investor_id: str, instrument_id: Optional[str], timeout=TIMEOUT) -> bool:
