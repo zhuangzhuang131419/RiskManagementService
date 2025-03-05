@@ -279,7 +279,7 @@ class MarketDataManager:
 
         strike_price_num = self.option_market_data[symbol].get_num_strike_price()
 
-        wing_model_para = WingModelPara()
+        wing_model_para = WingModelPara(time=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
         available_num = 0
         for strike_price, option_tuple in self.option_market_data[symbol].strike_price_options.items():

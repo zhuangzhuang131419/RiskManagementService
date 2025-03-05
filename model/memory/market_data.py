@@ -9,7 +9,7 @@ class MarketData:
     bid_volumes: List[int] = field(default_factory=lambda: [-1] * 5)
     ask_volumes: List[int] = field(default_factory=lambda: [-1] * 5)
     available: bool = False
-    time: time = None
+    sending_time: str = None
 
     def set_available(self):
         self.available = True if self.ask_volumes[0] > 0 and self.bid_volumes[0] > 0 and self.ask_prices[0] > 0 and self.bid_prices[0] > 0 else False

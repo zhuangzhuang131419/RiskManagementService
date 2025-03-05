@@ -73,7 +73,7 @@ class MarketDataService(ThostFtdcApi.CThostFtdcMdSpi):
                 self.market_data_manager.clock = pDepthMarketData.UpdateTime
 
                 depth_market_data = DepthMarketData()
-                depth_market_data.time = round(time.time())
+                depth_market_data.sending_time = pDepthMarketData.UpdateTime
                 depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)
                 depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
                 depth_market_data.ask_prices[0] = pDepthMarketData.AskPrice1

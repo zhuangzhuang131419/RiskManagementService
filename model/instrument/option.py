@@ -1,7 +1,7 @@
 import re
 from abc import abstractmethod
 
-from typing import Dict, TypeVar, Generic
+from typing import Dict, TypeVar, Generic, Optional, Iterator
 
 from model.enum.category import Category, UNDERLYING_CATEGORY_MAPPING
 from model.enum.option_type import OptionType
@@ -110,4 +110,21 @@ class OptionTuple:
 
     def __str__(self):
         return f"Call: {self.call.full_symbol}, Put: {self.put.full_symbol}"
+
+
+    def __iter__(self) -> Iterator[Optional[Option]]:
+        """迭代器实现"""
+        self._index = 0  # 初始化索引
+        return self
+
+    def __next__(self) -> Optional[Option]:
+        """返回下一个选项"""
+        if self._index == 0:
+            self._index += 1
+            return self.call  # 返回 Call 选项
+        elif self._index == 1:
+            self._index += 1
+            return self.put  # 返回 Put 选项
+        else:
+            raise StopIteration  # 停止迭代
 

@@ -65,12 +65,12 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
 
                 # if pDepthMarketData.InstrumentID == "91013096":
                 #     print(f"ask_price: {pDepthMarketData.AskPrice1} ask_volume: {pDepthMarketData.AskVolume1} bid_price: {pDepthMarketData.BidPrice1}")
-                self.market_data_manager.clock = pDepthMarketData.UpdateTime
+                self.market_data_manager.clock = pDepthMarketData.SendingTime
 
                 depth_market_data = DepthMarketData()
                 depth_market_data.symbol = self.market_data_manager.instrument_transform_full_symbol[pDepthMarketData.InstrumentID]
 
-                depth_market_data.time = round(time.time())
+                depth_market_data.sending_time = pDepthMarketData.SendingTime
                 depth_market_data.ask_volumes[0] = int(pDepthMarketData.AskVolume1)
                 depth_market_data.bid_volumes[0] = int(pDepthMarketData.BidVolume1)
                 depth_market_data.ask_prices[0] = pDepthMarketData.AskPrice1 * 10000
