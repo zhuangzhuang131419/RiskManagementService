@@ -160,6 +160,10 @@ class MarketDataManager:
         else:
             return None
 
+    def get_option_by_full_symbol(self, full_symbol):
+        symbol, option_type, strike_price = parse_option_full_symbol(full_symbol)
+        return self.option_market_data[symbol].get_option(strike_price, option_type)
+
     def index_volatility_calculator(self):
         while True:
             timestamp = time.time()
