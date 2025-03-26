@@ -63,7 +63,7 @@ class MarketDataService(ThostFtdcApiSOpt.CThostFtdcMdSpi):
         if self.market_data_manager is not None:
             if pDepthMarketData.InstrumentID in self.market_data_manager.instrument_transform_full_symbol:
 
-                # if pDepthMarketData.InstrumentID == "91013096":
+                # if pDepthMarketData.InstrumentID == "10008013":
                 #     print(f"ask_price: {pDepthMarketData.AskPrice1} ask_volume: {pDepthMarketData.AskVolume1} bid_price: {pDepthMarketData.BidPrice1}")
                 self.market_data_manager.clock = pDepthMarketData.SendingTime
 
