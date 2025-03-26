@@ -131,6 +131,12 @@ def count_trading_days(start_date, end_date, holidays_list) -> int:
         current_date += datetime.timedelta(days=1)
     return working_days
 
+def count_remaining_year(expired_date):
+    end_date = datetime.datetime.strptime(expired_date, "%Y%m%d").date()
+    day_count = count_trading_days(datetime.datetime.now().date(), end_date, HOLIDAYS)
+    remaining_year = max(round((day_count - 1) / YEAR_TRADING_DAY + inter_daytime(YEAR_TRADING_DAY), 4), 1 / YEAR_TRADING_DAY)
+    return remaining_year
+
 
 def inter_daytime(total_trading_days: int) -> float:
     # Base calculation

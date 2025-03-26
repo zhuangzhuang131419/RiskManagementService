@@ -18,12 +18,21 @@ export type OptionGreeksData = {
 };
 
 export type WingModelData = {
-    atm_vol: number;
+    symbol: string;
     v: number;
     k1: number;
     k2: number;
     b: number;
-    atm_available: number
+    atm_available?: number
+}
+
+export interface GroupWingModelData {
+    name: string;
+    cffex: WingModelData;
+    se: WingModelData;
+    average: WingModelData;
+    current: WingModelData;
+    shadow: WingModelData;
 }
 
 export type StrikePrices = {

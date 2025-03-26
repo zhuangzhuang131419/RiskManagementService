@@ -10,8 +10,8 @@ import { User, UserGreeks } from '../Model/User';
 import { userDataProvider } from '../DataProvider/UserDataProvider';
 import WingModelBar from './WingModelBar';
 import BaselineSelector from './BaselineSelector';
-import CustomizedParaDialog from './CustomizedParaDialog';
 import UserInfoTable from './UserInfoTable';
+import TheoreticalLineAuxiliaryChart from './TheoreticalLineAuxiliaryChart';
 
 document.body.style.overflow = 'hidden';
 document.documentElement.style.overflow = 'hidden';
@@ -203,6 +203,9 @@ const TradingDashboard: React.FC = () => {
 
     return (
         <Pivot>
+            <PivotItem headerText='风险值'>
+                <TheoreticalLineAuxiliaryChart></TheoreticalLineAuxiliaryChart>
+            </PivotItem>
             <PivotItem headerText='风控'>
                 <Stack tokens={{ childrenGap: 20 }} styles={{ root: { height: '100vh', width: '100vw' } }}>
                     {/* 顶部：账户选择器和数据展示 */}
@@ -264,9 +267,6 @@ const TradingDashboard: React.FC = () => {
                                     onSelect={setSelectedBaseline}
                                     selectedBaselineKey={selectedBaseline as string}
                                 />
-                            </Stack>
-                            <Stack styles={{ root: { height: '20%', overflowY: 'auto' } }}>
-                                <CustomizedParaDialog></CustomizedParaDialog>
                             </Stack>
                         </Stack>
 

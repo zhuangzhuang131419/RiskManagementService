@@ -1,10 +1,6 @@
 import threading
 import time
-from queue import Queue
-
-import numpy as np
 from numpy.linalg import LinAlgError
-from unicodedata import category
 
 from model.enum.category import Category, UNDERLYING_CATEGORY_MAPPING
 from model.instrument.future import Future
@@ -160,6 +156,13 @@ class MarketDataManager:
         else:
             return None
 
+    def get_group_instrument_by_categories(self, categories: List[Category]):
+        result = {}
+        for key, value in self.grouped_instruments.items():
+            if any(key.startswith(category.value) for category in categories):
+                result[key] = value
+        return result
+
     def get_option_by_full_symbol(self, full_symbol):
         symbol, option_type, strike_price = parse_option_full_symbol(full_symbol)
         return self.option_market_data[symbol].get_option(strike_price, option_type)
@@ -214,8 +217,9 @@ class MarketDataManager:
     def calculate_greeks(self, symbol, remaining_year):
         underlying_price = (self.option_market_data[symbol].imply_price.imply_s_ask + self.option_market_data[symbol].imply_price.imply_s_bid) / 2
         volatility = self.option_market_data[symbol].atm_volatility.atm_volatility_protected
+        group_instrument = self.get_group_instrument_by_symbol(symbol)
 
-        if self.option_market_data[symbol].customized_wing_model_para.v == 0:
+        if group_instrument.customized_wing_model_para.v == 0:
             group_instrument = self.get_group_instrument_by_symbol(symbol)
             if filter_etf_option(symbol):
                 if group_instrument is None or group_instrument.index_option_series is None:
@@ -233,10 +237,10 @@ class MarketDataManager:
                 self.logger.error(f"calculate_greeks exception: {symbol}")
                 raise ValueError
         else:
-            k1 = self.option_market_data[symbol].customized_wing_model_para.k1
-            k2 = self.option_market_data[symbol].customized_wing_model_para.k2
-            b = self.option_market_data[symbol].customized_wing_model_para.b
-            volatility = self.option_market_data[symbol].customized_wing_model_para.v
+            k1 = group_instrument.customized_wing_model_para.k1
+            k2 = group_instrument.customized_wing_model_para.k2
+            b = group_instrument.customized_wing_model_para.b
+            volatility = group_instrument.customized_wing_model_para.v
 
         # if symbol.startswith("IO20250321"):
         #     print(f"当前基准{self.baseline}")

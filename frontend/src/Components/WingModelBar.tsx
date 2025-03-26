@@ -49,8 +49,8 @@ const WingModelBar: React.FC<WingModelProps> = ({ symbol }) => {
 
   const columns = [
     {
-      key: 'atmVol', name: 'ATM波动率', fieldName: 'atm_vol', minWidth: 100, maxWidth: 150, isResizable: true,
-      onRender: (item: WingModelData) => <span>{formatPercentage(item.atm_vol)}</span>
+      key: 'atmVol', name: 'ATM波动率', fieldName: 'v', minWidth: 100, maxWidth: 150, isResizable: true,
+      onRender: (item: WingModelData) => <span>{formatPercentage(item.v)}</span>
     },
     {
       key: 'k1', name: 'K1', fieldName: 'k1', minWidth: 100, maxWidth: 150, isResizable: true,

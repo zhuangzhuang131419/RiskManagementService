@@ -115,6 +115,20 @@ def estimate_atm_volatility(strike_price_list: np.ndarray, volatility_list: np.n
     # 使用归一化后的系数计算平值隐含波动率
     return para[0] + para[1] * normalized_price + para[2] * normalized_price ** 2
 
+CUT_POINT = 3
+
+def generate_wing_model_chart(v, k1, k2, b):
+    result = {}
+    step = 100
+    for x_distance in range(-CUT_POINT * step, CUT_POINT * step):
+        x_distance = x_distance / step
+        if x_distance < 0:
+            y = v + k1 * x_distance * x_distance + b * x_distance
+        else:
+            y = v + k2 * x_distance * x_distance + b * x_distance
+        result[x_distance] = y
+    return result
+
 def is_close(a, b, precision=3):
     return round(a, precision) == round(b, precision)
 

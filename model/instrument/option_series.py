@@ -38,7 +38,6 @@ class OptionSeries:
         self.imply_price = ImplyPrice()
         self.atm_volatility = ATMPram()
         self.wing_model_para = WingModelPara()
-        self.customized_wing_model_para = WingModelPara()
 
 
     def get_option(self, strike_price, option_type: OptionType) -> Option:

@@ -6,7 +6,7 @@ export interface IOptionDataProvider {
   fetchOptionGreeks(symbol: string): Promise<GreeksResponse>;
   fetchWingModelParaBySymbol(symbol: string): Promise<WingModelData[]>;
   fetchWingModelPara(): Promise<{ [key: string]: WingModelData }>
-  postWingModelPara(para: { [key: string]: WingModelData }): Promise<void>
+  postWingModelPara(para: WingModelData): Promise<void>;
   fetchOptionGreeksSummary(symbol: string): Promise<CashGreeksResponse>
   fetchFutureGreeksSummary(symbol: string): Promise<CashGreeksResponse[]>
   fetchIndexOptionMonitor(symbol: string): Promise<string>
@@ -87,8 +87,8 @@ class OptionDataProvider implements IOptionDataProvider {
     return data;
   }
 
-  postWingModelPara = async (para: { [key: string]: WingModelData; }): Promise<void> => {
-    const response = await fetch('/api/option/wing_models', {
+  postWingModelPara = async (para: WingModelData): Promise<void> => {
+    const response = await fetch(`/api/option/wing_models/${para.symbol}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

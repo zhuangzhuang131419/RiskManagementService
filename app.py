@@ -4,12 +4,14 @@ from flask_socketio import SocketIO
 import numpy as np
 from typing import Dict
 
+from model.instrument.grouped_instrument import GroupedInstrument
+from utils.calculator import calculate_x_distance, CUT_POINT
 from utils.helper import filter_index_option, filter_etf_option, get_cash_multiplier, \
-    parse_option_full_symbol
+    parse_option_full_symbol, count_remaining_year, INTEREST_RATE, DIVIDEND
 from ctp.ctp_manager import CTPManager
 from model.direction import Direction
 from model.enum.baseline_type import BaselineType
-from model.enum.category import UNDERLYING_CATEGORY_MAPPING, INDEX_OPTION_ETF_OPTION_FUTURE_MAPPING
+from model.enum.category import UNDERLYING_CATEGORY_MAPPING, INDEX_OPTION_ETF_OPTION_FUTURE_MAPPING, Category
 from model.enum.exchange_type import ExchangeType
 from model.instrument.option_series import OptionSeries
 from model.memory.wing_model_para import WingModelPara
@@ -65,96 +67,12 @@ def init_ctp():
 
 
 def main():
-    # test_future_instruction("IF2504", "0081500056", 4000, 3950)
-    test_se_instruction("10008013", "9982100962", 0.038, 0.036)
-
     while True:
         time.sleep(30)
         for symbol, option_series in ctp_manager.market_data_manager.option_market_data.items():
             ctp_manager.market_log_manager.record_option_log(option_series)
             ctp_manager.market_log_manager.record_wing_para(option_series)
         time.sleep(30)
-
-def test_position():
-    print(get_se_monitor("HO20250221"))
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_OPEN, 200, 4)
-    print(get_se_monitor("HO20250221"))
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_OPEN, 240, 1)
-    print(get_se_monitor("HO20250221"))
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_CLOSE, 240, 1)
-    print(get_se_monitor("HO20250221"))
-
-def test_future_instruction(instrument_id, investor_id, high, low):
-    # 卖开
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.SELL_OPEN, low, 1)
-    time.sleep(1)
-    # # 买开
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.BUY_OPEN, high, 1)
-    time.sleep(1)
-    # 买平
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.BUY_CLOSE, high, 1)
-    time.sleep(1)
-    # # # 卖平
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.SELL_CLOSE, low, 1)
-    time.sleep(1)
-
-    # 买撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.BUY_OPEN, low, 1)
-    ctp_manager.current_user.order_action(ExchangeType.CFFEX, investor_id, instrument_id, order_ref)
-    time.sleep(1)
-    #
-    #卖撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, investor_id, instrument_id, Direction.SELL_OPEN, high, 1)
-    ctp_manager.current_user.order_action(ExchangeType.CFFEX, investor_id, instrument_id, order_ref)
-
-def test_se_instruction(instrument_id, investor_id, high, low):
-    # 卖开
-    ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.SELL_OPEN, low, 1)
-    time.sleep(1)
-    # 买开
-    ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.BUY_OPEN, high, 1)
-    time.sleep(1)
-    # 买平
-    ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.BUY_CLOSE, high, 1)
-    time.sleep(1)
-    # 卖平
-    ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.SELL_CLOSE, low, 1)
-    time.sleep(1)
-
-    # 买撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.BUY_OPEN, low, 1)
-    ctp_manager.current_user.order_action(ExchangeType.SE, investor_id, instrument_id, order_ref)
-    #
-    #卖撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.SE, investor_id, instrument_id, Direction.SELL_OPEN, high, 1)
-    ctp_manager.current_user.order_action(ExchangeType.SE, investor_id, instrument_id, order_ref)
-
-def test_instruction():
-    # 卖开
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_OPEN, 180, 1)
-    # # 买开
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2500", Direction.BUY_OPEN, 230, 1)
-    # 买平
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_CLOSE, 230, 1)
-    # # # 卖平
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_CLOSE, 180, 1)
-
-    # 买撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.BUY_OPEN, 180, 1)
-    ctp_manager.current_user.order_action(ExchangeType.CFFEX, "HO2502-C-2400", order_ref)
-    #
-    #卖撤
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2502-C-2400", Direction.SELL_OPEN, 230, 1)
-    ctp_manager.current_user.order_action(ExchangeType.CFFEX, "HO2502-C-2400", order_ref)
-
-
-def test():
-    ctp_manager.switch_to_user("Zhuang")
-    ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "HO2412-C-2400", Direction.BUY_OPEN, 285, 40)
-
-    order_ref = ctp_manager.current_user.insert_order(ExchangeType.CFFEX, "au2502", Direction.BUY_OPEN, 270, 1)
-    if order_ref is not None:
-        ctp_manager.current_user.order_action(ExchangeType.CFFEX, "au2502", order_ref)
 
 
 @app.route('/')
@@ -247,6 +165,72 @@ def get_option_greeks():
 
     return jsonify(resp.to_dict())
 
+@app.route('/api/option/wing_model_para', methods=['GET'])
+def get_wing_model_info():
+
+    result = []
+    group_instruments: Dict[str, GroupedInstrument] = ctp_manager.market_data_manager.get_group_instrument_by_categories([Category.SSE50, Category.CSI300])
+
+    for key, group_instrument in group_instruments.items():
+        item = {"name": key}
+        cffex_wing_model = None
+        se_wing_model = None
+
+        if group_instrument.index_option_series is not None:
+            cffex_wing_model = group_instrument.index_option_series.wing_model_para
+            item["cffex"] = WingModelResp(cffex_wing_model.v, cffex_wing_model.k1, cffex_wing_model.k2, cffex_wing_model.b).to_dict()
+            item["cffex"]["symbol"] = group_instrument.index_option_series.symbol
+
+        if group_instrument.etf_option_series is not None:
+            se_wing_model = group_instrument.etf_option_series.wing_model_para
+            item["se"] = WingModelResp(se_wing_model.v, se_wing_model.k1, se_wing_model.k2,se_wing_model.b).to_dict()
+            item["se"]["symbol"] = group_instrument.etf_option_series.symbol
+
+        if cffex_wing_model is not None and se_wing_model is not None:
+            v = (cffex_wing_model.v + se_wing_model.v) / 2
+            k1 = (cffex_wing_model.k1 + se_wing_model.k1) / 2
+            k2 = (cffex_wing_model.k2 + se_wing_model.k2) / 2
+            b = (cffex_wing_model.b + se_wing_model.b) / 2
+            item["average"] = WingModelResp(v, k1, k2, b).to_dict()
+
+
+        item["cur"] = WingModelResp(
+            group_instrument.customized_wing_model_para.v,
+            group_instrument.customized_wing_model_para.k1,
+            group_instrument.customized_wing_model_para.k2,
+            group_instrument.customized_wing_model_para.b,
+        ).to_dict()
+
+        result.append(item)
+
+    return jsonify(result)
+
+@app.route('/api/option/month_t_iv/<symbol>', methods=['GET'])
+def get_option_month_t_iv_info(symbol):
+    result = {}
+    group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
+    underlying_price = ctp_manager.market_data_manager.option_market_data[symbol].wing_model_para.S
+    for strike_price, option_tuple in ctp_manager.market_data_manager.option_market_data[symbol].strike_price_options.items():
+        remaining_year = count_remaining_year(option_tuple.call.expired_date)
+
+        if group_instrument.index_option_series is not None and group_instrument.etf_option_series is not None:
+            volatility = (group_instrument.etf_option_series.wing_model_para.v + group_instrument.index_option_series.wing_model_para.v) / 2
+        elif group_instrument.index_option_series is not None:
+            volatility = group_instrument.index_option_series.wing_model_para.v
+        elif group_instrument.etf_option_series is not None:
+            volatility = group_instrument.etf_option_series.wing_model_para.v
+        else:
+            continue
+
+        x_distance = calculate_x_distance(S=underlying_price, K=strike_price, t=remaining_year, r=INTEREST_RATE, v=volatility, q=DIVIDEND)
+        if option_tuple.imply_volatility.sample_valid and CUT_POINT > x_distance > -CUT_POINT:
+            if x_distance > 0:
+                result[strike_price] = (x_distance, option_tuple.imply_volatility.c_ask_vol, option_tuple.imply_volatility.c_bid_vol)
+            else:
+                result[strike_price] = (x_distance, option_tuple.imply_volatility.p_ask_vol, option_tuple.imply_volatility.p_bid_vol)
+
+    return jsonify(result)
+
 
 
 @app.route('/api/option/wing_model/', methods=['GET'])
@@ -306,33 +290,18 @@ def get_wing_model_by_symbol():
         return jsonify({"error": "Unrecognized baseline type"}), 400
 
     return jsonify(result)
-    # return result
 
-@app.route('/api/option/wing_models', methods=['GET'])
-def get_all_customized_wing_model_para():
-    resp: Dict[str, WingModelPara] = {}
-    if ctp_manager.market_data_manager is not None:
-        for symbol, option_series in ctp_manager.market_data_manager.option_market_data.items():
-            wing_model_para: WingModelPara = option_series.customized_wing_model_para
-            resp[symbol] = wing_model_para
-
-    return jsonify(resp)
-
-@app.route('/api/option/wing_models', methods=['POST'])
-def set_customized_wing_model():
-    data: Dict[str, dict] = request.get_json()
+@app.route('/api/option/wing_models/<category>', methods=['POST'])
+def set_customized_wing_model(category):
+    data = request.get_json()
     if data is None:
         return jsonify({"error": "Invalid or missing JSON data"}), 400
-    for symbol, value in data.items():
-        if ctp_manager.market_data_manager is not None:
-            if "v" in value:
-                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.v = float(value["v"])
-            if "k1" in value:
-                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k1 = float(value["k1"])
-            if "k2" in value:
-                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.k2 = float(value["k2"])
-            if "b" in value:
-                ctp_manager.market_data_manager.option_market_data[symbol].customized_wing_model_para.b = float(value["b"])
+
+    group_instrument: GroupedInstrument = ctp_manager.market_data_manager.grouped_instruments[category]
+    group_instrument.customized_wing_model_para.v = data.get("v")
+    group_instrument.customized_wing_model_para.k1 = data.get("k1")
+    group_instrument.customized_wing_model_para.k2 = data.get("k2")
+    group_instrument.customized_wing_model_para.b = data.get("b")
 
     return jsonify({"message": "Customized wing model received"}), 200
 
@@ -463,12 +432,13 @@ def get_option_position_greeks(symbol: str, user_name: str):
 
 def generate_wing_model_response(symbol: str) -> WingModelResp:
     option_series = ctp_manager.market_data_manager.option_market_data[symbol]
+    group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
 
-    if option_series.customized_wing_model_para.v == 0:
+    if group_instrument.customized_wing_model_para.v == 0:
         wing_model_para = option_series.wing_model_para
         return WingModelResp(option_series.atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, option_series.atm_volatility.atm_valid)
     else:
-        wing_model_para = option_series.customized_wing_model_para
+        wing_model_para = group_instrument.customized_wing_model_para
         return WingModelResp(wing_model_para.v, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, option_series.atm_volatility.atm_valid)
 
 @app.route('/api/cffex/monitor', methods=['GET'])
