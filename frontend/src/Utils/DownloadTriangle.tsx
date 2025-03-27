@@ -1,11 +1,5 @@
 import React from 'react';
 
-interface ScatterShapeProps {
-    cx?: number;
-    cy?: number;
-    fill?: string;
-}
-
 const DownwardTriangle = (props: { cx?: number; cy?: number; fill?: string }) => {
     const { cx = 0, cy = 0, fill = "black" } = props;
     const size = 10; // 控制三角形大小
