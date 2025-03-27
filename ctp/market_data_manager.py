@@ -219,7 +219,7 @@ class MarketDataManager:
         volatility = self.option_market_data[symbol].atm_volatility.atm_volatility_protected
         group_instrument = self.get_group_instrument_by_symbol(symbol)
 
-        if group_instrument.customized_wing_model_para.v == 0:
+        if group_instrument is None or group_instrument.customized_wing_model_para.v == 0:
             group_instrument = self.get_group_instrument_by_symbol(symbol)
             if filter_etf_option(symbol):
                 if group_instrument is None or group_instrument.index_option_series is None:
