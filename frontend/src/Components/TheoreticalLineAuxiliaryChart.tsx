@@ -1,13 +1,11 @@
-import { DetailsList, IColumn, SelectionMode, Stack, Selection, SpinButton, DefaultButton, Slider, IconButton, Icon, MessageBarType, MessageBar } from "@fluentui/react";
+import { DetailsList, IColumn, SelectionMode, Stack, Selection, SpinButton, Slider, IconButton, MessageBarType, MessageBar } from "@fluentui/react";
 import { useQuery } from "react-query";
 import { useEffect, useRef, useState } from "react";
 import { GroupWingModelData, WingModelData } from "../Model/OptionData";
-import { CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from "recharts";
 import DownwardTriangle from "../Utils/DownloadTriangle";
 import { theoreticalDataProvider } from "../DataProvider/TheoreticalDataProvider";
 import { optionDataProvider } from "../DataProvider/OptionDataProvider";
-
-interface TheoreticalLineAuxiliaryChartProps { }
 
 const drawWingModelLine = (
     volatility: number,
@@ -252,7 +250,7 @@ const TheoreticalLineAuxiliaryChart = () => {
             onRender: (item) => {
                 return (
                     <IconButton
-                        iconProps={{iconName: "Copy"}}
+                        iconProps={{ iconName: "Copy" }}
                         onClick={() => {
                             setShadowWingPara(prev => ({
                                 ...prev,
@@ -279,8 +277,8 @@ const TheoreticalLineAuxiliaryChart = () => {
             onRender: (item) => {
                 return (
                     <IconButton
-                        iconProps={{iconName: "CheckMark"}}
-                        onClick={async() => {
+                        iconProps={{ iconName: "CheckMark" }}
+                        onClick={async () => {
                             try {
                                 await optionDataProvider.postWingModelPara({
                                     symbol: item.name,
@@ -293,7 +291,7 @@ const TheoreticalLineAuxiliaryChart = () => {
                                 setNotification({ message: "自定义设置成功", type: MessageBarType.success });
                             } catch {
                                 setNotification({ message: "Failed to send data", type: MessageBarType.error });
-                            } 
+                            }
                         }}
                     />
                 );
