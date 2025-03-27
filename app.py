@@ -434,7 +434,7 @@ def generate_wing_model_response(symbol: str) -> WingModelResp:
     option_series = ctp_manager.market_data_manager.option_market_data[symbol]
     group_instrument = ctp_manager.market_data_manager.get_group_instrument_by_symbol(symbol)
 
-    if group_instrument.customized_wing_model_para.v == 0:
+    if group_instrument is None or group_instrument.customized_wing_model_para.v == 0:
         wing_model_para = option_series.wing_model_para
         return WingModelResp(option_series.atm_volatility.atm_volatility_protected, wing_model_para.k1, wing_model_para.k2, wing_model_para.b, option_series.atm_volatility.atm_valid)
     else:
