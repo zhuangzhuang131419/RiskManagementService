@@ -20,27 +20,19 @@ class WingModel:
         sigma_c = k2 * xcc**2 + b * xcc + v - (part1c * xcc**2 + part2c * xc0 * xcc)
 
         # 计算波动率函数
-        def calculate_volatility(xx):
-            if xx < xp0:
-                return part1p * xp0**2 + part2p * xp0**2 + sigma_p
-            elif xx < xpc:
-                return part1p * xx**2 + part2p * xp0 * xx + sigma_p
-            elif xx < 0:
-                return k1 * xx**2 + b * xx + v
-            elif xx < xcc:
-                return k2 * xx**2 + b * xx + v
-            elif xx < xc0:
-                return part1c * xx**2 + part2c * xc0 * xx + sigma_c
-            else:
-                return part1c * xc0**2 + part2c * xc0**2 + sigma_c
-
-        # 计算 x 距离
-        if isinstance(K, (np.ndarray, list)):
-            xx_array = np.array([calculate_x_distance(S, k, t, r, v, q) for k in K])
-            self.volatility = np.vectorize(calculate_volatility)(xx_array)
+        xx = calculate_x_distance(S, K, t, r, v, q)
+        if xx < xp0:
+            self.volatility = part1p * xp0 ** 2 + part2p * xp0 ** 2 + sigma_p
+        elif xx < xpc:
+            self.volatility = part1p * xx ** 2 + part2p * xp0 * xx + sigma_p
+        elif xx < 0:
+            self.volatility = k1 * xx ** 2 + b * xx + v
+        elif xx < xcc:
+            self.volatility = k2 * xx ** 2 + b * xx + v
+        elif xx < xc0:
+            self.volatility = part1c * xx ** 2 + part2c * xc0 * xx + sigma_c
         else:
-            xx = calculate_x_distance(S, K, t, r, v, q)
-            self.volatility = calculate_volatility(xx)
+            self.volatility = part1c * xc0 ** 2 + part2c * xc0 ** 2 + sigma_c
 
 def v_delta(flag, S, K, t, r, v, q, k1, k2, b):
     if t < 1 / 254:

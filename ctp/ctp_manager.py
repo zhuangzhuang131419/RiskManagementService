@@ -10,6 +10,7 @@ from model.instrument.future import Future
 from model.user import User
 from utils.helper import *
 from utils.logger import Logger
+from utils.record import load_customized_wing_model
 
 
 class CTPManager:
@@ -66,6 +67,10 @@ class CTPManager:
 
         # 查询持仓
         self.query_position()
+
+        for category, wing_model in load_customized_wing_model().items():
+            self.market_data_manager.grouped_instruments[category].customized_wing_model_para = wing_model
+
 
         Thread(target=self.market_data_manager.index_volatility_calculator).start()
         Thread(target=self.run_daily_job).start()
