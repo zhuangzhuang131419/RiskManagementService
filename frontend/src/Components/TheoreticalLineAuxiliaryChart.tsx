@@ -288,6 +288,10 @@ const TheoreticalLineAuxiliaryChart = () => {
                                     b: item.shadow_b ?? 0,
                                     atm_available: 1
                                 });
+                                item.cur_v = item.shadow_v;
+                                item.cur_k1 = item.shadow_k1;
+                                item.cur_k2 = item.shadow_k2;
+                                item.cur_b = item.shadow_b;
                                 setNotification({ message: "自定义设置成功", type: MessageBarType.success });
                             } catch {
                                 setNotification({ message: "Failed to send data", type: MessageBarType.error });

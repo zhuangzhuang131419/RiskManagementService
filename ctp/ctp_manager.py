@@ -7,10 +7,12 @@ from ctp.market_data_manager import MarketDataManager
 from infra.option_log_manager import OptionLogManager
 from model.enum.exchange_type import ExchangeType
 from model.instrument.future import Future
+from model.memory.wing_model_para import WingModelPara
 from model.user import User
 from utils.helper import *
 from utils.logger import Logger
 from utils.record import load_customized_wing_model
+from utils.wing_model import WingModel
 
 
 class CTPManager:
@@ -69,8 +71,9 @@ class CTPManager:
         # 查询持仓
         self.query_position()
 
-        for category, wing_model in load_customized_wing_model().items():
-            self.market_data_manager.grouped_instruments[category].customized_wing_model_para = wing_model
+        customized_wing_model_paras = load_customized_wing_model()
+        for category, wing_model in customized_wing_model_paras.items():
+            self.market_data_manager.grouped_instruments[category].customized_wing_model_para = WingModelPara(S=wing_model.S, k1=wing_model.k1, k2=wing_model.k2, v=wing_model.v)
 
 
         Thread(target=self.market_data_manager.index_volatility_calculator).start()
