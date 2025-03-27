@@ -217,7 +217,7 @@ class MarketDataManager:
     def calculate_greeks(self, symbol, remaining_year):
         underlying_price = (self.option_market_data[symbol].imply_price.imply_s_ask + self.option_market_data[symbol].imply_price.imply_s_bid) / 2
         volatility = self.option_market_data[symbol].atm_volatility.atm_volatility_protected
-        group_instrument = self.get_group_instrument_by_symbol(symbol)
+        group_instrument: GroupedInstrument = self.get_group_instrument_by_symbol(symbol)
 
         if group_instrument is None or group_instrument.customized_wing_model_para.v == 0:
             group_instrument = self.get_group_instrument_by_symbol(symbol)
