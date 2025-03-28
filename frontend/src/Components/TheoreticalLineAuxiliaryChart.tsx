@@ -39,6 +39,7 @@ const TheoreticalLineAuxiliaryChart = () => {
     const [selectedItem, setSelectedItem] = useState<any>();
     const [selectedCffexCurveData, setSelectedCffexCurveData] = useState<{ x: number, y: number }[]>([]);
     const [selectedSeCurveData, setSelectedSeCurveData] = useState<{ x: number, y: number }[]>([]);
+    const [selectedCurCurveData, setSelectedCurCurveData] = useState<{ x: number, y: number }[]>([]);
     const [shadowCurveData, setShadowCurveData] = useState<{ x: number, y: number }[]>([]);
     const [shadowWingPara, setShadowWingPara] = useState<Record<string, WingModelData>>({});
 
@@ -105,6 +106,12 @@ const TheoreticalLineAuxiliaryChart = () => {
             setShadowCurveData(drawWingModelLine(selectedItem?.shadow_v, selectedItem?.shadow_k1, selectedItem?.shadow_k2, selectedItem?.shadow_b, 10));
         }
     }, [selectedItem?.shadow_k1, selectedItem?.shadow_k2, selectedItem?.shadow_b, selectedItem?.shadow_v]);
+
+    useEffect(() => {
+        if (selectedItem?.cur_v !== 0) {
+            setSelectedCurCurveData(drawWingModelLine(selectedItem?.cur_v, selectedItem?.cur_k1, selectedItem?.cur_k2, selectedItem?.cur_b, 10));
+        }
+    }, [selectedItem?.cur_k1, selectedItem?.cur_k2, selectedItem?.cur_b, selectedItem?.cur_v]);
 
     const { data: cffexIVData } = useQuery(
         ["fetchIVData", selectedItem?.cffex_symbol],
@@ -255,10 +262,10 @@ const TheoreticalLineAuxiliaryChart = () => {
                             setShadowWingPara(prev => ({
                                 ...prev,
                                 [item.name]: {
-                                    v: item.cffex_v ?? 0,
-                                    k1: item.cffex_k1 ?? 0,
-                                    k2: item.cffex_k2 ?? 0,
-                                    b: item.cffex_b ?? 0
+                                    v: item.avg_v ?? 0,
+                                    k1: item.avg_k1 ?? 0,
+                                    k2: item.avg_k2 ?? 0,
+                                    b: item.avg_b ?? 0
                                 }
                             }));
                         }}
@@ -491,6 +498,19 @@ const TheoreticalLineAuxiliaryChart = () => {
                                 stroke="blue"
                                 data={selectedSeCurveData}
                                 opacity={activeLine && activeLine !== `SE - ${selectedItem?.se_symbol} - FIT` ? 0.2 : 1}
+                            />
+                        )}
+                        {selectedItem?.cur_v !== 0 && (
+                            <Line
+                                name={`CUR - FIT`}
+                                type="monotone"
+                                dataKey="y"
+                                activeDot={false}
+                                tooltipType="none"
+                                dot={false}
+                                stroke="green"
+                                data={selectedCurCurveData}
+                                opacity={activeLine && activeLine !== `CUR - FIT` ? 0.2 : 1}
                             />
                         )}
                         <Line
