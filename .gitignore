@@ -166,3 +166,5 @@ cython_debug/
 con_file/
 
 database/
+
+config/customized_wing_model_para.csv

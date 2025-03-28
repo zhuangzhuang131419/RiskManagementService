@@ -22,6 +22,7 @@ from model.response.option_resp_base import StrikePrices
 from model.response.greeks_cash_resp import GreeksCashResp
 from model.response.user import UserResp
 from model.response.wing_model_resp import WingModelResp
+from utils.record import save_customized_wing_model
 
 np.set_printoptions(suppress=True)
 from threading import Thread
@@ -69,9 +70,9 @@ def init_ctp():
 def main():
     while True:
         time.sleep(30)
-        for symbol, option_series in ctp_manager.market_data_manager.option_market_data.items():
-            ctp_manager.market_log_manager.record_option_log(option_series)
-            ctp_manager.market_log_manager.record_wing_para(option_series)
+        # for symbol, option_series in ctp_manager.market_data_manager.option_market_data.items():
+        #     ctp_manager.market_log_manager.record_option_log(option_series)
+        #     ctp_manager.market_log_manager.record_wing_para(option_series)
         time.sleep(30)
 
 
@@ -193,8 +194,7 @@ def get_wing_model_info():
             b = (cffex_wing_model.b + se_wing_model.b) / 2
             item["average"] = WingModelResp(v, k1, k2, b).to_dict()
 
-
-        item["cur"] = WingModelResp(
+        item["current"] = WingModelResp(
             group_instrument.customized_wing_model_para.v,
             group_instrument.customized_wing_model_para.k1,
             group_instrument.customized_wing_model_para.k2,
@@ -302,6 +302,7 @@ def set_customized_wing_model(category):
     group_instrument.customized_wing_model_para.k1 = data.get("k1")
     group_instrument.customized_wing_model_para.k2 = data.get("k2")
     group_instrument.customized_wing_model_para.b = data.get("b")
+    save_customized_wing_model(category, group_instrument.customized_wing_model_para)
 
     return jsonify({"message": "Customized wing model received"}), 200
 

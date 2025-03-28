@@ -88,7 +88,7 @@ class MarketDataManager:
             self.instrument_transform_full_symbol[future.id] = future.full_symbol
             self.index_future_symbol.append(future.symbol)
             if future.category.value + "-" + future.expired_month not in self.grouped_instruments:
-                self.grouped_instruments[future.category.value + "-" + future.expired_month] = GroupedInstrument(None, None, None)
+                self.grouped_instruments[future.category.value + "-" + future.expired_month] = GroupedInstrument()
             self.grouped_instruments[future.category.value + "-" + future.expired_month].future = future
 
     def add_options(self, options: [Option]):
@@ -128,7 +128,7 @@ class MarketDataManager:
             if symbol[:-8] in UNDERLYING_CATEGORY_MAPPING:
                 key = UNDERLYING_CATEGORY_MAPPING[symbol[:-8]].value + "-" + symbol[-8:][:6]
                 if key not in self.grouped_instruments:
-                    self.grouped_instruments[key] = GroupedInstrument(None, None, None)
+                    self.grouped_instruments[key] = GroupedInstrument()
                 if filter_etf_option(symbol):
                     self.grouped_instruments[key].etf_option_series = self.option_market_data[symbol]
                 if filter_index_option(symbol):
