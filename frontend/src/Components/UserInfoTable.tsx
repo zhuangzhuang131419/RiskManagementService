@@ -29,7 +29,7 @@ const UserInfoTable: React.FC<UserInfoTableProps> = ({ indexSymbol, etfSymbol })
         () => optionDataProvider.fetchIndexOptionMonitor(indexSymbol as string),
         {
             onSuccess(data) {
-                console.log('fetchIndexOptionMonitor: ' + JSON.stringify(data))
+                // console.log('fetchIndexOptionMonitor: ' + JSON.stringify(data))
             },
             enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
             refetchOnWindowFocus: false, // 禁用在窗口获得焦点时重新获取数据
@@ -42,7 +42,7 @@ const UserInfoTable: React.FC<UserInfoTableProps> = ({ indexSymbol, etfSymbol })
         () => optionDataProvider.fetchETFOptionMonitor(etfSymbol as string),
         {
             onSuccess(data) {
-                console.log('fetchETFOptionMonitor: ' + JSON.stringify(data))
+                // console.log('fetchETFOptionMonitor: ' + JSON.stringify(data))
             },
             enabled: !!etfSymbol,  // 只有当 symbol 存在时才启用查询
             refetchOnWindowFocus: false, // 禁用在窗口获得焦点时重新获取数据
@@ -57,7 +57,7 @@ const UserInfoTable: React.FC<UserInfoTableProps> = ({ indexSymbol, etfSymbol })
                 : item
         );
 
-        console.log("useEffect" + JSON.stringify(updatedItems))
+        // console.log("useEffect" + JSON.stringify(updatedItems))
 
         setItems(updatedItems); // Set the updated array
     }, [indexRiskLevel, items]);

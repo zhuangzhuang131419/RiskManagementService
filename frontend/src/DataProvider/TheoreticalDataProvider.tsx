@@ -2,7 +2,7 @@ import { GroupWingModelData } from "../Model/OptionData";
 
 export interface ITheoreticalDataProvider {
     fetchWingModelData(): Promise<GroupWingModelData[]>;
-    fetchIVData(symbol: string): Promise<Record<string, [number, number, number]>>;
+    fetchIVData(symbol: string): Promise<Record<string, [number, number, number, number]>>;
 }
 class TheoreticalDataProvider implements ITheoreticalDataProvider {
     fetchWingModelData = async (): Promise<GroupWingModelData[]> => {
@@ -13,7 +13,7 @@ class TheoreticalDataProvider implements ITheoreticalDataProvider {
         return response.json();
     }
 
-    fetchIVData = async (symbol: string): Promise<Record<string, [number, number, number]>> => {
+    fetchIVData = async (symbol: string): Promise<Record<string, [number, number, number, number]>> => {
         const response = await fetch(`/api/option/month_t_iv/${symbol}`);
         if (!response.ok) {
             throw new Error("Failed to fetch wing model data");

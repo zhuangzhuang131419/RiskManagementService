@@ -71,7 +71,7 @@ const TradingDashboard: React.FC = () => {
                 return data.map((item) => ({ key: item }))
             },
             onSuccess(data) {
-                console.log('fetchIndexOptionSymbols:' + JSON.stringify(data))
+                // console.log('fetchIndexOptionSymbols:' + JSON.stringify(data))
             },
             refetchOnWindowFocus: false,
             refetchInterval: 1000 * 60 * 60,
@@ -87,7 +87,7 @@ const TradingDashboard: React.FC = () => {
                 return data.map((item) => ({ key: item }))
             },
             onSuccess(data) {
-                console.log('fetchETFOptionSymbols:' + JSON.stringify(data))
+                // console.log('fetchETFOptionSymbols:' + JSON.stringify(data))
             },
 
             refetchOnWindowFocus: false,
@@ -101,7 +101,7 @@ const TradingDashboard: React.FC = () => {
         userDataProvider.fetchGreeksTotal,
         {
             onSuccess(data) {
-                console.log('fetchGreeksTotal:' + JSON.stringify(data))
+                // console.log('fetchGreeksTotal:' + JSON.stringify(data))
 
             },
             refetchOnWindowFocus: false,
@@ -123,7 +123,7 @@ const TradingDashboard: React.FC = () => {
                 CSI500: item.CSI500?.[selectedGreek] ?? 0,
                 CSI1000: item.CSI1000?.[selectedGreek] ?? 0,
             }));
-            console.log(JSON.stringify(transformedItems))
+            // console.log(JSON.stringify(transformedItems))
             setGreeksItem(transformedItems);
         }
     }, [selectedGreek, greeksTotalItems]);
@@ -182,7 +182,7 @@ const TradingDashboard: React.FC = () => {
         userDataProvider.fetchMonitorIndexTotal,
         {
             onSuccess(data) {
-                console.log('fetchMonitorIndexTotal:' + JSON.stringify(data))
+                // console.log('fetchMonitorIndexTotal:' + JSON.stringify(data))
 
             },
             refetchOnWindowFocus: false,

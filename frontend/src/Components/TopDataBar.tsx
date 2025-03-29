@@ -21,7 +21,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
     () => optionDataProvider.fetchFutureGreeksSummary(indexSymbol as string),
     {
       onSuccess(data) {
-        console.log('fetchFutureGreeksSummary:' + indexSymbol + "-" + JSON.stringify(data))
+        // console.log('fetchFutureGreeksSummary:' + indexSymbol + "-" + JSON.stringify(data))
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
       enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
@@ -35,7 +35,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
     () => optionDataProvider.fetchOptionGreeksSummary(indexSymbol as string),
     {
       onSuccess(data) {
-        console.log('fetchOptionGreeksSummary' + indexSymbol + "-" + JSON.stringify(data))
+        // console.log('fetchOptionGreeksSummary' + indexSymbol + "-" + JSON.stringify(data))
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
       enabled: !!indexSymbol,  // 只有当 symbol 存在时才启用查询
@@ -48,7 +48,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
     () => optionDataProvider.fetchOptionGreeksSummary(etfSymbol as string),
     {
       onSuccess(data) {
-        console.log('fetchOptionGreeksSummary' + JSON.stringify(data))
+        // console.log('fetchOptionGreeksSummary' + JSON.stringify(data))
       },
       refetchInterval: 3000, // 每隔 3 秒重新获取一次数据
       enabled: !!etfSymbol,  // 只有当 symbol 存在时才启用查询
@@ -130,7 +130,7 @@ const TopDataBar: React.FC<TopDataBarProps> = ({ indexSymbol, etfSymbol }) => {
         : []),
     ];
 
-    console.log("combine data" + JSON.stringify(combinedData))
+    // console.log("combine data" + JSON.stringify(combinedData))
 
     const totalData = {
       type: "综合",

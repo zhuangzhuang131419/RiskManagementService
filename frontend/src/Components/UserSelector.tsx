@@ -31,7 +31,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({ accounts, onSelect, selecte
       userDataProvider.setUser(userName)
       setMessage({ text: `用户 ${userName} 已成功选择。`, type: MessageBarType.success });
     } catch (error) {
-      console.log("setUser:" + error)
+      // console.log("setUser:" + error)
       setMessage({ text: `选择用户 ${userName} 时出错: ${error}`, type: MessageBarType.error });
     } finally {
       setTimeout(() => setMessage(null), 3000); // 3秒后消失

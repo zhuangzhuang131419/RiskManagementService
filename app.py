@@ -225,9 +225,9 @@ def get_option_month_t_iv_info(symbol):
         x_distance = calculate_x_distance(S=underlying_price, K=strike_price, t=remaining_year, r=INTEREST_RATE, v=volatility, q=DIVIDEND)
         if option_tuple.imply_volatility.sample_valid and CUT_POINT > x_distance > -CUT_POINT:
             if x_distance > 0:
-                result[strike_price] = (x_distance, option_tuple.imply_volatility.c_ask_vol, option_tuple.imply_volatility.c_bid_vol)
+                result[strike_price] = (x_distance, option_tuple.imply_volatility.c_ask_vol, option_tuple.imply_volatility.c_bid_vol, option_tuple.call.greeks.delta)
             else:
-                result[strike_price] = (x_distance, option_tuple.imply_volatility.p_ask_vol, option_tuple.imply_volatility.p_bid_vol)
+                result[strike_price] = (x_distance, option_tuple.imply_volatility.p_ask_vol, option_tuple.imply_volatility.p_bid_vol, option_tuple.put.greeks.delta)
 
     return jsonify(result)
 

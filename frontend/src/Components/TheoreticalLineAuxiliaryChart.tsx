@@ -2,7 +2,7 @@ import { DetailsList, IColumn, SelectionMode, Stack, Selection, SpinButton, Slid
 import { useQuery } from "react-query";
 import { useEffect, useRef, useState } from "react";
 import { GroupWingModelData, WingModelData } from "../Model/OptionData";
-import { CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, ComposedChart, LabelList, Legend, Line, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from "recharts";
 import DownwardTriangle from "../Utils/DownloadTriangle";
 import { theoreticalDataProvider } from "../DataProvider/TheoreticalDataProvider";
 import { optionDataProvider } from "../DataProvider/OptionDataProvider";
@@ -118,8 +118,9 @@ const TheoreticalLineAuxiliaryChart = () => {
         () => theoreticalDataProvider.fetchIVData(selectedItem?.cffex_symbol),
         {
             select(data) {
-                return Object.entries(data).map(([strike, [x_distance, iv_ask, iv_bid]]) => ({
+                return Object.entries(data).map(([strike, [x_distance, iv_ask, iv_bid, delta]]) => ({
                     strike: strike,
+                    delta: delta,
                     x: x_distance,   // X轴：行权价标准差距离
                     iv_ask: iv_ask * 100,
                     iv_bid: iv_bid * 100,
@@ -144,7 +145,7 @@ const TheoreticalLineAuxiliaryChart = () => {
                 }));
             },
             enabled: !!selectedItem && !!selectedItem.se_symbol,
-            refetchInterval: 10000,
+            // refetchInterval: 10000,
             refetchOnWindowFocus: false,
         }
     );
@@ -295,10 +296,6 @@ const TheoreticalLineAuxiliaryChart = () => {
                                     b: item.shadow_b ?? 0,
                                     atm_available: 1
                                 });
-                                item.cur_v = item.shadow_v;
-                                item.cur_k1 = item.shadow_k1;
-                                item.cur_k2 = item.shadow_k2;
-                                item.cur_b = item.shadow_b;
                                 setNotification({ message: "自定义设置成功", type: MessageBarType.success });
                             } catch {
                                 setNotification({ message: "Failed to send data", type: MessageBarType.error });
@@ -341,48 +338,14 @@ const TheoreticalLineAuxiliaryChart = () => {
 
 
     useEffect(() => {
-        console.log("shadowCurveData" + JSON.stringify(shadowCurveData))
+        console.log("cffexIVData" + JSON.stringify(cffexIVData))
         // console.log("selectedItem" + selectedItem?.shadow_k1 + selectedItem?.shadow_k2 + selectedItem?.shadow_b);
-    }, [shadowCurveData])
+    }, [cffexIVData])
 
     const [activeLine, setActiveLine] = useState<string | null>(null);
 
     const [domainMin, setDominMin] = useState<number>(10);
     const [domainMax, setDominMax] = useState<number>(30);
-
-    // const CustomTooltip = ({ active, label, payload, item }: any) => {
-    //     if (!active || !payload || payload.length === 0) {
-    //         return null;
-    //     }
-
-    //     const filteredPayload = payload.filter((item: any) => item.payload.strike !== undefined);
-
-    //     if (filteredPayload.length === 0) {
-    //         return null; // 或者返回一个空的 Tooltip
-    //     }
-
-    //     console.log("payload" + JSON.stringify(payload))
-    //     console.log("label" + JSON.stringify(label))
-    //     console.log("filteredPayload" + JSON.stringify(filteredPayload))
-
-    //     return (
-    //         <div className="custom-tooltip">
-    //             {filteredPayload.map((item: any, index: any) => {
-    //                 const { x, cffex_y, se_y, strike } = item.payload;
-    //                 return (
-    //                     <div key={index}>
-    //                         <p>{`Strike: ${strike}`}</p>
-    //                         <p>{`X: ${x}`}</p>
-    //                         {cffex_y !== undefined && <p>{`Y: ${cffex_y}`}</p>}
-    //                         {se_y !== undefined && <p>{`Y: ${se_y}`}</p>}
-    //                     </div>
-    //                 );
-    //             })}
-    //         </div>
-    //     );
-    // };
-
-
 
     return (
         <Stack tokens={{ childrenGap: 10 }} styles={{ root: { width: "100%", height: "100vh" } }}>
@@ -444,13 +407,16 @@ const TheoreticalLineAuxiliaryChart = () => {
                         <Legend onMouseEnter={(e) => setActiveLine(e.value)} onMouseLeave={() => setActiveLine(null)} />
                         <Scatter
                             name={`CFFEX - ${selectedItem?.cffex_symbol} - ask`}
-                            data={cffexIVData?.map(point => ({ x: point.x, cffex_y: point.iv_ask, strike: point.strike })) ?? []}
+                            data={cffexIVData?.map(point => ({ x: point.x, cffex_y: point.iv_ask, strike: point.strike, delta: point.delta.toFixed(2) })) ?? []}
                             shape={DownwardTriangle}
                             color="red"
                             dataKey="cffex_y"
                             fill="red"
                             opacity={activeLine && activeLine !== `CFFEX - ${selectedItem?.cffex_symbol} - ask` ? 0.2 : 1}
-                        />
+                        >
+                            <LabelList dataKey="strike" position="top" data={cffexIVData?.map(point => ({}))}/>
+                            <LabelList dataKey="delta" position="bottom" />
+                        </Scatter>
                         <Scatter
                             name={`CFFEX - ${selectedItem?.cffex_symbol} - bid`}
                             data={cffexIVData?.map(point => ({ x: point.x, cffex_y: point.iv_bid, strike: point.strike })) ?? []}
